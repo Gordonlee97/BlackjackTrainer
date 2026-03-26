@@ -26,7 +26,7 @@ export default function HandTotal({ cards, hideHole }: HandTotalProps) {
 
   return (
     <span
-      className={`inline-block text-base font-black px-4 py-1.5 rounded-full tracking-wide ${
+      className={`inline-block text-2xl font-black px-6 py-2 rounded-full tracking-wide ${
         bust
           ? 'bg-red-600 text-white'
           : hv.total === 21

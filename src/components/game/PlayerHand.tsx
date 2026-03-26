@@ -30,12 +30,12 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands }: Pl
 
   return (
     <div
-      className={`flex flex-col items-center gap-3 transition-all duration-200 ${
+      className={`flex flex-col items-center gap-4 transition-all duration-200 ${
         !isActive && totalHands > 1 ? 'opacity-50 scale-95' : ''
       }`}
     >
       {totalHands > 1 && (
-        <div className="text-xs font-bold text-white/40 tracking-[0.2em] uppercase">
+        <div className="text-sm font-bold text-white/50 tracking-[0.2em] uppercase">
           Hand {handIndex + 1}
         </div>
       )}
@@ -54,17 +54,17 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands }: Pl
       <HandTotal cards={hand.cards} />
 
       {hand.result && (
-        <div className={`text-base font-black px-5 py-2 rounded-full ${RESULT_STYLES[hand.result] ?? 'bg-gray-600 text-white'}`}>
+        <div className={`text-xl font-black px-7 py-2.5 rounded-full ${RESULT_STYLES[hand.result] ?? 'bg-gray-600 text-white'}`}>
           {RESULT_LABELS[hand.result] ?? hand.result.toUpperCase()}
         </div>
       )}
 
       {isActive && !hand.isComplete && (
-        <div className="flex gap-1.5 items-center">
+        <div className="flex gap-2 items-center">
           {[0, 150, 300].map((d) => (
             <div
               key={d}
-              className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+              className="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-bounce"
               style={{ animationDelay: `${d}ms` }}
             />
           ))}

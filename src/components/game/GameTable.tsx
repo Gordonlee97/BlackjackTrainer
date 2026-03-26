@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore, playDealer } from '../../store/gameStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useStatsStore } from '../../store/statsStore';
@@ -15,9 +15,11 @@ import ActionButtons from './ActionButtons';
 import BetControls from './BetControls';
 import StatsPanel from '../feedback/StatsPanel';
 import StrategyModal from '../feedback/StrategyModal';
+import StrategyChartModal from '../feedback/StrategyChartModal';
+import SettingsModal from './SettingsModal';
 
 interface GameTableProps {
-  onBackToSetup: () => void;
+  onBackToMenu: () => void;
 }
 
 function pickResultSound(hands: HandState[]) {
@@ -26,17 +28,24 @@ function pickResultSound(hands: HandState[]) {
   if (results.includes('win')  && !results.includes('lose')) return playWin;
   if (results.includes('lose') && !results.includes('win'))  return playLose;
   if (results.every(r => r === 'push'))                      return playPush;
-  // mixed: win+lose → neutral
   return playPush;
 }
 
-export default function GameTable({ onBackToSetup }: GameTableProps) {
+const controlVariants = {
+  enter: { opacity: 0, y: 16, scale: 0.95 },
+  show:  { opacity: 1, y: 0,  scale: 1,   transition: { type: 'spring' as const, damping: 22, stiffness: 260 } },
+  exit:  { opacity: 0, y: -12, scale: 0.95, transition: { duration: 0.15 } },
+};
+
+export default function GameTable({ onBackToMenu }: GameTableProps) {
   const game = useGameStore();
   const { rules } = useSettingsStore();
   const stats = useStatsStore();
   const strategyRef = useRef<FullStrategy | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [chartOpen, setChartOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [modalData, setModalData] = useState<{
     playerAction: FinalAction;
     advice: StrategyAdvice;
@@ -130,6 +139,12 @@ export default function GameTable({ onBackToSetup }: GameTableProps) {
 
   const shoePercent = game.shoeSize > 0 ? (game.shoe.length / game.shoeSize) * 100 : 0;
 
+  // Derive a stable key for the controls AnimatePresence
+  const controlsKey =
+    game.phase === 'betting'     ? 'betting'  :
+    game.phase === 'player_turn' ? 'player'   :
+    game.phase === 'complete'    ? 'complete' : 'dealer';
+
   return (
     <div
       className="h-screen flex flex-col overflow-hidden select-none"
@@ -139,45 +154,70 @@ export default function GameTable({ onBackToSetup }: GameTableProps) {
     >
       {/* ══ TOP BAR ══ */}
       <div
-        className="shrink-0 flex items-center justify-between px-6 h-20"
-        style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+        className="shrink-0 flex items-center justify-between px-10 h-[88px]"
+        style={{ background: 'rgba(0,0,0,0.32)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
-        <button
-          onClick={onBackToSetup}
-          className="flex items-center gap-2 text-white/55 hover:text-white/85 transition-colors text-base font-semibold tracking-wide rounded-full px-5 py-2.5"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }}
-        >
-          <span className="text-lg leading-none">⚙</span>
-          <span>Settings</span>
-        </button>
+        {/* Left: Settings + Charts — shrink-0 so StatsPanel never squeezes these */}
+        <div className="flex items-center gap-3 shrink-0">
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
+            style={{
+              padding: '12px 24px',
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+            }}
+          >
+            <span className="leading-none" style={{ fontSize: '18px' }}>⚙</span>
+            <span>Settings</span>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setChartOpen(true)}
+            className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
+            style={{
+              padding: '12px 24px',
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+            }}
+          >
+            <span className="leading-none" style={{ fontSize: '18px' }}>♠</span>
+            <span>Charts</span>
+          </motion.button>
+        </div>
 
         <StatsPanel />
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-24 h-2 bg-black/50 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${shoePercent}%`,
-                  background: shoePercent > 25 ? 'rgba(250,204,21,0.7)' : 'rgba(239,68,68,0.85)',
-                }}
-              />
+        {/* Right: Shoe + Balance — shrink-0 */}
+        <div className="flex items-center gap-5 shrink-0">
+          <div className="flex flex-col items-end gap-1.5">
+            <div className="flex items-center gap-2.5">
+              <div className="w-28 h-2.5 bg-black/50 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  animate={{ width: `${shoePercent}%` }}
+                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                  style={{
+                    background: shoePercent > 25 ? 'rgba(250,204,21,0.75)' : 'rgba(239,68,68,0.85)',
+                  }}
+                />
+              </div>
+              <span className="text-sm text-white/35 w-10">{Math.round(shoePercent)}%</span>
             </div>
-            <span className="text-xs text-white/30 w-8">{Math.round(shoePercent)}%</span>
           </div>
           <div className="text-right">
-            <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-1">Balance</span>
-            <span className="text-2xl font-black text-yellow-400 leading-none">${game.balance.toLocaleString()}</span>
+            <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-1.5">Balance</span>
+            <span className="text-3xl font-black text-yellow-400 leading-none">${game.balance.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      {/* ══ DEALER ZONE ══ */}
-      <div className="flex-[3] flex flex-col items-center justify-center min-h-0">
+      {/* ══ DEALER ZONE — justify-center so cards sit in the middle, not at the edge ══ */}
+      <div className="flex-[4] flex flex-col items-center justify-center min-h-0 py-6">
         <DealerHand
           hand={game.dealerHand}
           holeCardRevealed={game.dealerHoleCardRevealed}
@@ -185,24 +225,31 @@ export default function GameTable({ onBackToSetup }: GameTableProps) {
       </div>
 
       {/* ══ DIVIDER ══ */}
-      <div className="shrink-0 flex items-center gap-5 px-12">
-        <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-        {game.message && (
-          <div
-            className="shrink-0 text-base font-semibold text-white/80 whitespace-nowrap px-8 py-3 rounded-full"
-            style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)' }}
-          >
-            {game.message}
-          </div>
-        )}
-        <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+      <div className="shrink-0 flex items-center gap-6 px-12 py-3">
+        <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.09)' }} />
+        <AnimatePresence mode="wait">
+          {game.message && (
+            <motion.div
+              key={game.message}
+              className="shrink-0 text-lg font-semibold text-white/85 whitespace-nowrap px-10 py-3.5 rounded-full"
+              style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)' }}
+              initial={{ opacity: 0, scale: 0.88, y: 4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: -4 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+            >
+              {game.message}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.09)' }} />
       </div>
 
-      {/* ══ PLAYER ZONE ══ */}
-      <div className="flex-[5] flex flex-col items-center justify-around min-h-0 py-4">
+      {/* ══ PLAYER ZONE — justify-center + gap keeps hands and controls together ══ */}
+      <div className="flex-[6] flex flex-col items-center justify-center gap-10 min-h-0 py-6">
 
         {/* Player hand(s) */}
-        <div className="flex gap-12 items-start justify-center">
+        <div className="flex gap-14 items-start justify-center">
           {game.playerHands.map((hand, i) => (
             <PlayerHand
               key={i}
@@ -214,55 +261,91 @@ export default function GameTable({ onBackToSetup }: GameTableProps) {
           ))}
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center justify-center">
+        {/* Controls — animated phase transitions */}
+        <AnimatePresence mode="wait">
           {game.phase === 'betting' && (
-            <BetControls
-              currentBet={game.currentBet}
-              balance={game.balance}
-              onBetChange={game.placeBet}
-              onDeal={game.deal}
-            />
+            <motion.div
+              key="betting"
+              variants={controlVariants}
+              initial="enter"
+              animate="show"
+              exit="exit"
+            >
+              <BetControls
+                currentBet={game.currentBet}
+                balance={game.balance}
+                onBetChange={game.placeBet}
+                onDeal={game.deal}
+              />
+            </motion.div>
           )}
 
           {game.phase === 'player_turn' && (
-            <ActionButtons
-              onHit={() => handlePlayerAction('HIT', game.hit)}
-              onStand={() => handlePlayerAction('STAND', game.stand)}
-              onDouble={() => handlePlayerAction('DOUBLE', game.double)}
-              onSplit={() => handlePlayerAction('SPLIT', game.split)}
-              onSurrender={() => handlePlayerAction('SURRENDER', game.surrender)}
-              canDouble={game.canDouble()}
-              canSplit={game.canSplit()}
-              canSurrender={game.canSurrender()}
-              disabled={modalOpen}
-            />
+            <motion.div
+              key="player"
+              variants={controlVariants}
+              initial="enter"
+              animate="show"
+              exit="exit"
+            >
+              <ActionButtons
+                onHit={() => handlePlayerAction('HIT', game.hit)}
+                onStand={() => handlePlayerAction('STAND', game.stand)}
+                onDouble={() => handlePlayerAction('DOUBLE', game.double)}
+                onSplit={() => handlePlayerAction('SPLIT', game.split)}
+                onSurrender={() => handlePlayerAction('SURRENDER', game.surrender)}
+                canDouble={game.canDouble()}
+                canSplit={game.canSplit()}
+                canSurrender={game.canSurrender()}
+                disabled={modalOpen}
+              />
+            </motion.div>
           )}
 
           {(game.phase === 'dealer_turn' || game.phase === 'settling') && (
-            <div className="text-white/35 text-sm font-medium tracking-widest uppercase animate-pulse">
-              Dealer playing…
-            </div>
+            <motion.div
+              key="dealer"
+              variants={controlVariants}
+              initial="enter"
+              animate="show"
+              exit="exit"
+            >
+              <motion.span
+                className="text-white/40 text-base font-semibold tracking-widest uppercase"
+                animate={{ opacity: [0.35, 0.8, 0.35] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                Dealer playing…
+              </motion.span>
+            </motion.div>
           )}
 
           {game.phase === 'complete' && (
-            <motion.button
-              whileHover={{ scale: 1.03, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={game.newHand}
-              className="font-black text-xl tracking-wide rounded-full"
-              style={{
-                padding: '18px 80px',
-                background: 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #b45309 100%)',
-                border: '1px solid rgba(255,255,255,0.22)',
-                boxShadow: '0 4px 28px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',
-                color: '#111827',
-              }}
+            <motion.div
+              key={`complete-${controlsKey}`}
+              variants={controlVariants}
+              initial="enter"
+              animate="show"
+              exit="exit"
             >
-              Next Hand
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.04, y: -3 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={game.newHand}
+                className="font-black text-2xl tracking-wide rounded-full"
+                style={{
+                  padding: '20px 100px',
+                  background: 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #b45309 100%)',
+                  border: '1px solid rgba(255,255,255,0.22)',
+                  boxShadow: '0 4px 28px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',
+                  color: '#111827',
+                }}
+              >
+                Next Hand
+              </motion.button>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </div>
 
       {/* ══ STRATEGY MODAL ══ */}
@@ -279,6 +362,20 @@ export default function GameTable({ onBackToSetup }: GameTableProps) {
           blockMode={rules.wrongMoveAction === 'block'}
         />
       )}
+
+      {/* ══ CHART MODAL ══ */}
+      <StrategyChartModal
+        isOpen={chartOpen}
+        onClose={() => setChartOpen(false)}
+        rules={rules}
+      />
+
+      {/* ══ SETTINGS MODAL ══ */}
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onBackToMenu={onBackToMenu}
+      />
     </div>
   );
 }

@@ -17,19 +17,19 @@ export default function SetupPage({ onStart }: SetupPageProps) {
     >
       {/* ── Header bar ── */}
       <div
-        className="shrink-0 flex items-center justify-center gap-5 py-6 px-8"
+        className="shrink-0 flex items-center justify-center gap-5 py-7 px-8"
         style={{ background: 'rgba(0,0,0,0.28)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
       >
-        <span className="text-5xl leading-none">🃏</span>
+        <span className="text-6xl leading-none">🃏</span>
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight leading-none">Blackjack Trainer</h1>
-          <p className="text-white/40 text-sm mt-1 tracking-wide">Practice perfect basic strategy</p>
+          <h1 className="text-4xl font-black text-white tracking-tight leading-none">Blackjack Trainer</h1>
+          <p className="text-white/40 text-base mt-1.5 tracking-wide">Practice perfect basic strategy</p>
         </div>
       </div>
 
       {/* ── Settings area ── */}
       <div className="flex-1 flex items-center justify-center px-8 py-8 overflow-y-auto">
-        <div className="w-full max-w-2xl space-y-2">
+        <div className="w-full max-w-2xl space-y-3">
 
           <SectionLabel>Game Rules</SectionLabel>
           <SettingsCard>
@@ -55,11 +55,11 @@ export default function SetupPage({ onStart }: SetupPageProps) {
               onChange={(v) => setRules({ dealerHitsSoft17: v === 'hit' })}
             />
             <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={(v) => setRules({ surrenderAllowed: v })} />
-            <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={(v) => setRules({ dasAllowed: v })} last />
+            <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={(v) => setRules({ dasAllowed: v })} />
             <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={(v) => setRules({ hitSplitAces: v })} last />
           </SettingsCard>
 
-          <div className="pt-3" />
+          <div className="pt-4" />
           <SectionLabel>Training Options</SectionLabel>
           <SettingsCard>
             <SelectRow
@@ -90,14 +90,14 @@ export default function SetupPage({ onStart }: SetupPageProps) {
 
       {/* ── Footer / CTA ── */}
       <div
-        className="shrink-0 flex flex-col items-center gap-3 py-6 px-8"
+        className="shrink-0 flex flex-col items-center gap-4 py-7 px-8"
         style={{ background: 'rgba(0,0,0,0.28)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
       >
         <button
           onClick={onStart}
-          className="w-full max-w-2xl rounded-full font-black text-lg tracking-wide transition-opacity hover:opacity-90 active:scale-[0.98]"
+          className="w-full max-w-2xl rounded-full font-black text-2xl tracking-wide transition-opacity hover:opacity-90 active:scale-[0.98]"
           style={{
-            padding: '18px',
+            padding: '22px',
             background: 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #b45309 100%)',
             border: '1px solid rgba(255,255,255,0.22)',
             boxShadow: '0 4px 28px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.25)',
@@ -106,7 +106,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
         >
           Start Training
         </button>
-        <p className="text-white/20 text-xs tracking-widest">
+        <p className="text-white/25 text-sm tracking-widest">
           H = Hit &nbsp;·&nbsp; S = Stand &nbsp;·&nbsp; D = Double &nbsp;·&nbsp; P = Split &nbsp;·&nbsp; R = Surrender
         </p>
       </div>
@@ -118,7 +118,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-bold text-white/30 uppercase tracking-[0.2em] px-1 pb-1">
+    <p className="text-sm font-bold text-white/40 uppercase tracking-[0.18em] px-1 pb-1">
       {children}
     </p>
   );
@@ -144,18 +144,18 @@ function SelectRow({ label, value, options, onChange, last }: {
 }) {
   return (
     <div
-      className="flex items-center justify-between px-5 py-4"
+      className="flex items-center justify-between px-6 py-5"
       style={last ? {} : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}
     >
-      <span className="text-white/70 text-base font-medium">{label}</span>
+      <span className="text-white/75 text-lg font-medium">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="text-white text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none cursor-pointer"
+        className="text-white text-base font-semibold rounded-xl px-5 py-3 focus:outline-none cursor-pointer"
         style={{
           background: 'rgba(255,255,255,0.09)',
           border: '1px solid rgba(255,255,255,0.12)',
-          minWidth: '220px',
+          minWidth: '240px',
         }}
       >
         {options.map((opt) => (
@@ -176,32 +176,32 @@ function ToggleRow({ label, checked, onChange, last }: {
 }) {
   return (
     <div
-      className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
+      className="flex items-center justify-between px-6 py-5 cursor-pointer hover:bg-white/[0.02] transition-colors"
       style={last ? {} : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       onClick={() => onChange(!checked)}
     >
-      <span className="text-white/70 text-base font-medium">{label}</span>
+      <span className="text-white/75 text-lg font-medium">{label}</span>
       <div
         className="relative shrink-0 ml-4 transition-all duration-200"
         style={{
-          width: 48,
-          height: 28,
+          width: 58,
+          height: 34,
           borderRadius: 9999,
           background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
           border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
-          boxShadow: checked ? '0 0 12px rgba(245,158,11,0.25)' : 'none',
+          boxShadow: checked ? '0 0 14px rgba(245,158,11,0.25)' : 'none',
         }}
       >
         <span
           className="absolute transition-transform duration-200"
           style={{
-            top: 3,
-            left: 3,
-            width: 20,
-            height: 20,
+            top: 4,
+            left: 4,
+            width: 24,
+            height: 24,
             borderRadius: 9999,
             background: checked ? '#f59e0b' : 'rgba(255,255,255,0.4)',
-            transform: checked ? 'translateX(20px)' : 'translateX(0)',
+            transform: checked ? 'translateX(24px)' : 'translateX(0)',
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />

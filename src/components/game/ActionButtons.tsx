@@ -25,12 +25,12 @@ export default function ActionButtons({
   canDouble, canSplit, canSurrender, disabled,
 }: ActionButtonsProps) {
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="flex gap-4">
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex gap-5">
         <ActionBtn label="Hit"   shortcut="H" gradient={BUTTON_STYLES.hit}   enabled size="lg" disabled={disabled} onClick={onHit} />
         <ActionBtn label="Stand" shortcut="S" gradient={BUTTON_STYLES.stand} enabled size="lg" disabled={disabled} onClick={onStand} />
       </div>
-      <div className="flex gap-3">
+      <div className="flex gap-4">
         <ActionBtn label="Double"    shortcut="D" gradient={BUTTON_STYLES.double}    enabled={canDouble}    size="md" disabled={disabled} onClick={onDouble} />
         <ActionBtn label="Split"     shortcut="P" gradient={BUTTON_STYLES.split}     enabled={canSplit}     size="md" disabled={disabled} onClick={onSplit} />
         <ActionBtn label="Surrender" shortcut="R" gradient={BUTTON_STYLES.surrender} enabled={canSurrender} size="md" disabled={disabled} onClick={onSurrender} />
@@ -49,8 +49,8 @@ function ActionBtn({ label, shortcut, gradient, enabled, size, disabled, onClick
   onClick: () => void;
 }) {
   const off = disabled || !enabled;
-  const w = size === 'lg' ? 176 : 144;
-  const h = size === 'lg' ? 88  : 72;
+  const w = size === 'lg' ? 210 : 168;
+  const h = size === 'lg' ? 104 : 84;
 
   return (
     <motion.button
@@ -58,21 +58,21 @@ function ActionBtn({ label, shortcut, gradient, enabled, size, disabled, onClick
       whileTap={!off ? { scale: 0.96 } : {}}
       onClick={onClick}
       disabled={off}
-      className="flex flex-col items-center justify-center gap-1 font-black text-white select-none"
+      className="flex flex-col items-center justify-center gap-1.5 font-black text-white select-none"
       style={{
         width: w,
         height: h,
-        borderRadius: '20px',
+        borderRadius: '22px',
         background: off ? 'rgba(255,255,255,0.06)' : gradient,
         border: off ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.18)',
-        boxShadow: off ? 'none' : '0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)',
+        boxShadow: off ? 'none' : '0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)',
         color: off ? 'rgba(255,255,255,0.18)' : 'white',
         cursor: off ? 'not-allowed' : 'pointer',
         transition: 'box-shadow 0.15s, opacity 0.15s',
       }}
     >
-      <span style={{ fontSize: size === 'lg' ? '1.375rem' : '1.125rem', lineHeight: 1 }}>{label}</span>
-      <span style={{ fontSize: '10px', opacity: 0.4, lineHeight: 1 }}>[{shortcut}]</span>
+      <span style={{ fontSize: size === 'lg' ? '1.6rem' : '1.3rem', lineHeight: 1 }}>{label}</span>
+      <span style={{ fontSize: '12px', opacity: 0.45, lineHeight: 1 }}>[{shortcut}]</span>
     </motion.button>
   );
 }

@@ -11,8 +11,8 @@ export default function DealerHand({ hand, holeCardRevealed }: DealerHandProps) 
   if (hand.cards.length === 0) return null;
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="text-xs font-bold text-white/40 tracking-[0.25em] uppercase">
+    <div className="flex flex-col items-center gap-4">
+      <div className="text-sm font-bold text-white/50 tracking-[0.25em] uppercase">
         Dealer
       </div>
       <div className="flex items-center justify-center">
