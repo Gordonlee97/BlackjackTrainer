@@ -1,4 +1,9 @@
 let _ctx: AudioContext | null = null;
+let _masterVolume = 0.5; // 0–1, controlled by settings
+
+export function setMasterVolume(v: number) {
+  _masterVolume = Math.max(0, Math.min(1, v));
+}
 
 function ac(): AudioContext {
   if (!_ctx) _ctx = new AudioContext();
@@ -11,7 +16,7 @@ function tone(
   duration: number,
   delay = 0,
   type: OscillatorType = 'sine',
-  vol = 0.28,
+  vol = 0.25,
 ) {
   try {
     const ctx = ac();
@@ -21,9 +26,10 @@ function tone(
     gain.connect(ctx.destination);
     osc.type = type;
     osc.frequency.value = freq;
+    const scaled = vol * _masterVolume;
     const t = ctx.currentTime + delay;
     gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(vol, t + 0.012);
+    gain.gain.linearRampToValueAtTime(scaled, t + 0.01);
     gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
     osc.start(t);
     osc.stop(t + duration + 0.05);
@@ -32,54 +38,59 @@ function tone(
   }
 }
 
-/** Ascending C-E-G arpeggio */
+/** Ascending C-E-G arpeggio — warm win sound */
 export function playWin() {
-  tone(523.25, 0.12, 0.00);
-  tone(659.25, 0.12, 0.10);
-  tone(783.99, 0.25, 0.20);
+  tone(523.25, 0.14, 0.00, 'sine', 0.22);
+  tone(659.25, 0.14, 0.10, 'sine', 0.22);
+  tone(783.99, 0.28, 0.20, 'sine', 0.25);
 }
 
-/** Triumphant C-E-G-C fanfare */
+/** Triumphant C-E-G-C fanfare — blackjack celebration */
 export function playBlackjack() {
-  tone(523.25, 0.10, 0.00);
-  tone(659.25, 0.10, 0.08);
-  tone(783.99, 0.10, 0.16);
-  tone(1046.5, 0.45, 0.26, 'sine', 0.35);
+  tone(523.25, 0.10, 0.00, 'sine', 0.22);
+  tone(659.25, 0.10, 0.08, 'sine', 0.22);
+  tone(783.99, 0.10, 0.16, 'sine', 0.25);
+  tone(1046.5, 0.50, 0.26, 'sine', 0.30);
 }
 
-/** Descending sawtooth thud */
+/** Descending minor — gentle lose */
 export function playLose() {
-  tone(349.23, 0.20, 0.00, 'sawtooth', 0.20);
-  tone(293.66, 0.35, 0.18, 'sawtooth', 0.15);
+  tone(392.00, 0.18, 0.00, 'triangle', 0.16);
+  tone(311.13, 0.30, 0.16, 'triangle', 0.12);
 }
 
-/** Double neutral ding */
+/** Double neutral ding — push */
 export function playPush() {
-  tone(523.25, 0.09, 0.00, 'sine', 0.22);
-  tone(523.25, 0.09, 0.18, 'sine', 0.16);
+  tone(523.25, 0.10, 0.00, 'sine', 0.18);
+  tone(523.25, 0.10, 0.18, 'sine', 0.13);
 }
 
-/** Soft card-deal snap */
+/** Soft card-deal snap — crisp white noise burst */
 export function playDeal() {
   try {
     const ctx = ac();
-    const len = Math.floor(ctx.sampleRate * 0.055);
+    const len = Math.floor(ctx.sampleRate * 0.06);
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) {
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5) * 0.22;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3) * 0.20 * _masterVolume;
     }
     const src = ctx.createBufferSource();
     src.buffer = buf;
-    src.connect(ctx.destination);
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 2000;
+    src.connect(highpass);
+    highpass.connect(ctx.destination);
     src.start();
   } catch {
     // ignore
   }
 }
 
-/** Chip click */
+/** Chip click — satisfying poker chip tap */
 export function playChip() {
-  tone(1100, 0.04, 0.00, 'square', 0.09);
-  tone(800, 0.03, 0.04, 'square', 0.07);
+  tone(1200, 0.03, 0.00, 'square', 0.07);
+  tone(900,  0.025, 0.03, 'square', 0.05);
+  tone(600,  0.02, 0.05, 'triangle', 0.04);
 }

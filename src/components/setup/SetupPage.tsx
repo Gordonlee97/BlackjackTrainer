@@ -15,24 +15,27 @@ export default function SetupPage({ onStart }: SetupPageProps) {
         background: 'radial-gradient(ellipse 140% 120% at 50% 30%, #1d7a40 0%, #125929 45%, #071a0e 100%)',
       }}
     >
-      {/* ── Header bar ── */}
+      {/* ── Header ── */}
       <div
-        className="shrink-0 flex items-center justify-center gap-5 py-7 px-8"
-        style={{ background: 'rgba(0,0,0,0.28)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        className="shrink-0 flex items-center justify-center gap-6"
+        style={{
+          padding: '40px 32px 32px 32px',
+          background: 'rgba(0,0,0,0.25)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
       >
-        <span className="text-6xl leading-none">🃏</span>
+        <span style={{ fontSize: '72px', lineHeight: 1 }}>🃏</span>
         <div>
-          <h1 className="text-4xl font-black text-white tracking-tight leading-none">Blackjack Trainer</h1>
-          <p className="text-white/40 text-base mt-1.5 tracking-wide">Practice perfect basic strategy</p>
+          <h1 style={{ fontSize: '44px', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', lineHeight: 1 }}>Blackjack Trainer</h1>
+          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: '16px' }}>Practice perfect basic strategy</p>
         </div>
       </div>
 
       {/* ── Settings area ── */}
-      <div className="flex-1 flex items-center justify-center px-8 py-8 overflow-y-auto">
-        <div className="w-full max-w-2xl space-y-3">
+      <div className="flex-1 flex items-center justify-center px-8 overflow-y-auto">
+        <div className="w-full max-w-2xl py-8" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
-          <SectionLabel>Game Rules</SectionLabel>
-          <SettingsCard>
+          <Section label="Game Rules">
             <SelectRow
               label="Number of Decks"
               value={String(rules.numDecks)}
@@ -57,11 +60,9 @@ export default function SetupPage({ onStart }: SetupPageProps) {
             <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={(v) => setRules({ surrenderAllowed: v })} />
             <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={(v) => setRules({ dasAllowed: v })} />
             <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={(v) => setRules({ hitSplitAces: v })} last />
-          </SettingsCard>
+          </Section>
 
-          <div className="pt-4" />
-          <SectionLabel>Training Options</SectionLabel>
-          <SettingsCard>
+          <Section label="Training Options">
             <SelectRow
               label="Practice Mode"
               value={rules.practiceMode}
@@ -83,24 +84,27 @@ export default function SetupPage({ onStart }: SetupPageProps) {
               onChange={(v) => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
               last
             />
-          </SettingsCard>
+          </Section>
+
+          <Section label="Display & Audio">
+            <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={(v) => setRules({ showHandTotals: v })} />
+            <SliderRow label="Sound Volume" value={rules.soundVolume} onChange={(v) => setRules({ soundVolume: v })} last />
+          </Section>
 
         </div>
       </div>
 
-      {/* ── Footer / CTA ── */}
-      <div
-        className="shrink-0 flex flex-col items-center gap-4 py-7 px-8"
-        style={{ background: 'rgba(0,0,0,0.28)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
-      >
+      {/* ── Footer / CTA — no dark background, just the button ── */}
+      <div className="shrink-0 flex flex-col items-center gap-4 px-8 pb-8 pt-4">
         <button
           onClick={onStart}
-          className="w-full max-w-2xl rounded-full font-black text-2xl tracking-wide transition-opacity hover:opacity-90 active:scale-[0.98]"
+          className="w-full max-w-2xl rounded-full font-black tracking-wide transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse"
           style={{
-            padding: '22px',
-            background: 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #b45309 100%)',
-            border: '1px solid rgba(255,255,255,0.22)',
-            boxShadow: '0 4px 28px rgba(245,158,11,0.35), inset 0 1px 0 rgba(255,255,255,0.25)',
+            padding: '24px',
+            fontSize: '22px',
+            letterSpacing: '0.05em',
+            background: 'linear-gradient(135deg, #92400e 0%, #b45309 25%, #f59e0b 50%, #b45309 75%, #92400e 100%)',
+            border: '1.5px solid rgba(255,255,255,0.25)',
             color: '#111827',
           }}
         >
@@ -114,23 +118,27 @@ export default function SetupPage({ onStart }: SetupPageProps) {
   );
 }
 
-/* ── Helpers ── */
+/* ── Shared components ── */
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <p className="text-sm font-bold text-white/40 uppercase tracking-[0.18em] px-1 pb-1">
-      {children}
-    </p>
-  );
-}
-
-function SettingsCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.07)' }}
-    >
-      {children}
+    <div>
+      <p
+        className="uppercase tracking-[0.18em]"
+        style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', padding: '0 4px', marginBottom: '10px' }}
+      >
+        {label}
+      </p>
+      <div
+        style={{
+          background: 'rgba(0,0,0,0.25)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -144,18 +152,26 @@ function SelectRow({ label, value, options, onChange, last }: {
 }) {
   return (
     <div
-      className="flex items-center justify-between px-6 py-5"
-      style={last ? {} : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      className="flex items-center justify-between"
+      style={{
+        padding: '16px 24px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
+      }}
     >
-      <span className="text-white/75 text-lg font-medium">{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="text-white text-base font-semibold rounded-xl px-5 py-3 focus:outline-none cursor-pointer"
+        className="focus:outline-none cursor-pointer"
         style={{
+          color: 'white',
+          fontSize: '15px',
+          fontWeight: 600,
           background: 'rgba(255,255,255,0.09)',
           border: '1px solid rgba(255,255,255,0.12)',
-          minWidth: '240px',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          minWidth: '260px',
         }}
       >
         {options.map((opt) => (
@@ -176,16 +192,20 @@ function ToggleRow({ label, checked, onChange, last }: {
 }) {
   return (
     <div
-      className="flex items-center justify-between px-6 py-5 cursor-pointer hover:bg-white/[0.02] transition-colors"
-      style={last ? {} : { borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
+      style={{
+        padding: '16px 24px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
+      }}
       onClick={() => onChange(!checked)}
     >
-      <span className="text-white/75 text-lg font-medium">{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
       <div
-        className="relative shrink-0 ml-4 transition-all duration-200"
+        className="relative shrink-0 transition-all duration-200"
         style={{
           width: 58,
           height: 34,
+          marginLeft: '16px',
           borderRadius: 9999,
           background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
           border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
@@ -205,6 +225,41 @@ function ToggleRow({ label, checked, onChange, last }: {
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />
+      </div>
+    </div>
+  );
+}
+
+function SliderRow({ label, value, onChange, last }: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: '16px 24px',
+        gap: '24px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
+      }}
+    >
+      <span className="shrink-0" style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
+      <div className="flex items-center gap-4" style={{ minWidth: '260px' }}>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          className="flex-1 h-2 rounded-full appearance-none cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #f59e0b ${value}%, rgba(255,255,255,0.12) ${value}%)`,
+            accentColor: '#f59e0b',
+          }}
+        />
+        <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: 600, width: '40px', textAlign: 'right' }}>{value}%</span>
       </div>
     </div>
   );

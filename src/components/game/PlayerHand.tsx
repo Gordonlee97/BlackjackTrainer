@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import Card from './Card';
 import HandTotal from './HandTotal';
 import type { HandState } from '../../engine/types';
@@ -7,26 +8,22 @@ interface PlayerHandProps {
   isActive: boolean;
   handIndex: number;
   totalHands: number;
+  showHandTotals: boolean;
 }
 
-const RESULT_STYLES: Record<string, string> = {
-  win:       'bg-emerald-500 text-white',
-  blackjack: 'bg-yellow-400 text-black',
-  lose:      'bg-red-600 text-white',
-  push:      'bg-amber-500 text-black',
-  surrender: 'bg-slate-500 text-white',
+const RESULT_CONFIG: Record<string, { classes: string; label: string; glow: string }> = {
+  win:       { classes: 'bg-emerald-500 text-white',  label: 'Win',        glow: '0 0 20px rgba(16,185,129,0.4)' },
+  blackjack: { classes: 'bg-yellow-400 text-black',   label: 'Blackjack!', glow: '0 0 24px rgba(250,204,21,0.5)' },
+  lose:      { classes: 'bg-red-600/90 text-white',   label: 'Lose',       glow: '0 0 20px rgba(220,38,38,0.35)' },
+  push:      { classes: 'bg-amber-500 text-black',    label: 'Push',       glow: '0 0 20px rgba(245,158,11,0.35)' },
+  surrender: { classes: 'bg-slate-500 text-white',    label: 'Surrender',  glow: '0 0 16px rgba(100,116,139,0.3)' },
 };
 
-const RESULT_LABELS: Record<string, string> = {
-  win:       '+ Win',
-  blackjack: '★ Blackjack!',
-  lose:      '− Lose',
-  push:      '= Push',
-  surrender: 'Surrender',
-};
-
-export default function PlayerHand({ hand, isActive, handIndex, totalHands }: PlayerHandProps) {
+export default function PlayerHand({ hand, isActive, handIndex, totalHands, showHandTotals }: PlayerHandProps) {
   if (hand.cards.length === 0) return null;
+
+  const result = hand.result ? RESULT_CONFIG[hand.result] : null;
+  const showDots = isActive && !hand.isComplete;
 
   return (
     <div
@@ -51,25 +48,32 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands }: Pl
         ))}
       </div>
 
-      <HandTotal cards={hand.cards} />
+      {showHandTotals && <HandTotal cards={hand.cards} />}
 
-      {hand.result && (
-        <div className={`text-xl font-black px-7 py-2.5 rounded-full ${RESULT_STYLES[hand.result] ?? 'bg-gray-600 text-white'}`}>
-          {RESULT_LABELS[hand.result] ?? hand.result.toUpperCase()}
-        </div>
-      )}
-
-      {isActive && !hand.isComplete && (
-        <div className="flex gap-2 items-center">
-          {[0, 150, 300].map((d) => (
-            <div
-              key={d}
-              className="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-bounce"
-              style={{ animationDelay: `${d}ms` }}
-            />
-          ))}
-        </div>
-      )}
+      {/* Fixed-height slot for result badge OR dots — always reserves space so cards never shift */}
+      <div className="flex items-center justify-center" style={{ minHeight: '36px' }}>
+        {result ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+            className={`text-lg font-black rounded-full whitespace-nowrap ${result.classes}`}
+            style={{ padding: '10px 28px', boxShadow: result.glow }}
+          >
+            {result.label}
+          </motion.div>
+        ) : (
+          <div className={`flex gap-2 items-center ${showDots ? '' : 'invisible'}`}>
+            {[0, 150, 300].map((d) => (
+              <div
+                key={d}
+                className="w-2.5 h-2.5 bg-yellow-400 rounded-full animate-bounce"
+                style={{ animationDelay: `${d}ms` }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

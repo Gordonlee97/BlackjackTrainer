@@ -111,24 +111,31 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
       {isOpen && (
         <motion.div
           key="chart-overlay"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(10px)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22 }}
-          onClick={onClose}
         >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(10px)' }}
+            onClick={onClose}
+          />
+
+          {/* Panel */}
           <motion.div
             key="chart-panel"
             className="relative flex flex-col overflow-hidden"
             style={{
-              width: 'min(96vw, 920px)',
-              maxHeight: '92vh',
+              width: 'min(92vw, 920px)',
+              maxHeight: '88vh',
               background: 'linear-gradient(160deg, #1c2b22 0%, #0f1c15 55%, #090f0b 100%)',
               border: '1px solid rgba(255,255,255,0.11)',
-              borderRadius: '22px',
+              borderRadius: '24px',
               boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
+              margin: '24px',
             }}
             initial={{ y: 32, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -138,28 +145,34 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
           >
             {/* Header */}
             <div
-              className="shrink-0 flex items-start justify-between px-8 pt-8 pb-5"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+              className="shrink-0 flex items-start justify-between"
+              style={{
+                padding: '32px 36px 20px 36px',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
+              }}
             >
               <div>
-                <h2 className="text-white font-black text-2xl tracking-wide leading-tight">
+                <h2 className="text-white font-black tracking-wide leading-tight" style={{ fontSize: '24px' }}>
                   Perfect Basic Strategy
                 </h2>
-                <p className="text-white/40 text-sm mt-1.5 font-medium tracking-wide">{rulesDesc}</p>
+                <p className="text-white/40 mt-2 font-medium tracking-wide" style={{ fontSize: '14px' }}>{rulesDesc}</p>
               </div>
               <button
                 onClick={onClose}
-                className="text-white/30 hover:text-white/80 transition-colors leading-none"
-                style={{ fontSize: '36px', fontWeight: 300, marginTop: '-6px', marginRight: '-4px' }}
+                className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors shrink-0"
+                style={{ fontSize: '22px' }}
               >
-                ×
+                ✕
               </button>
             </div>
 
             {/* Tabs */}
             <div
-              className="shrink-0 flex gap-3 px-8 py-4"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+              className="shrink-0 flex gap-3"
+              style={{
+                padding: '16px 36px',
+                borderBottom: '1px solid rgba(255,255,255,0.06)',
+              }}
             >
               {TABS.map(tab => (
                 <motion.button
@@ -167,8 +180,10 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                   whileHover={{ scale: 1.04 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => setActiveTab(tab.id)}
-                  className="px-6 py-2.5 rounded-full text-base font-bold"
+                  className="rounded-full font-bold"
                   style={{
+                    padding: '10px 24px',
+                    fontSize: '15px',
                     color: activeTab === tab.id ? '#111827' : 'rgba(255,255,255,0.45)',
                     background: activeTab === tab.id
                       ? 'linear-gradient(135deg, #b45309, #f59e0b)'
@@ -189,7 +204,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             </div>
 
             {/* Table */}
-            <div className="overflow-auto flex-1 px-5 pt-4 pb-3">
+            <div className="overflow-auto flex-1" style={{ padding: '20px 28px 16px 28px' }}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -283,8 +298,11 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
 
             {/* Legend */}
             <div
-              className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-3 px-8 py-5"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+              className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-3"
+              style={{
+                padding: '20px 36px',
+                borderTop: '1px solid rgba(255,255,255,0.07)',
+              }}
             >
               {LEGEND.map(([key, name]) => (
                 <div key={key} className="flex items-center gap-2.5">

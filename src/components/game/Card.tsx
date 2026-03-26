@@ -20,15 +20,12 @@ export default function Card({ card, index = 0, delay = 0 }: CardProps) {
   return (
     <motion.div
       className="relative shrink-0"
-      style={{ marginLeft: index > 0 ? '-48px' : '0' }}
+      style={{ marginLeft: index > 0 ? '-48px' : '0', zIndex: index }}
       initial={{ x: 200, y: -200, opacity: 0, rotateY: 180 }}
       animate={{ x: 0, y: 0, opacity: 1, rotateY: card.faceUp ? 0 : 180 }}
-      transition={{ type: 'spring', stiffness: 200, damping: 20, delay }}
+      transition={{ type: 'spring', stiffness: 180, damping: 22, delay }}
     >
-      <div
-        className="w-[164px] h-[230px] rounded-2xl"
-        style={{ filter: 'drop-shadow(0 10px 26px rgba(0,0,0,0.65))' }}
-      >
+      <div className="w-[164px] h-[230px] rounded-2xl">
         {card.faceUp ? (
           <CardFront rank={card.rank} suit={card.suit} isRed={isRed} />
         ) : (
@@ -50,7 +47,8 @@ function CardFront({ rank, suit, isRed }: { rank: string; suit: string; isRed: b
         padding: '14px 16px',
         backgroundColor: '#f9f9f7',
         color,
-        border: '1px solid rgba(0,0,0,0.14)',
+        border: '1px solid rgba(0,0,0,0.12)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.9)',
       }}
     >
       <div className="text-left leading-none">
@@ -73,12 +71,14 @@ function CardBack() {
       style={{
         background: 'linear-gradient(145deg, #1e3a8a 0%, #2563eb 50%, #1e3a8a 100%)',
         border: '1px solid rgba(255,255,255,0.12)',
+        boxShadow: '0 10px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3)',
       }}
     >
       <div className="w-full h-full" style={{ padding: '12px' }}>
         <div
-          className="w-full h-full rounded-xl border border-white/20"
+          className="w-full h-full rounded-xl"
           style={{
+            border: '1.5px solid rgba(255,255,255,0.18)',
             background:
               'repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.06) 6px, rgba(255,255,255,0.06) 12px)',
           }}

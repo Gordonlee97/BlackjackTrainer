@@ -20,6 +20,8 @@ export interface RuleSet {
   hitSplitAces: boolean;
   practiceMode: 'all' | 'hard' | 'soft' | 'splits';
   wrongMoveAction: 'execute' | 'block';
+  showHandTotals: boolean;
+  soundVolume: number; // 0–100
 }
 
 // Chart: playerValue -> dealerUpcard (2-11, where 11=Ace) -> action
@@ -39,4 +41,6 @@ export const DEFAULT_RULES: RuleSet = {
   hitSplitAces: false,
   practiceMode: 'all',
   wrongMoveAction: 'execute',
+  showHandTotals: true,
+  soundVolume: 50,
 };

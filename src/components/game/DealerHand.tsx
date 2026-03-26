@@ -5,9 +5,10 @@ import type { HandState } from '../../engine/types';
 interface DealerHandProps {
   hand: HandState;
   holeCardRevealed: boolean;
+  showHandTotals: boolean;
 }
 
-export default function DealerHand({ hand, holeCardRevealed }: DealerHandProps) {
+export default function DealerHand({ hand, holeCardRevealed, showHandTotals }: DealerHandProps) {
   if (hand.cards.length === 0) return null;
 
   return (
@@ -25,7 +26,7 @@ export default function DealerHand({ hand, holeCardRevealed }: DealerHandProps) 
           />
         ))}
       </div>
-      <HandTotal cards={hand.cards} hideHole={!holeCardRevealed} />
+      {showHandTotals && <HandTotal cards={hand.cards} hideHole={!holeCardRevealed} />}
     </div>
   );
 }

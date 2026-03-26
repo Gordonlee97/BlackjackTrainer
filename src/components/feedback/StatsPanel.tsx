@@ -8,7 +8,13 @@ export default function StatsPanel() {
   const accWarning = accuracy < 70 && totalDecisions > 5;
 
   return (
-    <div className="flex items-center gap-7">
+    <div
+      className="flex items-center gap-6 px-6 py-3 rounded-2xl"
+      style={{
+        background: 'rgba(0,0,0,0.2)',
+        border: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
       <Stat label="Hands"    value={handsPlayed || '—'} />
       <Sep />
       <Stat label="Accuracy" value={accDisplay} highlight={accHighlight} warn={accWarning} />
@@ -29,8 +35,8 @@ function Stat({ label, value, highlight, warn }: {
   warn?: boolean;
 }) {
   return (
-    <div className="text-center min-w-[64px]">
-      <div className="text-xs text-white/35 uppercase tracking-widest leading-none mb-2">{label}</div>
+    <div className="text-center min-w-[56px]">
+      <div className="text-xs text-white/40 uppercase tracking-widest leading-none mb-2">{label}</div>
       <div className={`text-2xl font-black leading-none ${
         highlight ? 'text-emerald-400' : warn ? 'text-rose-400' : 'text-white/80'
       }`}>
@@ -41,5 +47,5 @@ function Stat({ label, value, highlight, warn }: {
 }
 
 function Sep() {
-  return <div className="w-px h-10 bg-white/10" />;
+  return <div className="w-px h-8 bg-white/10" />;
 }
