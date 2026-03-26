@@ -1,0 +1,6 @@
+# Core
+rich>=13.0.0        # Terminal UI / pretty output
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=5.0.0
