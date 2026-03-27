@@ -59,14 +59,18 @@ export default function StrategyModal({
           exit={{ opacity: 0 }}
         >
           <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 backdrop-blur-sm"
+            style={{ background: 'rgba(0,0,0,0.70)' }}
             onClick={!blockMode ? onClose : undefined}
           />
           <motion.div
-            className="relative rounded-2xl shadow-2xl p-7 max-w-sm w-full mx-4"
+            className="relative flex flex-col"
             style={{
-              background: 'linear-gradient(145deg, #1e2535 0%, #151c2c 100%)',
-              border: '1px solid rgba(255,255,255,0.08)',
+              width: 'min(92vw, 520px)',
+              background: 'linear-gradient(160deg, #1e2535 0%, #151c2c 55%, #0f1520 100%)',
+              border: '1px solid rgba(255,255,255,0.11)',
+              borderRadius: '28px',
+              boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
             }}
             initial={{ scale: 0.85, y: 40, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
@@ -74,69 +78,104 @@ export default function StrategyModal({
             transition={{ type: 'spring', stiffness: 280, damping: 26 }}
           >
             {/* Header */}
-            <div className="text-center mb-5">
-              <div className="text-4xl mb-3">
-                {blockMode ? '⚠️' : '❌'}
+            <div
+              className="text-center"
+              style={{ padding: '36px 40px 28px 40px' }}
+            >
+              <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+                {blockMode ? '\u26a0\ufe0f' : '\u274c'}
               </div>
-              <h2 className="text-lg font-black text-white tracking-wide">
+              <h2 className="text-white font-black tracking-wide" style={{ fontSize: '24px' }}>
                 {blockMode ? 'Not Quite Right' : 'Wrong Play'}
               </h2>
-              <p className="text-xs text-white/40 mt-1 tracking-widest uppercase">
+              <p
+                className="text-white/40 tracking-[0.18em] uppercase"
+                style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}
+              >
                 {handTypeLabel(handType, playerTotal)} vs Dealer {dealerLabel}
               </p>
             </div>
 
             {/* Action comparison */}
-            <div className="space-y-2 mb-5">
-              <div className="flex justify-between items-center rounded-xl px-4 py-3"
-                style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.2)' }}>
-                <span className="text-red-300/80 text-sm">You played</span>
-                <span className="text-red-400 font-black text-sm">{ACTION_LABELS[playerAction]}</span>
+            <div style={{ padding: '0 40px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div
+                className="flex justify-between items-center"
+                style={{
+                  padding: '18px 24px',
+                  borderRadius: '16px',
+                  background: 'rgba(220,38,38,0.10)',
+                  border: '1px solid rgba(220,38,38,0.18)',
+                }}
+              >
+                <span className="text-red-300/80 font-medium" style={{ fontSize: '16px' }}>You played</span>
+                <span className="text-red-400 font-black" style={{ fontSize: '16px' }}>{ACTION_LABELS[playerAction]}</span>
               </div>
-              <div className="flex justify-between items-center rounded-xl px-4 py-3"
-                style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.2)' }}>
-                <span className="text-emerald-300/80 text-sm">Correct play</span>
-                <span className="text-emerald-400 font-black text-sm">{ACTION_LABELS[correctAction]}</span>
+              <div
+                className="flex justify-between items-center"
+                style={{
+                  padding: '18px 24px',
+                  borderRadius: '16px',
+                  background: 'rgba(16,185,129,0.10)',
+                  border: '1px solid rgba(16,185,129,0.18)',
+                }}
+              >
+                <span className="text-emerald-300/80 font-medium" style={{ fontSize: '16px' }}>Correct play</span>
+                <span className="text-emerald-400 font-black" style={{ fontSize: '16px' }}>{ACTION_LABELS[correctAction]}</span>
               </div>
             </div>
 
             {/* Explanation */}
-            <div className="rounded-xl px-4 py-3 mb-6"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
-              <p className="text-sm text-white/70 leading-relaxed">
-                {explanation}
-              </p>
+            <div style={{ padding: '24px 40px 0 40px' }}>
+              <div
+                style={{
+                  padding: '20px 24px',
+                  borderRadius: '16px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              >
+                <p className="text-white/70 leading-relaxed" style={{ fontSize: '15px' }}>
+                  {explanation}
+                </p>
+              </div>
             </div>
 
             {/* Action button */}
-            <div className="flex justify-center">
+            <div style={{ padding: '28px 40px 36px 40px' }}>
               {blockMode && onForceCorrect ? (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={onForceCorrect}
-                  className="w-full font-black text-white tracking-wide rounded-full transition-opacity hover:opacity-90"
+                  className="w-full font-black uppercase tracking-widest text-white"
                   style={{
-                    padding: '15px 32px',
-                    background: 'linear-gradient(155deg, #065f46 0%, #059669 100%)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    boxShadow: '0 4px 20px rgba(5,150,105,0.4), inset 0 1px 0 rgba(255,255,255,0.18)',
+                    padding: '20px 32px',
+                    fontSize: '17px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
+                    border: 'none',
+                    boxShadow: '0 8px 32px rgba(16,185,129,0.35), 0 2px 8px rgba(0,0,0,0.3)',
                   }}
                 >
                   Play Correct Move
-                </button>
+                </motion.button>
               ) : (
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={onClose}
-                  className="w-full font-black tracking-wide rounded-full transition-opacity hover:opacity-90"
+                  className="w-full font-black uppercase tracking-widest text-white"
                   style={{
-                    padding: '15px 32px',
-                    background: 'linear-gradient(155deg, #1e40af 0%, #3b82f6 100%)',
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    boxShadow: '0 4px 20px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
-                    color: 'white',
+                    padding: '20px 32px',
+                    fontSize: '17px',
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)',
+                    border: 'none',
+                    boxShadow: '0 8px 32px rgba(59,130,246,0.35), 0 2px 8px rgba(0,0,0,0.3)',
                   }}
                 >
-                  Got it
-                </button>
+                  Got It
+                </motion.button>
               )}
             </div>
           </motion.div>

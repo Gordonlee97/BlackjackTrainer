@@ -9,6 +9,13 @@
   --chip-green: #166534;
   --chip-black: #1e293b;
   --chip-purple: #581c87;
+
+  /* Shared design tokens */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-light: rgba(255, 255, 255, 0.12);
+  --border-medium: rgba(255, 255, 255, 0.18);
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --surface-dark: rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -35,4 +42,99 @@ body {
   color: white;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── CTA pulse glow — smooth ebb and flow ── */
+@keyframes cta-glow {
+  0%   { box-shadow: 0 4px 20px rgba(245, 158, 11, 0.25), 0 0 0 rgba(245, 158, 11, 0), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+  50%  { box-shadow: 0 6px 40px rgba(245, 158, 11, 0.5), 0 0 60px rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+  100% { box-shadow: 0 4px 20px rgba(245, 158, 11, 0.25), 0 0 0 rgba(245, 158, 11, 0), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+}
+
+.cta-pulse {
+  animation: cta-glow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Nicer select dropdowns ── */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 38px !important;
+}
+
+/* ── Range slider thumb ── */
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 12px rgba(245, 158, 11, 0.3);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 12px rgba(245, 158, 11, 0.3);
+  cursor: pointer;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ── Settled card float — gentle bob per card ── */
+@keyframes card-float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+.card-float {
+  animation: card-float 3s ease-in-out infinite;
+}
+
+/* ── Result badge pop with bounce ── */
+@keyframes badge-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  50%  { transform: scale(1.15); }
+  75%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Chip wobble on hover ── */
+@keyframes chip-wobble {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-3deg); }
+  75%  { transform: rotate(3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ── Win celebration shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.result-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
 }

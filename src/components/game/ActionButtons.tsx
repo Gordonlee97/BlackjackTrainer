@@ -13,11 +13,11 @@ interface ActionButtonsProps {
 }
 
 const BUTTON_STYLES = {
-  hit:       'linear-gradient(155deg, #065f46 0%, #059669 100%)',
-  stand:     'linear-gradient(155deg, #991b1b 0%, #dc2626 100%)',
-  double:    'linear-gradient(155deg, #1e40af 0%, #3b82f6 100%)',
-  split:     'linear-gradient(155deg, #5b21b6 0%, #8b5cf6 100%)',
-  surrender: 'linear-gradient(155deg, #334155 0%, #64748b 100%)',
+  hit:       { gradient: 'linear-gradient(155deg, #065f46 0%, #059669 100%)', glow: 'rgba(5,150,105,0.5)' },
+  stand:     { gradient: 'linear-gradient(155deg, #991b1b 0%, #dc2626 100%)', glow: 'rgba(220,38,38,0.45)' },
+  double:    { gradient: 'linear-gradient(155deg, #1e40af 0%, #3b82f6 100%)', glow: 'rgba(59,130,246,0.45)' },
+  split:     { gradient: 'linear-gradient(155deg, #5b21b6 0%, #8b5cf6 100%)', glow: 'rgba(139,92,246,0.45)' },
+  surrender: { gradient: 'linear-gradient(155deg, #334155 0%, #64748b 100%)', glow: 'rgba(100,116,139,0.35)' },
 } as const;
 
 export default function ActionButtons({
@@ -27,34 +27,37 @@ export default function ActionButtons({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="flex gap-5">
-        <ActionBtn label="Hit"   shortcut="H" gradient={BUTTON_STYLES.hit}   enabled size="lg" disabled={disabled} onClick={onHit} />
-        <ActionBtn label="Stand" shortcut="S" gradient={BUTTON_STYLES.stand} enabled size="lg" disabled={disabled} onClick={onStand} />
+        <ActionBtn label="Hit"   shortcut="H" style={BUTTON_STYLES.hit}   enabled size="lg" disabled={disabled} onClick={onHit} />
+        <ActionBtn label="Stand" shortcut="S" style={BUTTON_STYLES.stand} enabled size="lg" disabled={disabled} onClick={onStand} />
       </div>
       <div className="flex gap-4">
-        <ActionBtn label="Double"    shortcut="D" gradient={BUTTON_STYLES.double}    enabled={canDouble}    size="md" disabled={disabled} onClick={onDouble} />
-        <ActionBtn label="Split"     shortcut="P" gradient={BUTTON_STYLES.split}     enabled={canSplit}     size="md" disabled={disabled} onClick={onSplit} />
-        <ActionBtn label="Surrender" shortcut="R" gradient={BUTTON_STYLES.surrender} enabled={canSurrender} size="md" disabled={disabled} onClick={onSurrender} />
+        <ActionBtn label="Double"    shortcut="D" style={BUTTON_STYLES.double}    enabled={canDouble}    size="md" disabled={disabled} onClick={onDouble} />
+        <ActionBtn label="Split"     shortcut="P" style={BUTTON_STYLES.split}     enabled={canSplit}     size="md" disabled={disabled} onClick={onSplit} />
+        <ActionBtn label="Surrender" shortcut="R" style={BUTTON_STYLES.surrender} enabled={canSurrender} size="md" disabled={disabled} onClick={onSurrender} />
       </div>
     </div>
   );
 }
 
-function ActionBtn({ label, shortcut, gradient, enabled, size, disabled, onClick }: {
+function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }: {
   label: string;
   shortcut: string;
-  gradient: string;
+  style: { gradient: string; glow: string };
   enabled: boolean;
   size: 'lg' | 'md';
   disabled: boolean;
   onClick: () => void;
 }) {
   const off = disabled || !enabled;
-  const w = size === 'lg' ? 210 : 168;
-  const h = size === 'lg' ? 104 : 84;
+  const w = size === 'lg' ? 230 : 180;
+  const h = size === 'lg' ? 110 : 90;
+
+  const baseShadow = `0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)`;
+  const hoverShadow = `0 8px 32px ${style.glow}, 0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22)`;
 
   return (
     <motion.button
-      whileHover={!off ? { scale: 1.05, y: -3 } : {}}
+      whileHover={!off ? { scale: 1.05, y: -3, boxShadow: hoverShadow } : {}}
       whileTap={!off ? { scale: 0.96 } : {}}
       onClick={onClick}
       disabled={off}
@@ -63,16 +66,16 @@ function ActionBtn({ label, shortcut, gradient, enabled, size, disabled, onClick
         width: w,
         height: h,
         borderRadius: '22px',
-        background: off ? 'rgba(255,255,255,0.06)' : gradient,
-        border: off ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.18)',
-        boxShadow: off ? 'none' : '0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)',
-        color: off ? 'rgba(255,255,255,0.18)' : 'white',
+        background: off ? 'rgba(255,255,255,0.04)' : style.gradient,
+        border: off ? '1px solid rgba(255,255,255,0.05)' : '1.5px solid rgba(255,255,255,0.2)',
+        boxShadow: off ? 'none' : baseShadow,
+        color: off ? 'rgba(255,255,255,0.15)' : 'white',
         cursor: off ? 'not-allowed' : 'pointer',
-        transition: 'box-shadow 0.15s, opacity 0.15s',
+        transition: 'box-shadow 0.2s ease, opacity 0.15s',
       }}
     >
-      <span style={{ fontSize: size === 'lg' ? '1.6rem' : '1.3rem', lineHeight: 1 }}>{label}</span>
-      <span style={{ fontSize: '12px', opacity: 0.45, lineHeight: 1 }}>[{shortcut}]</span>
+      <span style={{ fontSize: size === 'lg' ? '1.7rem' : '1.35rem', lineHeight: 1 }}>{label}</span>
+      <span style={{ fontSize: '13px', opacity: off ? 0.3 : 0.5, lineHeight: 1 }}>[{shortcut}]</span>
     </motion.button>
   );
 }

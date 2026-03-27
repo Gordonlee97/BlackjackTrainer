@@ -24,15 +24,25 @@ export default function HandTotal({ cards, hideHole }: HandTotalProps) {
     display = String(hv.total);
   }
 
+  const colorClasses = bust
+    ? 'bg-red-600 text-white'
+    : hv.total === 21
+    ? 'bg-yellow-400 text-black'
+    : 'bg-black/50 text-white';
+
+  const glowShadow = bust
+    ? '0 0 16px rgba(220,38,38,0.3)'
+    : hv.total === 21
+    ? '0 0 20px rgba(250,204,21,0.35)'
+    : 'none';
+
   return (
     <span
-      className={`inline-block text-2xl font-black px-6 py-2 rounded-full tracking-wide ${
-        bust
-          ? 'bg-red-600 text-white'
-          : hv.total === 21
-          ? 'bg-yellow-400 text-black'
-          : 'bg-black/50 text-white'
-      }`}
+      className={`inline-block text-xl font-black px-8 py-2.5 rounded-full tracking-wide whitespace-nowrap ${colorClasses}`}
+      style={{
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: glowShadow,
+      }}
     >
       {display}
     </span>

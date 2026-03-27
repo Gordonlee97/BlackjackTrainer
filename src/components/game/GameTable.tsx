@@ -1,6 +1,8 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore, playDealer } from '../../store/gameStore';
+import { useGameStore, playDealerSteps } from '../../store/gameStore';
+import { calculatePayout } from '../../engine/payout';
+import { useCountStore } from '../../store/countStore';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useStatsStore } from '../../store/statsStore';
 import type { StrategyAdvice } from '../../strategy/advisor';
@@ -8,7 +10,7 @@ import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
 import type { HandState } from '../../engine/types';
-import { playWin, playBlackjack, playLose, playPush, playDeal } from '../../engine/sounds';
+import { playWin, playBlackjack, playLose, playPush, playDeal, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import ActionButtons from './ActionButtons';
@@ -17,6 +19,7 @@ import StatsPanel from '../feedback/StatsPanel';
 import StrategyModal from '../feedback/StrategyModal';
 import StrategyChartModal from '../feedback/StrategyChartModal';
 import SettingsModal from './SettingsModal';
+import RunningCount from './RunningCount';
 
 interface GameTableProps {
   onBackToMenu: () => void;
@@ -52,17 +55,77 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   } | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
+  const splitAnimatingRef = useRef(false);
+
+  // Sync volume setting
+  useEffect(() => { setMasterVolume(rules.soundVolume / 100); }, [rules.soundVolume]);
+
   useEffect(() => { strategyRef.current = buildStrategy(rules); }, [rules]);
   useEffect(() => { game.initGame(rules); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Dealer play
+  // Animated split — detect 1-card split hands and deal to them sequentially
+  const splitHandCount = game.playerHands.length;
+  useEffect(() => {
+    if (game.phase !== 'player_turn') {
+      splitAnimatingRef.current = false;
+      return;
+    }
+
+    // Find split hands that only have 1 card (need their second card dealt)
+    const hands = useGameStore.getState().playerHands;
+    const pendingIndices = hands
+      .map((h, i) => (h.isSplit && h.cards.length === 1 ? i : -1))
+      .filter(i => i !== -1);
+
+    if (pendingIndices.length === 0) {
+      splitAnimatingRef.current = false;
+      return;
+    }
+
+    splitAnimatingRef.current = true;
+
+    // Schedule all deals + final unlock in one batch, no cleanup cancellation
+    pendingIndices.forEach((handIndex, i) => {
+      setTimeout(() => {
+        useGameStore.getState().dealToSplitHand(handIndex);
+      }, (i + 1) * 600);
+    });
+
+    setTimeout(() => {
+      splitAnimatingRef.current = false;
+      // Force a re-render so buttons pick up the change
+      useGameStore.setState({});
+    }, (pendingIndices.length + 1) * 600);
+
+  }, [splitHandCount, game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Dealer play — apply steps sequentially for smooth card-by-card animation
   useEffect(() => {
     if (game.phase === 'dealer_turn') {
-      const timer = setTimeout(() => {
-        const result = playDealer(game);
-        useGameStore.setState(result);
-      }, 500);
-      return () => clearTimeout(timer);
+      const steps = playDealerSteps(game);
+      const timers: ReturnType<typeof setTimeout>[] = [];
+
+      // Step 0: reveal hole card after short pause
+      // Steps 1..n-2: draw cards one at a time
+      // Final step: settle
+      let delay = 400;
+      const DRAW_INTERVAL = 650;
+      const SETTLE_DELAY = 450;
+
+      steps.forEach((step, i) => {
+        const isLast = i === steps.length - 1;
+
+        timers.push(setTimeout(() => {
+          useGameStore.setState(step.state);
+          if (step.countCards.length > 0) {
+            useCountStore.getState().updateCount(step.countCards);
+          }
+        }, delay));
+
+        delay += isLast ? 0 : (i === 0 ? DRAW_INTERVAL : (i === steps.length - 2 ? SETTLE_DELAY : DRAW_INTERVAL));
+      });
+
+      return () => timers.forEach(clearTimeout);
     }
   }, [game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -70,7 +133,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   useEffect(() => {
     if (game.phase === 'complete') {
       stats.recordHandPlayed();
-      const t = setTimeout(() => pickResultSound(game.playerHands)(), 950);
+      const t = setTimeout(() => pickResultSound(game.playerHands)(), 100);
       return () => clearTimeout(t);
     }
   }, [game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -80,10 +143,65 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     if (game.phase === 'dealing') playDeal();
   }, [game.phase]);
 
+  // Dramatic natural reveal — cards deal normally, then hole card flips, then settle
+  useEffect(() => {
+    if (game.phase !== 'dealing' || !game.pendingNatural) return;
+
+    const { dealerHasNatural, playerHasNatural } = game.pendingNatural;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    // Step 1: Wait for deal animation to land, then reveal hole card
+    timers.push(setTimeout(() => {
+      const s = useGameStore.getState();
+      const revealedCards = s.dealerHand.cards.map(c => ({ ...c, faceUp: true }));
+      useGameStore.setState({
+        dealerHoleCardRevealed: true,
+        dealerHand: { ...s.dealerHand, cards: revealedCards },
+      });
+      // Count the hole card
+      useCountStore.getState().updateCount([s.dealerHand.cards[0]]);
+    }, 1200));
+
+    // Step 2: Settle the hand after the flip animation plays
+    timers.push(setTimeout(() => {
+      const s = useGameStore.getState();
+
+      let result: 'blackjack' | 'push' | 'lose';
+      if (playerHasNatural && dealerHasNatural) {
+        result = 'push';
+      } else if (playerHasNatural) {
+        result = 'blackjack';
+      } else {
+        result = 'lose';
+      }
+
+      const settledPlayer = {
+        ...s.playerHands[0],
+        isComplete: true,
+        result,
+      };
+      const settledDealer = { ...s.dealerHand, isComplete: true };
+      const payout = calculatePayout(settledPlayer);
+
+      useGameStore.setState({
+        playerHands: [settledPlayer],
+        dealerHand: settledDealer,
+        balance: s.balance + s.currentBet + payout,
+        phase: 'complete',
+        pendingNatural: null,
+        message: result === 'blackjack' ? 'Blackjack! You win!' :
+                 result === 'push' ? 'Push — both have Blackjack' :
+                 'Dealer has Blackjack',
+      });
+    }, 2000));
+
+    return () => timers.forEach(clearTimeout);
+  }, [game.phase, game.pendingNatural]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (game.phase !== 'player_turn' || modalOpen) return;
+      if (game.phase !== 'player_turn' || modalOpen || splitAnimatingRef.current) return;
       switch (e.key.toLowerCase()) {
         case 'h': handlePlayerAction('HIT', game.hit); break;
         case 's': handlePlayerAction('STAND', game.stand); break;
@@ -143,7 +261,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   const controlsKey =
     game.phase === 'betting'     ? 'betting'  :
     game.phase === 'player_turn' ? 'player'   :
-    game.phase === 'complete'    ? 'complete' : 'dealer';
+    game.phase === 'complete'    ? 'complete' :
+    game.phase === 'dealing'     ? 'dealing'  : 'dealer';
 
   return (
     <div
@@ -154,10 +273,10 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     >
       {/* ══ TOP BAR ══ */}
       <div
-        className="shrink-0 flex items-center justify-between px-10 h-[88px]"
-        style={{ background: 'rgba(0,0,0,0.32)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        className="shrink-0 flex items-center justify-between h-[88px]"
+        style={{ background: 'rgba(0,0,0,0.32)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 24px' }}
       >
-        {/* Left: Settings + Charts — shrink-0 so StatsPanel never squeezes these */}
+        {/* Left: Settings + Charts */}
         <div className="flex items-center gap-3 shrink-0">
           <motion.button
             whileHover={{ scale: 1.04 }}
@@ -188,11 +307,12 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             <span className="leading-none" style={{ fontSize: '18px' }}>♠</span>
             <span>Charts</span>
           </motion.button>
+
         </div>
 
         <StatsPanel />
 
-        {/* Right: Shoe + Balance — shrink-0 */}
+        {/* Right: Shoe + Balance */}
         <div className="flex items-center gap-5 shrink-0">
           <div className="flex flex-col items-end gap-1.5">
             <div className="flex items-center gap-2.5">
@@ -210,32 +330,38 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             </div>
           </div>
           <div className="text-right">
-            <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-1.5">Balance</span>
-            <span className="text-3xl font-black text-yellow-400 leading-none">${game.balance.toLocaleString()}</span>
+            <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-2">Balance</span>
+            <span className="font-black text-yellow-400 leading-none whitespace-nowrap" style={{ fontSize: '36px' }}>${game.balance.toLocaleString()}</span>
           </div>
         </div>
       </div>
 
-      {/* ══ DEALER ZONE — justify-center so cards sit in the middle, not at the edge ══ */}
-      <div className="flex-[4] flex flex-col items-center justify-center min-h-0 py-6">
+      {/* ══ DEALER ZONE ══ */}
+      <div className="flex-[4] flex flex-col items-center justify-center min-h-0 relative">
+        {rules.showCount !== 'off' && (
+          <div className="absolute top-4 left-6 z-10">
+            <RunningCount mode={rules.showCount} />
+          </div>
+        )}
         <DealerHand
           hand={game.dealerHand}
           holeCardRevealed={game.dealerHoleCardRevealed}
+          showHandTotals={rules.showHandTotals}
         />
       </div>
 
-      {/* ══ DIVIDER ══ */}
-      <div className="shrink-0 flex items-center gap-6 px-12 py-3">
+      {/* ══ DIVIDER — fixed height so message pill appearing/disappearing never shifts cards ══ */}
+      <div className="shrink-0 flex items-center gap-6 px-12" style={{ height: '52px' }}>
         <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.09)' }} />
         <AnimatePresence mode="wait">
           {game.message && (
             <motion.div
               key={game.message}
-              className="shrink-0 text-lg font-semibold text-white/85 whitespace-nowrap px-10 py-3.5 rounded-full"
-              style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)' }}
-              initial={{ opacity: 0, scale: 0.88, y: 4 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: -4 }}
+              className="shrink-0 text-base font-semibold text-white/85 whitespace-nowrap rounded-full"
+              style={{ padding: '12px 40px', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)' }}
+              initial={{ opacity: 0, scale: 0.88 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
               transition={{ type: 'spring', damping: 22, stiffness: 300 }}
             >
               {game.message}
@@ -245,107 +371,131 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.09)' }} />
       </div>
 
-      {/* ══ PLAYER ZONE — justify-center + gap keeps hands and controls together ══ */}
-      <div className="flex-[6] flex flex-col items-center justify-center gap-10 min-h-0 py-6">
-
-        {/* Player hand(s) */}
-        <div className="flex gap-14 items-start justify-center">
-          {game.playerHands.map((hand, i) => (
-            <PlayerHand
-              key={i}
-              hand={hand}
-              isActive={i === game.activeHandIndex && game.phase === 'player_turn'}
-              handIndex={i}
-              totalHands={game.playerHands.length}
-            />
-          ))}
+      {/* ══ PLAYER ZONE ══ */}
+      <div className="flex-[6] flex flex-col min-h-0">
+        {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
+        <div className="flex-1 flex items-end justify-center min-h-0" style={{ paddingBottom: '12px' }}>
+          <div className="flex gap-14 items-start justify-center">
+            {game.playerHands.map((hand, i) => (
+              <PlayerHand
+                key={i}
+                hand={hand}
+                isActive={i === game.activeHandIndex && game.phase === 'player_turn'}
+                handIndex={i}
+                totalHands={game.playerHands.length}
+                showHandTotals={rules.showHandTotals}
+              />
+            ))}
+          </div>
         </div>
 
-        {/* Controls — animated phase transitions */}
-        <AnimatePresence mode="wait">
-          {game.phase === 'betting' && (
-            <motion.div
-              key="betting"
-              variants={controlVariants}
-              initial="enter"
-              animate="show"
-              exit="exit"
-            >
-              <BetControls
-                currentBet={game.currentBet}
-                balance={game.balance}
-                onBetChange={game.placeBet}
-                onDeal={game.deal}
-              />
-            </motion.div>
-          )}
-
-          {game.phase === 'player_turn' && (
-            <motion.div
-              key="player"
-              variants={controlVariants}
-              initial="enter"
-              animate="show"
-              exit="exit"
-            >
-              <ActionButtons
-                onHit={() => handlePlayerAction('HIT', game.hit)}
-                onStand={() => handlePlayerAction('STAND', game.stand)}
-                onDouble={() => handlePlayerAction('DOUBLE', game.double)}
-                onSplit={() => handlePlayerAction('SPLIT', game.split)}
-                onSurrender={() => handlePlayerAction('SURRENDER', game.surrender)}
-                canDouble={game.canDouble()}
-                canSplit={game.canSplit()}
-                canSurrender={game.canSurrender()}
-                disabled={modalOpen}
-              />
-            </motion.div>
-          )}
-
-          {(game.phase === 'dealer_turn' || game.phase === 'settling') && (
-            <motion.div
-              key="dealer"
-              variants={controlVariants}
-              initial="enter"
-              animate="show"
-              exit="exit"
-            >
-              <motion.span
-                className="text-white/40 text-base font-semibold tracking-widest uppercase"
-                animate={{ opacity: [0.35, 0.8, 0.35] }}
-                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        {/* Controls — fixed height, content absolutely positioned so cards never shift */}
+        <div className="shrink-0 relative" style={{ height: '320px' }}>
+          <AnimatePresence mode="wait">
+            {game.phase === 'betting' && (
+              <motion.div
+                key="betting"
+                className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
+                style={{ paddingBottom: '48px' }}
+                variants={controlVariants}
+                initial="enter"
+                animate="show"
+                exit="exit"
               >
-                Dealer playing…
-              </motion.span>
-            </motion.div>
-          )}
+                <BetControls
+                  currentBet={game.currentBet}
+                  balance={game.balance}
+                  onBetChange={game.placeBet}
+                  onDeal={game.deal}
+                />
+              </motion.div>
+            )}
 
-          {game.phase === 'complete' && (
-            <motion.div
-              key={`complete-${controlsKey}`}
-              variants={controlVariants}
-              initial="enter"
-              animate="show"
-              exit="exit"
-            >
-              <motion.button
-                whileHover={{ scale: 1.04, y: -3 }}
-                whileTap={{ scale: 0.96 }}
-                onClick={game.newHand}
-                className="font-black text-2xl tracking-wide rounded-full"
-                style={{
-                  padding: '20px 100px',
-                  background: 'linear-gradient(135deg, #b45309 0%, #f59e0b 50%, #b45309 100%)',
-                  border: '1px solid rgba(255,255,255,0.22)',
-                  boxShadow: '0 4px 28px rgba(245,158,11,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',
-                  color: '#111827',
-                }}
+            {game.phase === 'player_turn' && (
+              <motion.div
+                key="player"
+                className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
+                style={{ paddingBottom: '48px' }}
+                variants={controlVariants}
+                initial="enter"
+                animate="show"
+                exit="exit"
               >
-                Next Hand
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <ActionButtons
+                  onHit={() => handlePlayerAction('HIT', game.hit)}
+                  onStand={() => handlePlayerAction('STAND', game.stand)}
+                  onDouble={() => handlePlayerAction('DOUBLE', game.double)}
+                  onSplit={() => handlePlayerAction('SPLIT', game.split)}
+                  onSurrender={() => handlePlayerAction('SURRENDER', game.surrender)}
+                  canDouble={game.canDouble()}
+                  canSplit={game.canSplit()}
+                  canSurrender={game.canSurrender()}
+                  disabled={modalOpen || splitAnimatingRef.current}
+                />
+              </motion.div>
+            )}
+
+            {(game.phase === 'dealer_turn' || game.phase === 'settling') && (
+              <motion.div
+                key="dealer"
+                className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end gap-3"
+                style={{ paddingBottom: '48px' }}
+                variants={controlVariants}
+                initial="enter"
+                animate="show"
+                exit="exit"
+              >
+                <motion.span
+                  className="text-white/50 text-base font-semibold tracking-widest uppercase"
+                  animate={{ opacity: [0.35, 0.8, 0.35] }}
+                  transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  Dealer playing…
+                </motion.span>
+                <div className="flex gap-1.5">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1.5 h-1.5 bg-white/30 rounded-full"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {game.phase === 'complete' && (
+              <motion.div
+                key={`complete-${controlsKey}`}
+                className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
+                style={{ paddingBottom: '48px' }}
+                variants={controlVariants}
+                initial="enter"
+                animate="show"
+                exit="exit"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.04, y: -3 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={game.newHand}
+                  className="font-black uppercase tracking-widest cta-pulse"
+                  style={{
+                    padding: '22px 120px',
+                    fontSize: '22px',
+                    borderRadius: '18px',
+                    background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
+                    border: 'none',
+                    color: '#1a1a1a',
+                    boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  Next Hand
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* ══ STRATEGY MODAL ══ */}

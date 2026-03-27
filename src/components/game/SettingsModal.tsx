@@ -16,24 +16,30 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
       {isOpen && (
         <motion.div
           key="settings-overlay"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          onClick={onClose}
         >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0"
+            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}
+            onClick={onClose}
+          />
+
+          {/* Panel */}
           <motion.div
             key="settings-panel"
-            className="relative flex flex-col overflow-hidden"
+            className="relative flex flex-col"
             style={{
-              width: 'min(96vw, 560px)',
-              maxHeight: '90vh',
+              width: 'min(92vw, 720px)',
+              maxHeight: '85vh',
               background: 'linear-gradient(160deg, #1c2b22 0%, #0f1c15 55%, #090f0b 100%)',
               border: '1px solid rgba(255,255,255,0.11)',
-              borderRadius: '22px',
-              boxShadow: '0 32px 100px rgba(0,0,0,0.85)',
+              borderRadius: '28px',
+              boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
             }}
             initial={{ y: 32, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -41,79 +47,120 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* ── Header ── */}
             <div
-              className="shrink-0 flex items-center justify-between px-8 pt-8 pb-5"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+              className="shrink-0 flex items-center justify-between"
+              style={{
+                padding: '32px 36px 24px 36px',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
+              }}
             >
-              <h2 className="text-white font-black text-2xl tracking-wide">Settings</h2>
+              <h2 className="text-white font-black tracking-wide" style={{ fontSize: '28px' }}>Settings</h2>
               <button
                 onClick={onClose}
-                className="text-white/30 hover:text-white/80 transition-colors leading-none"
-                style={{ fontSize: '36px', fontWeight: 300, marginTop: '-6px', marginRight: '-4px' }}
+                className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
+                style={{ fontSize: '22px' }}
               >
-                ×
+                ✕
               </button>
             </div>
 
-            {/* Settings */}
-            <div className="overflow-y-auto flex-1 px-8 py-6 space-y-6">
-              <Section label="Game Rules">
-                <SelectRow
-                  label="Number of Decks"
-                  value={String(rules.numDecks)}
-                  options={[
-                    { value: '1', label: '1 Deck' },
-                    { value: '2', label: '2 Decks' },
-                    { value: '4', label: '4 Decks' },
-                    { value: '6', label: '6 Decks' },
-                    { value: '8', label: '8 Decks' },
-                  ]}
-                  onChange={v => setRules({ numDecks: Number(v) as RuleSet['numDecks'] })}
-                />
-                <SelectRow
-                  label="Dealer Soft 17"
-                  value={rules.dealerHitsSoft17 ? 'hit' : 'stand'}
-                  options={[
-                    { value: 'stand', label: 'Stand on Soft 17 (S17)' },
-                    { value: 'hit',   label: 'Hit on Soft 17 (H17)' },
-                  ]}
-                  onChange={v => setRules({ dealerHitsSoft17: v === 'hit' })}
-                />
-                <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={v => setRules({ surrenderAllowed: v })} />
-                <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={v => setRules({ dasAllowed: v })} />
-                <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={v => setRules({ hitSplitAces: v })} last />
-              </Section>
+            {/* ── Scrollable content ── */}
+            <div
+              className="overflow-y-auto flex-1"
+              style={{ padding: '28px 36px 28px 36px' }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
-              <Section label="Training Options">
-                <SelectRow
-                  label="Practice Mode"
-                  value={rules.practiceMode}
-                  options={[
-                    { value: 'all',    label: 'All Hands' },
-                    { value: 'hard',   label: 'Hard Totals Only' },
-                    { value: 'soft',   label: 'Soft Totals Only' },
-                    { value: 'splits', label: 'Splits Only' },
-                  ]}
-                  onChange={v => setRules({ practiceMode: v as RuleSet['practiceMode'] })}
-                />
-                <SelectRow
-                  label="Wrong Move"
-                  value={rules.wrongMoveAction}
-                  options={[
-                    { value: 'execute', label: 'Show feedback, play move' },
-                    { value: 'block',   label: 'Block until correct move' },
-                  ]}
-                  onChange={v => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
-                  last
-                />
-              </Section>
+                {/* Game Rules */}
+                <Section label="Game Rules">
+                  <SelectRow
+                    label="Number of Decks"
+                    value={String(rules.numDecks)}
+                    options={[
+                      { value: '1', label: '1 Deck' },
+                      { value: '2', label: '2 Decks' },
+                      { value: '4', label: '4 Decks' },
+                      { value: '6', label: '6 Decks' },
+                      { value: '8', label: '8 Decks' },
+                    ]}
+                    onChange={v => setRules({ numDecks: Number(v) as RuleSet['numDecks'] })}
+                  />
+                  <SelectRow
+                    label="Dealer Soft 17"
+                    value={rules.dealerHitsSoft17 ? 'hit' : 'stand'}
+                    options={[
+                      { value: 'stand', label: 'Stand on Soft 17 (S17)' },
+                      { value: 'hit',   label: 'Hit on Soft 17 (H17)' },
+                    ]}
+                    onChange={v => setRules({ dealerHitsSoft17: v === 'hit' })}
+                  />
+                  <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={v => setRules({ surrenderAllowed: v })} />
+                  <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={v => setRules({ dasAllowed: v })} />
+                  <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={v => setRules({ hitSplitAces: v })} last />
+                </Section>
+
+                {/* Training */}
+                <Section label="Training">
+                  <SelectRow
+                    label="Practice Mode"
+                    value={rules.practiceMode}
+                    options={[
+                      { value: 'all',    label: 'All Hands' },
+                      { value: 'hard',   label: 'Hard Totals Only' },
+                      { value: 'soft',   label: 'Soft Totals Only' },
+                      { value: 'splits', label: 'Splits Only' },
+                    ]}
+                    onChange={v => setRules({ practiceMode: v as RuleSet['practiceMode'] })}
+                  />
+                  <SelectRow
+                    label="Wrong Move"
+                    value={rules.wrongMoveAction}
+                    options={[
+                      { value: 'execute', label: 'Show feedback, play move' },
+                      { value: 'block',   label: 'Block until correct move' },
+                    ]}
+                    onChange={v => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
+                    last
+                  />
+                </Section>
+
+                {/* Display */}
+                <Section label="Display">
+                  <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={v => setRules({ showHandTotals: v })} />
+                  <SelectRow
+                    label="Running Count (Hi-Lo)"
+                    value={rules.showCount}
+                    options={[
+                      { value: 'off',    label: 'Off' },
+                      { value: 'always', label: 'Always Visible' },
+                      { value: 'hover',  label: 'Hover to Reveal' },
+                    ]}
+                    onChange={v => setRules({ showCount: v as RuleSet['showCount'] })}
+                    last
+                  />
+                </Section>
+
+                {/* Audio */}
+                <Section label="Audio">
+                  <SliderRow
+                    label="Sound Volume"
+                    value={rules.soundVolume}
+                    onChange={v => setRules({ soundVolume: v })}
+                    last
+                  />
+                </Section>
+
+              </div>
             </div>
 
-            {/* Footer */}
+            {/* ── Footer ── */}
             <div
-              className="shrink-0 flex items-center justify-between px-8 py-5"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+              className="shrink-0 flex items-center justify-between"
+              style={{
+                padding: '20px 36px 24px 36px',
+                borderTop: '1px solid rgba(255,255,255,0.07)',
+              }}
             >
               <p className="text-white/30 text-sm">Changes apply on the next hand</p>
               <button
@@ -130,19 +177,32 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
   );
 }
 
+/* ── Section wrapper ── */
+
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="text-sm font-bold text-white/35 uppercase tracking-[0.18em] mb-3">{label}</p>
+      <p
+        className="uppercase tracking-[0.18em]"
+        style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: '14px' }}
+      >
+        {label}
+      </p>
       <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}
+        style={{
+          background: 'rgba(0,0,0,0.25)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+        }}
       >
         {children}
       </div>
     </div>
   );
 }
+
+/* ── Row components ── */
 
 function SelectRow({ label, value, options, onChange, last }: {
   label: string;
@@ -153,18 +213,26 @@ function SelectRow({ label, value, options, onChange, last }: {
 }) {
   return (
     <div
-      className="flex items-center justify-between px-5 py-4"
-      style={last ? {} : { borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+      className="flex items-center justify-between"
+      style={{
+        padding: '18px 24px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+      }}
     >
-      <span className="text-white/75 text-base font-medium">{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="text-white text-sm font-semibold rounded-xl px-4 py-2.5 focus:outline-none cursor-pointer"
+        className="focus:outline-none cursor-pointer"
         style={{
+          color: 'white',
+          fontSize: '14px',
+          fontWeight: 600,
           background: 'rgba(255,255,255,0.09)',
           border: '1px solid rgba(255,255,255,0.12)',
-          minWidth: '210px',
+          borderRadius: '12px',
+          padding: '10px 18px',
+          minWidth: '220px',
         }}
       >
         {options.map(opt => (
@@ -185,15 +253,19 @@ function ToggleRow({ label, checked, onChange, last }: {
 }) {
   return (
     <div
-      className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-white/[0.02] transition-colors"
-      style={last ? {} : { borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+      className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
+      style={{
+        padding: '18px 24px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+      }}
       onClick={() => onChange(!checked)}
     >
-      <span className="text-white/75 text-base font-medium">{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
       <div
-        className="relative shrink-0 ml-4 transition-all duration-200"
+        className="relative shrink-0 transition-all duration-200"
         style={{
           width: 52, height: 30,
+          marginLeft: '16px',
           borderRadius: 9999,
           background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
           border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
@@ -211,6 +283,41 @@ function ToggleRow({ label, checked, onChange, last }: {
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />
+      </div>
+    </div>
+  );
+}
+
+function SliderRow({ label, value, onChange, last }: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  last?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: '18px 24px',
+        gap: '24px',
+        borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      <span className="shrink-0" style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
+      <div className="flex items-center gap-4" style={{ minWidth: '220px' }}>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={value}
+          onChange={e => onChange(Number(e.target.value))}
+          className="flex-1 h-2 rounded-full appearance-none cursor-pointer"
+          style={{
+            background: `linear-gradient(to right, #f59e0b ${value}%, rgba(255,255,255,0.12) ${value}%)`,
+            accentColor: '#f59e0b',
+          }}
+        />
+        <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: 600, width: '40px', textAlign: 'right' }}>{value}%</span>
       </div>
     </div>
   );
