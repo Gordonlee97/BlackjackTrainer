@@ -115,7 +115,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.22 }}
+          transition={{ duration: 0.15 }}
         >
           {/* Backdrop */}
           <div
@@ -137,10 +137,10 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
               boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
               margin: '24px',
             }}
-            initial={{ y: 32, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+            initial={{ scale: 0.97, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.97, opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -203,15 +203,15 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
               ))}
             </div>
 
-            {/* Table */}
-            <div className="overflow-auto flex-1" style={{ padding: '20px 28px 16px 28px' }}>
+            {/* Table — fixed height so panel doesn't resize when switching tabs */}
+            <div className="overflow-auto" style={{ padding: '20px 28px 16px 28px', height: '520px' }}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.18 }}
+                  transition={{ duration: 0.12 }}
                 >
                   <div className="text-center mb-3">
                     <span className="text-white/30 text-sm font-semibold tracking-widest uppercase">
@@ -234,15 +234,10 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                       </tr>
                     </thead>
                     <tbody>
-                      {rows.map((row, rowIdx) => {
+                      {rows.map(row => {
                         const rowData = chart[row.key] ?? {};
                         return (
-                          <motion.tr
-                            key={row.key}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: rowIdx * 0.035, duration: 0.2 }}
-                          >
+                          <tr key={row.key}>
                             <td
                               className="text-white/85 font-black text-center"
                               style={{
@@ -255,7 +250,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                             >
                               {row.label}
                             </td>
-                            {DEALER_COLS.map((d, colIdx) => {
+                            {DEALER_COLS.map(d => {
                               const rawAction = rowData[d];
                               if (rawAction === undefined) {
                                 return <td key={d} />;
@@ -263,16 +258,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                               const resolved = resolveAction(rawAction, rules);
                               const cfg = ACTION_CONFIG[resolved];
                               return (
-                                <motion.td
-                                  key={d}
-                                  className="p-[3px]"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{
-                                    delay: rowIdx * 0.035 + colIdx * 0.012,
-                                    duration: 0.18,
-                                  }}
-                                >
+                                <td key={d} className="p-[3px]">
                                   <div
                                     className="flex items-center justify-center font-black text-white rounded-md"
                                     style={{
@@ -284,10 +270,10 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                                   >
                                     {resolved}
                                   </div>
-                                </motion.td>
+                                </td>
                               );
                             })}
-                          </motion.tr>
+                          </tr>
                         );
                       })}
                     </tbody>

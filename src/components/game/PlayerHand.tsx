@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import Card from './Card';
 import HandTotal from './HandTotal';
 import type { HandState } from '../../engine/types';
@@ -11,9 +11,9 @@ interface PlayerHandProps {
   showHandTotals: boolean;
 }
 
-const RESULT_CONFIG: Record<string, { classes: string; label: string; glow: string }> = {
+const RESULT_CONFIG: Record<string, { classes: string; label: string; glow: string; shimmer?: boolean }> = {
   win:       { classes: 'bg-emerald-500 text-white',  label: 'Win',        glow: '0 0 20px rgba(16,185,129,0.4)' },
-  blackjack: { classes: 'bg-yellow-400 text-black',   label: 'Blackjack!', glow: '0 0 24px rgba(250,204,21,0.5)' },
+  blackjack: { classes: 'text-black',                 label: 'Blackjack!', glow: '0 0 30px rgba(250,204,21,0.6)', shimmer: true },
   lose:      { classes: 'bg-red-600/90 text-white',   label: 'Lose',       glow: '0 0 20px rgba(220,38,38,0.35)' },
   push:      { classes: 'bg-amber-500 text-black',    label: 'Push',       glow: '0 0 20px rgba(245,158,11,0.35)' },
   surrender: { classes: 'bg-slate-500 text-white',    label: 'Surrender',  glow: '0 0 16px rgba(100,116,139,0.3)' },
@@ -24,11 +24,16 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
 
   const result = hand.result ? RESULT_CONFIG[hand.result] : null;
   const showDots = isActive && !hand.isComplete;
+  const isSettled = !!hand.result;
+
+  // During split animation (1-card hands), don't dim either hand
+  const isSplitAnimating = hand.isSplit && hand.cards.length === 1;
+  const shouldDim = !isActive && totalHands > 1 && !isSplitAnimating && hand.cards.length >= 2;
 
   return (
     <div
       className={`flex flex-col items-center gap-4 transition-all duration-200 ${
-        !isActive && totalHands > 1 ? 'opacity-50 scale-95' : ''
+        shouldDim ? 'opacity-50 scale-95' : ''
       }`}
     >
       {totalHands > 1 && (
@@ -37,28 +42,39 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
         </div>
       )}
 
-      <div className="flex items-center justify-center">
-        {hand.cards.map((card, i) => (
-          <Card
-            key={`player-${handIndex}-${i}`}
-            card={card}
-            index={i}
-            delay={i * 0.12}
-          />
-        ))}
-      </div>
+      <LayoutGroup>
+        <div className="flex items-center justify-center">
+          {hand.cards.map((card, i) => (
+            <Card
+              key={`player-${handIndex}-${i}`}
+              card={card}
+              index={i}
+              delay={i < 2 ? i * 0.2 : 0}
+              smoothLayout
+              settled={isSettled}
+            />
+          ))}
+        </div>
+      </LayoutGroup>
 
       {showHandTotals && <HandTotal cards={hand.cards} />}
 
-      {/* Fixed-height slot for result badge OR dots — always reserves space so cards never shift */}
-      <div className="flex items-center justify-center" style={{ minHeight: '36px' }}>
+      {/* Fixed-height slot for result badge OR dots — never changes size */}
+      <div className="flex items-center justify-center" style={{ height: '44px' }}>
         {result ? (
           <motion.div
-            initial={{ opacity: 0, scale: 0.7, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 20 }}
-            className={`text-lg font-black rounded-full whitespace-nowrap ${result.classes}`}
-            style={{ padding: '10px 28px', boxShadow: result.glow }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15, mass: 0.8 }}
+            className={`text-lg font-black rounded-full whitespace-nowrap ${result.classes} ${result.shimmer ? 'result-shimmer' : ''}`}
+            style={{
+              padding: '10px 28px',
+              boxShadow: result.glow,
+              ...(result.shimmer ? {
+                background: 'linear-gradient(90deg, #facc15 0%, #fde68a 40%, #fbbf24 60%, #facc15 100%)',
+                backgroundSize: '200% 100%',
+              } : {}),
+            }}
           >
             {result.label}
           </motion.div>

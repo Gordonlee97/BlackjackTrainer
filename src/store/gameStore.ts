@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Card, GamePhase, GameState, HandState, HandResult } from '../engine/types';
+import type { Card, GamePhase, GameState, HandState } from '../engine/types';
 import { createShoe, drawCard, needsReshuffle } from '../engine/shoe';
 import { handValue, isBlackjack, isBust, isPair } from '../engine/hand';
 import { settleHand, calculatePayout } from '../engine/payout';
@@ -9,8 +9,14 @@ import { useCountStore } from './countStore';
 const INITIAL_BALANCE = 1000;
 const DEFAULT_BET = 25;
 
+export interface NaturalInfo {
+  dealerHasNatural: boolean;
+  playerHasNatural: boolean;
+}
+
 interface GameStore extends GameState {
   rules: RuleSet | null;
+  pendingNatural: NaturalInfo | null;
 
   // Actions
   initGame: (rules: RuleSet) => void;
@@ -20,6 +26,7 @@ interface GameStore extends GameState {
   stand: () => void;
   double: () => void;
   split: () => void;
+  dealToSplitHand: (handIndex: number) => void;
   surrender: () => void;
   newHand: () => void;
 
@@ -67,6 +74,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dealerHoleCardRevealed: false,
   message: '',
   rules: null,
+  pendingNatural: null,
 
   initGame: (rules) => {
     const numCards = rules.numDecks * 52;
@@ -85,7 +93,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   placeBet: (amount) => {
     const { balance } = get();
     if (amount > balance) return;
-    set({ currentBet: amount, message: '' });
+    set({ currentBet: amount });
   },
 
   deal: () => {
@@ -164,42 +172,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const newBalance = balance - currentBet;
 
-    // Check for dealer blackjack (peek)
+    // Check for naturals
     const dealerHasNatural = isBlackjack(dealerCards);
     const playerHasNatural = isBlackjack(playerCards);
 
     if (dealerHasNatural || playerHasNatural) {
-      // Reveal dealer hole card
-      dealerHand.cards = dealerHand.cards.map(c => ({ ...c, faceUp: true }));
-
-      let result: HandResult;
-      if (playerHasNatural && dealerHasNatural) {
-        result = 'push';
-      } else if (playerHasNatural) {
-        result = 'blackjack';
-      } else {
-        result = 'lose';
-      }
-
-      playerHand.isComplete = true;
-      playerHand.result = result;
-      dealerHand.isComplete = true;
-
-      const payout = calculatePayout(playerHand);
-
+      // Deal cards normally first (hole card face down), store natural info for dramatic reveal
       set({
         shoe,
         dealerHand,
         playerHands: [playerHand],
         activeHandIndex: 0,
-        balance: newBalance + currentBet + payout,
-        phase: 'complete',
-        dealerHoleCardRevealed: true,
-        message: result === 'blackjack' ? 'Blackjack! You win!' :
-                 result === 'push' ? 'Push - both have Blackjack' :
-                 'Dealer has Blackjack',
+        balance: newBalance,
+        phase: 'dealing',
+        dealerHoleCardRevealed: false,
+        message: '',
+        pendingNatural: { dealerHasNatural, playerHasNatural },
       });
-      useCountStore.getState().updateCount([...playerCards, ...dealerCards]);
+      // Count the 3 face-up cards initially (hole card counted on reveal)
+      useCountStore.getState().updateCount([playerCards[0], playerCards[1], dealerCards[1]]);
       return;
     }
 
@@ -212,6 +203,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       phase: 'player_turn',
       dealerHoleCardRevealed: false,
       message: '',
+      pendingNatural: null,
     });
     useCountStore.getState().updateCount([playerCards[0], playerCards[1], dealerCards[1]]);
   },
@@ -292,33 +284,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const hand = state.playerHands[state.activeHandIndex];
     const [card1, card2] = hand.cards;
 
-    let shoe = state.shoe;
-
-    // Create two new hands
-    let result = drawCard(shoe);
-    const newCard1 = result.card;
-    shoe = result.shoe;
-
-    result = drawCard(shoe);
-    const newCard2 = result.card;
-    shoe = result.shoe;
-    useCountStore.getState().updateCount([newCard1, newCard2]);
-
-    const isAceSplit = card1.rank === 'A';
+    // Step 1: Separate into two 1-card hands (no new cards yet)
     const hand1: HandState = {
-      cards: [card1, newCard1],
+      cards: [card1],
       bet: hand.bet,
       isDoubled: false,
       isSplit: true,
-      isComplete: isAceSplit && !state.rules?.hitSplitAces,
+      isComplete: false,
     };
 
     const hand2: HandState = {
-      cards: [card2, newCard2],
+      cards: [card2],
       bet: hand.bet,
       isDoubled: false,
       isSplit: true,
-      isComplete: isAceSplit && !state.rules?.hitSplitAces,
+      isComplete: false,
     };
 
     const playerHands = [...state.playerHands];
@@ -326,15 +306,49 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const balance = state.balance - hand.bet; // Deduct bet for second hand
 
-    let newState: Partial<GameStore> = {
-      shoe,
+    set({
       playerHands,
       balance,
+      // Phase stays 'player_turn', splitPending signals GameTable to animate deals
+    });
+  },
+
+  // Deal one card to a specific hand (used for animated split deals)
+  dealToSplitHand: (handIndex: number) => {
+    const state = get();
+    const hand = state.playerHands[handIndex];
+    if (!hand || hand.cards.length !== 1) return;
+
+    const { card, shoe } = drawCard(state.shoe);
+    useCountStore.getState().updateCount([card]);
+
+    const isAceSplit = hand.cards[0].rank === 'A';
+    const updatedHand: HandState = {
+      ...hand,
+      cards: [...hand.cards, card],
+      isComplete: isAceSplit && !state.rules?.hitSplitAces,
     };
 
-    // If aces split with no hit allowed, advance
-    if (hand1.isComplete) {
-      newState = { ...newState, ...advanceToNextHand(playerHands) };
+    const playerHands = [...state.playerHands];
+    playerHands[handIndex] = updatedHand;
+
+    let newState: Partial<GameStore> = { shoe, playerHands };
+
+    // After dealing to the last split hand, check if all aces auto-complete
+    const allSplitHandsDealt = playerHands.every(h => h.cards.length >= 2);
+    if (allSplitHandsDealt) {
+      const allComplete = playerHands.every(h => h.isComplete);
+      if (allComplete) {
+        newState = { ...newState, ...advanceToNextHand(playerHands) };
+      } else {
+        // Set active hand to the first incomplete hand (always start from 0)
+        for (let i = 0; i < playerHands.length; i++) {
+          if (!playerHands[i].isComplete) {
+            newState = { ...newState, activeHandIndex: i };
+            break;
+          }
+        }
+      }
     }
 
     set(newState);
@@ -365,6 +379,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       activeHandIndex: 0,
       dealerHoleCardRevealed: false,
       message: 'Place your bet',
+      pendingNatural: null,
     });
   },
 
@@ -421,13 +436,28 @@ function advanceToNextHand(
   return { phase: 'dealer_turn' as GamePhase };
 }
 
-// Dealer play logic - called from component after phase changes to dealer_turn
-export function playDealer(store: GameStore): Partial<GameStore> {
+// A single step in the dealer play sequence
+export interface DealerStep {
+  state: Partial<GameStore>;
+  countCards: Card[]; // Cards to count at this step
+}
+
+// Dealer play logic — returns steps to apply sequentially for smooth animation
+export function playDealerSteps(store: GameStore): DealerStep[] {
+  const steps: DealerStep[] = [];
   let shoe = [...store.shoe];
-  const dealerHand = { ...store.dealerHand };
-  dealerHand.cards = dealerHand.cards.map(c => ({ ...c, faceUp: true }));
+  let currentCards = store.dealerHand.cards.map(c => ({ ...c, faceUp: true }));
 
   const rules = store.rules!;
+
+  // Step 1: Reveal hole card
+  steps.push({
+    state: {
+      dealerHoleCardRevealed: true,
+      dealerHand: { ...store.dealerHand, cards: [...currentCards] },
+    },
+    countCards: [store.dealerHand.cards[0]], // Count the hole card
+  });
 
   // Check if all player hands busted or surrendered
   const allBustedOrSurrendered = store.playerHands.every(
@@ -435,59 +465,66 @@ export function playDealer(store: GameStore): Partial<GameStore> {
   );
 
   if (!allBustedOrSurrendered) {
-    // Dealer draws
+    // Draw cards one at a time
     while (true) {
-      const hv = handValue(dealerHand.cards);
+      const hv = handValue(currentCards);
       if (hv.total > 17) break;
       if (hv.total === 17 && (!hv.isSoft || !rules.dealerHitsSoft17)) break;
 
       const result = drawCard(shoe);
-      dealerHand.cards = [...dealerHand.cards, result.card];
+      currentCards = [...currentCards, result.card];
       shoe = result.shoe;
+
+      steps.push({
+        state: {
+          dealerHand: { ...store.dealerHand, cards: [...currentCards] },
+          shoe: [...shoe],
+        },
+        countCards: [result.card], // Count this drawn card
+      });
     }
   }
 
-  dealerHand.isComplete = true;
-  const holeCard = store.dealerHand.cards[0];
-  const drawnCards = dealerHand.cards.slice(2);
-  useCountStore.getState().updateCount([holeCard, ...drawnCards]);
+  // Final step: settle hands
+  const finalDealerHand: HandState = {
+    ...store.dealerHand,
+    cards: currentCards,
+    isComplete: true,
+  };
   const dealerHasBlackjack = isBlackjack(store.dealerHand.cards);
 
-  // Settle all hands
   const playerHands = store.playerHands.map(hand => {
-    if (hand.result) return hand; // Already settled (bust/surrender)
-    const result = settleHand(hand, dealerHand.cards, dealerHasBlackjack);
+    if (hand.result) return hand;
+    const result = settleHand(hand, currentCards, dealerHasBlackjack);
     return { ...hand, result };
   });
 
-  // Calculate total payout
   let totalPayout = 0;
   for (const hand of playerHands) {
     const payout = calculatePayout(hand);
     const bet = hand.isDoubled ? hand.bet * 2 : hand.bet;
-    // Return bet + winnings for non-losing hands
     if (payout >= 0) {
       totalPayout += bet + payout;
     }
   }
 
-  const dealerTotal = handValue(dealerHand.cards).total;
-  const dealerBusted = isBust(dealerHand.cards);
+  const dealerTotal = handValue(currentCards).total;
+  const dealerBusted = isBust(currentCards);
 
-  let message = '';
-  if (dealerBusted) {
-    message = `Dealer busts with ${dealerTotal}!`;
-  } else {
-    message = `Dealer has ${dealerTotal}`;
-  }
+  steps.push({
+    state: {
+      shoe,
+      dealerHand: finalDealerHand,
+      playerHands,
+      balance: store.balance + totalPayout,
+      phase: 'complete',
+      dealerHoleCardRevealed: true,
+      message: dealerBusted
+        ? `Dealer busts with ${dealerTotal}!`
+        : `Dealer has ${dealerTotal}`,
+    },
+    countCards: [],
+  });
 
-  return {
-    shoe,
-    dealerHand,
-    playerHands,
-    balance: store.balance + totalPayout,
-    phase: 'complete',
-    dealerHoleCardRevealed: true,
-    message,
-  };
+  return steps;
 }

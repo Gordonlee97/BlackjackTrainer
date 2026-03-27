@@ -5,6 +5,8 @@ interface CardProps {
   card: CardType;
   index?: number;
   delay?: number;
+  smoothLayout?: boolean;
+  settled?: boolean;
 }
 
 const SUIT_SYMBOLS: Record<string, string> = {
@@ -14,18 +16,29 @@ const SUIT_SYMBOLS: Record<string, string> = {
   spades: '\u2660',
 };
 
-export default function Card({ card, index = 0, delay = 0 }: CardProps) {
+export default function Card({ card, index = 0, delay = 0, smoothLayout = false, settled = false }: CardProps) {
   const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
 
   return (
     <motion.div
+      layout={smoothLayout}
       className="relative shrink-0"
       style={{ marginLeft: index > 0 ? '-48px' : '0', zIndex: index }}
-      initial={{ x: 200, y: -200, opacity: 0, rotateY: 180 }}
-      animate={{ x: 0, y: 0, opacity: 1, rotateY: card.faceUp ? 0 : 180 }}
-      transition={{ type: 'spring', stiffness: 180, damping: 22, delay }}
+      initial={{ x: 350, y: -60, opacity: 0, rotateY: 180, rotate: -5 }}
+      animate={{ x: 0, y: 0, opacity: 1, rotateY: card.faceUp ? 0 : 180, rotate: 0 }}
+      transition={{
+        type: 'spring',
+        stiffness: 160,
+        damping: 20,
+        mass: 0.8,
+        delay,
+        layout: { type: 'spring', stiffness: 200, damping: 28 },
+      }}
     >
-      <div className="w-[164px] h-[230px] rounded-2xl">
+      <div
+        className={`w-[164px] h-[230px] rounded-2xl ${settled ? 'card-float' : ''}`}
+        style={settled ? { animationDelay: `${index * 0.4}s` } : undefined}
+      >
         {card.faceUp ? (
           <CardFront rank={card.rank} suit={card.suit} isRed={isRed} />
         ) : (

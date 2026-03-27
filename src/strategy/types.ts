@@ -22,7 +22,7 @@ export interface RuleSet {
   wrongMoveAction: 'execute' | 'block';
   showHandTotals: boolean;
   soundVolume: number; // 0–100
-  showCount: boolean;
+  showCount: 'off' | 'always' | 'hover';
 }
 
 // Chart: playerValue -> dealerUpcard (2-11, where 11=Ace) -> action
@@ -44,5 +44,5 @@ export const DEFAULT_RULES: RuleSet = {
   wrongMoveAction: 'execute',
   showHandTotals: true,
   soundVolume: 50,
-  showCount: false,
+  showCount: 'off',
 };

@@ -100,3 +100,41 @@ input[type="range"]::-moz-range-thumb {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.22);
 }
+
+/* ── Settled card float — gentle bob per card ── */
+@keyframes card-float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+.card-float {
+  animation: card-float 3s ease-in-out infinite;
+}
+
+/* ── Result badge pop with bounce ── */
+@keyframes badge-pop {
+  0%   { transform: scale(0.5); opacity: 0; }
+  50%  { transform: scale(1.15); }
+  75%  { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── Chip wobble on hover ── */
+@keyframes chip-wobble {
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-3deg); }
+  75%  { transform: rotate(3deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* ── Win celebration shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.result-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}

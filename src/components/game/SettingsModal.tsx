@@ -127,7 +127,18 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
 
                 {/* Display */}
                 <Section label="Display">
-                  <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={v => setRules({ showHandTotals: v })} last />
+                  <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={v => setRules({ showHandTotals: v })} />
+                  <SelectRow
+                    label="Running Count (Hi-Lo)"
+                    value={rules.showCount}
+                    options={[
+                      { value: 'off',    label: 'Off' },
+                      { value: 'always', label: 'Always Visible' },
+                      { value: 'hover',  label: 'Hover to Reveal' },
+                    ]}
+                    onChange={v => setRules({ showCount: v as RuleSet['showCount'] })}
+                    last
+                  />
                 </Section>
 
                 {/* Audio */}

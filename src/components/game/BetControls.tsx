@@ -27,7 +27,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
   };
 
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center">
       {/* Bet + balance display */}
       <div className="flex items-center gap-10">
         <div className="text-center">
@@ -44,27 +44,27 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
       </div>
 
       {/* Chips row */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center" style={{ gap: '20px', marginTop: '24px' }}>
         {CHIPS.map((chip) => {
           const canAdd = currentBet + chip.value <= balance;
           return (
             <motion.button
               key={chip.value}
-              whileHover={canAdd ? { scale: 1.12, y: -5 } : {}}
-              whileTap={canAdd ? { scale: 0.92 } : {}}
+              whileHover={canAdd ? { scale: 1.12, y: -5, rotate: [0, -3, 3, 0] } : {}}
+              whileTap={canAdd ? { scale: 0.88, y: 2 } : {}}
               onClick={() => handleChipClick(chip.value)}
               disabled={!canAdd}
               className="relative rounded-full flex items-center justify-center font-black select-none"
               style={{
-                width: '96px',
-                height: '96px',
-                fontSize: '16px',
+                width: '116px',
+                height: '116px',
+                fontSize: '18px',
                 backgroundColor: canAdd ? chip.bg : '#1f2937',
                 border: `3px dashed ${canAdd ? chip.ring : '#374151'}`,
                 color: canAdd ? 'white' : '#4b5563',
                 opacity: canAdd ? 1 : 0.3,
                 boxShadow: canAdd
-                  ? `0 8px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 0 0 9px ${chip.innerRing}`
+                  ? `0 8px 24px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 0 0 10px ${chip.innerRing}`
                   : 'none',
                 transition: 'opacity 0.2s, box-shadow 0.2s',
               }}
@@ -93,27 +93,30 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         </motion.button>
       </div>
 
-      {/* Deal button */}
+      {/* Deal button — this is always the last element, so it anchors at the bottom */}
       <motion.button
         whileHover={canDeal ? { scale: 1.03, y: -2 } : {}}
         whileTap={canDeal ? { scale: 0.97 } : {}}
         onClick={onDeal}
         disabled={!canDeal}
-        className={`font-black tracking-wide rounded-full ${canDeal ? 'cta-pulse' : ''}`}
+        className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
         style={canDeal ? {
-          padding: '20px 96px',
-          fontSize: '20px',
-          letterSpacing: '0.05em',
-          background: 'linear-gradient(135deg, #92400e 0%, #b45309 25%, #f59e0b 50%, #b45309 75%, #92400e 100%)',
-          border: '1.5px solid rgba(255,255,255,0.25)',
-          color: '#111827',
+          marginTop: '28px',
+          padding: '22px 120px',
+          fontSize: '22px',
+          borderRadius: '18px',
+          background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
+          border: 'none',
+          color: '#1a1a1a',
           cursor: 'pointer',
+          boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
         } : {
-          padding: '20px 96px',
-          fontSize: '20px',
-          letterSpacing: '0.05em',
+          marginTop: '28px',
+          padding: '22px 120px',
+          fontSize: '22px',
+          borderRadius: '18px',
           background: 'rgba(255,255,255,0.04)',
-          border: '1.5px solid rgba(255,255,255,0.06)',
+          border: 'none',
           color: 'rgba(255,255,255,0.18)',
           cursor: 'not-allowed',
           boxShadow: 'none',

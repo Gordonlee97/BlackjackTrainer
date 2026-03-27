@@ -9,8 +9,10 @@ export default function StatsPanel() {
 
   return (
     <div
-      className="flex items-center gap-6 px-6 py-3 rounded-2xl"
+      className="flex items-center rounded-2xl"
       style={{
+        padding: '18px 40px',
+        gap: '36px',
         background: 'rgba(0,0,0,0.2)',
         border: '1px solid rgba(255,255,255,0.06)',
       }}
@@ -35,8 +37,8 @@ function Stat({ label, value, highlight, warn }: {
   warn?: boolean;
 }) {
   return (
-    <div className="text-center min-w-[56px]">
-      <div className="text-xs text-white/40 uppercase tracking-widest leading-none mb-2">{label}</div>
+    <div className="text-center min-w-[60px]">
+      <div className="text-xs text-white/40 uppercase tracking-widest leading-none mb-2.5">{label}</div>
       <div className={`text-2xl font-black leading-none ${
         highlight ? 'text-emerald-400' : warn ? 'text-rose-400' : 'text-white/80'
       }`}>

@@ -88,7 +88,16 @@ export default function SetupPage({ onStart }: SetupPageProps) {
 
           <Section label="Display & Audio">
             <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={(v) => setRules({ showHandTotals: v })} />
-            <ToggleRow label="Show Running Count (Hi-Lo)" checked={rules.showCount} onChange={(v) => setRules({ showCount: v })} />
+            <SelectRow
+              label="Running Count (Hi-Lo)"
+              value={rules.showCount}
+              options={[
+                { value: 'off',    label: 'Off' },
+                { value: 'always', label: 'Always Visible' },
+                { value: 'hover',  label: 'Hover to Reveal' },
+              ]}
+              onChange={(v) => setRules({ showCount: v as RuleSet['showCount'] })}
+            />
             <SliderRow label="Sound Volume" value={rules.soundVolume} onChange={(v) => setRules({ soundVolume: v })} last />
           </Section>
 
@@ -99,14 +108,15 @@ export default function SetupPage({ onStart }: SetupPageProps) {
       <div className="shrink-0 flex flex-col items-center gap-4 px-8 pb-8 pt-4">
         <button
           onClick={onStart}
-          className="w-full max-w-2xl rounded-full font-black tracking-wide transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse"
+          className="w-full max-w-2xl font-black uppercase tracking-widest transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse"
           style={{
             padding: '24px',
             fontSize: '22px',
-            letterSpacing: '0.05em',
-            background: 'linear-gradient(135deg, #92400e 0%, #b45309 25%, #f59e0b 50%, #b45309 75%, #92400e 100%)',
-            border: '1.5px solid rgba(255,255,255,0.25)',
-            color: '#111827',
+            borderRadius: '18px',
+            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
+            border: 'none',
+            color: '#1a1a1a',
+            boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
           }}
         >
           Start Training
