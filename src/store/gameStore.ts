@@ -4,6 +4,7 @@ import { createShoe, drawCard, needsReshuffle } from '../engine/shoe';
 import { handValue, isBlackjack, isBust, isPair } from '../engine/hand';
 import { settleHand, calculatePayout } from '../engine/payout';
 import type { RuleSet } from '../strategy/types';
+import { useCountStore } from './countStore';
 
 const INITIAL_BALANCE = 1000;
 const DEFAULT_BET = 25;
@@ -78,6 +79,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       phase: 'betting',
       message: 'Place your bet',
     });
+    useCountStore.getState().resetCount();
   },
 
   placeBet: (amount) => {
@@ -98,6 +100,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Check if reshuffle needed
     if (needsReshuffle(shoe, shoeSize)) {
       shoe = createShoe(rules.numDecks);
+      useCountStore.getState().resetCount();
     }
 
     // Deal with practice mode filtering - retry up to 50 times
@@ -196,6 +199,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
                  result === 'push' ? 'Push - both have Blackjack' :
                  'Dealer has Blackjack',
       });
+      useCountStore.getState().updateCount([...playerCards, ...dealerCards]);
       return;
     }
 
@@ -209,6 +213,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       dealerHoleCardRevealed: false,
       message: '',
     });
+    useCountStore.getState().updateCount([playerCards[0], playerCards[1], dealerCards[1]]);
   },
 
   hit: () => {
@@ -218,6 +223,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const hand = { ...state.playerHands[state.activeHandIndex] };
     const { card, shoe } = drawCard(state.shoe);
     hand.cards = [...hand.cards, card];
+    useCountStore.getState().updateCount([card]);
 
     if (isBust(hand.cards)) {
       hand.isComplete = true;
@@ -258,6 +264,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const hand = { ...state.playerHands[state.activeHandIndex] };
     const { card, shoe } = drawCard(state.shoe);
     hand.cards = [...hand.cards, card];
+    useCountStore.getState().updateCount([card]);
     hand.isDoubled = true;
     hand.isComplete = true;
 
@@ -295,6 +302,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     result = drawCard(shoe);
     const newCard2 = result.card;
     shoe = result.shoe;
+    useCountStore.getState().updateCount([newCard1, newCard2]);
 
     const isAceSplit = card1.rank === 'A';
     const hand1: HandState = {
@@ -440,6 +448,9 @@ export function playDealer(store: GameStore): Partial<GameStore> {
   }
 
   dealerHand.isComplete = true;
+  const holeCard = store.dealerHand.cards[0];
+  const drawnCards = dealerHand.cards.slice(2);
+  useCountStore.getState().updateCount([holeCard, ...drawnCards]);
   const dealerHasBlackjack = isBlackjack(store.dealerHand.cards);
 
   // Settle all hands
