@@ -88,6 +88,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
 
           <Section label="Display & Audio">
             <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={(v) => setRules({ showHandTotals: v })} />
+            <ToggleRow label="Show Running Count (Hi-Lo)" checked={rules.showCount} onChange={(v) => setRules({ showCount: v })} />
             <SliderRow label="Sound Volume" value={rules.soundVolume} onChange={(v) => setRules({ soundVolume: v })} last />
           </Section>
 

@@ -17,6 +17,7 @@ import StatsPanel from '../feedback/StatsPanel';
 import StrategyModal from '../feedback/StrategyModal';
 import StrategyChartModal from '../feedback/StrategyChartModal';
 import SettingsModal from './SettingsModal';
+import RunningCount from './RunningCount';
 
 interface GameTableProps {
   onBackToMenu: () => void;
@@ -191,6 +192,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             <span className="leading-none" style={{ fontSize: '18px' }}>♠</span>
             <span>Charts</span>
           </motion.button>
+
+          {rules.showCount && <RunningCount />}
         </div>
 
         <StatsPanel />
