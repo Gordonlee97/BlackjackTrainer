@@ -28,12 +28,12 @@ export default function RunningCount({ mode }: RunningCountProps) {
         : 'rgba(255,255,255,0.05)';
 
   const borderColor = !revealed
-    ? 'rgba(255,255,255,0.08)'
+    ? 'var(--border-subtle)'
     : count > 0
       ? 'rgba(16,185,129,0.20)'
       : count < 0
         ? 'rgba(244,63,94,0.20)'
-        : 'rgba(255,255,255,0.10)';
+        : 'var(--border-subtle)';
 
   const displayCount = count > 0 ? `+${count}` : String(count);
 

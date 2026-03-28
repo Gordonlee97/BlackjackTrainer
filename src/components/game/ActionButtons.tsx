@@ -67,7 +67,7 @@ function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }:
         height: h,
         borderRadius: '22px',
         background: off ? 'rgba(255,255,255,0.04)' : style.gradient,
-        border: off ? '1px solid rgba(255,255,255,0.05)' : '1.5px solid rgba(255,255,255,0.2)',
+        border: off ? `1px solid var(--border-subtle)` : '1.5px solid rgba(255,255,255,0.2)',
         boxShadow: off ? 'none' : baseShadow,
         color: off ? 'rgba(255,255,255,0.15)' : 'white',
         cursor: off ? 'not-allowed' : 'pointer',
@@ -75,7 +75,7 @@ function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }:
       }}
     >
       <span style={{ fontSize: size === 'lg' ? '1.7rem' : '1.35rem', lineHeight: 1 }}>{label}</span>
-      <span style={{ fontSize: '13px', opacity: off ? 0.3 : 0.5, lineHeight: 1 }}>[{shortcut}]</span>
+      <span style={{ fontSize: 'var(--text-sm)', opacity: off ? 0.3 : 0.5, lineHeight: 1 }}>[{shortcut}]</span>
     </motion.button>
   );
 }

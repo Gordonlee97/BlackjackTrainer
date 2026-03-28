@@ -274,7 +274,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       {/* ══ TOP BAR ══ */}
       <div
         className="shrink-0 flex items-center justify-between h-[88px]"
-        style={{ background: 'rgba(0,0,0,0.32)', borderBottom: '1px solid rgba(255,255,255,0.07)', padding: '0 24px' }}
+        style={{ background: 'var(--surface-dark)', borderBottom: '1px solid var(--border-subtle)', padding: '0 24px' }}
       >
         {/* Left: Settings + Charts */}
         <div className="flex items-center gap-3 shrink-0">
@@ -285,11 +285,11 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
               padding: '12px 24px',
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'var(--surface-glass)',
+              border: '1px solid var(--border-light)',
             }}
           >
-            <span className="leading-none" style={{ fontSize: '18px' }}>⚙</span>
+            <span className="leading-none" style={{ fontSize: 'var(--text-lg)' }}>⚙</span>
             <span>Settings</span>
           </motion.button>
 
@@ -300,11 +300,11 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
               padding: '12px 24px',
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'var(--surface-glass)',
+              border: '1px solid var(--border-light)',
             }}
           >
-            <span className="leading-none" style={{ fontSize: '18px' }}>♠</span>
+            <span className="leading-none" style={{ fontSize: 'var(--text-lg)' }}>♠</span>
             <span>Charts</span>
           </motion.button>
 
@@ -331,7 +331,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           </div>
           <div className="text-right">
             <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-2">Balance</span>
-            <span className="font-black text-yellow-400 leading-none whitespace-nowrap" style={{ fontSize: '36px' }}>${game.balance.toLocaleString()}</span>
+            <span className="font-black text-yellow-400 leading-none whitespace-nowrap" style={{ fontSize: 'var(--text-3xl)' }}>${game.balance.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -358,7 +358,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             <motion.div
               key={game.message}
               className="shrink-0 text-base font-semibold text-white/85 whitespace-nowrap rounded-full"
-              style={{ padding: '12px 40px', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.15)' }}
+              style={{ padding: '12px 40px', background: 'var(--surface-dark)', border: '1px solid var(--border-light)' }}
               initial={{ opacity: 0, scale: 0.88 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
@@ -482,7 +482,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   className="font-black uppercase tracking-widest cta-pulse"
                   style={{
                     padding: '22px 120px',
-                    fontSize: '22px',
+                    fontSize: 'var(--text-xl)',
                     borderRadius: '18px',
                     background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
                     border: 'none',

@@ -58,7 +58,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
               style={{
                 width: '116px',
                 height: '116px',
-                fontSize: '18px',
+                fontSize: 'var(--text-lg)',
                 backgroundColor: canAdd ? chip.bg : '#1f2937',
                 border: `3px dashed ${canAdd ? chip.ring : '#374151'}`,
                 color: canAdd ? 'white' : '#4b5563',
@@ -83,9 +83,9 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
           title="Clear bet"
           className="w-12 h-12 rounded-full flex items-center justify-center text-base transition-all"
           style={{
-            border: '1.5px solid rgba(255,255,255,0.12)',
+            border: '1.5px solid var(--border-light)',
             color: showClear ? 'rgba(255,255,255,0.4)' : 'transparent',
-            borderColor: showClear ? 'rgba(255,255,255,0.12)' : 'transparent',
+            borderColor: showClear ? 'var(--border-light)' : 'transparent',
             cursor: showClear ? 'pointer' : 'default',
           }}
         >
@@ -103,7 +103,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         style={canDeal ? {
           marginTop: '28px',
           padding: '22px 120px',
-          fontSize: '22px',
+          fontSize: 'var(--text-xl)',
           borderRadius: '18px',
           background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
           border: 'none',
@@ -113,7 +113,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         } : {
           marginTop: '28px',
           padding: '22px 120px',
-          fontSize: '22px',
+          fontSize: 'var(--text-xl)',
           borderRadius: '18px',
           background: 'rgba(255,255,255,0.04)',
           border: 'none',

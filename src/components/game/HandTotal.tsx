@@ -40,7 +40,7 @@ export default function HandTotal({ cards, hideHole }: HandTotalProps) {
     <span
       className={`inline-block text-xl font-black px-8 py-2.5 rounded-full tracking-wide whitespace-nowrap ${colorClasses}`}
       style={{
-        border: '1px solid rgba(255,255,255,0.1)',
+        border: '1px solid var(--border-subtle)',
         boxShadow: glowShadow,
       }}
     >
