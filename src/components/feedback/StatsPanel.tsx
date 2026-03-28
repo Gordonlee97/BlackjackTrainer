@@ -1,3 +1,5 @@
+import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useStatsStore } from '../../store/statsStore';
 import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 
@@ -11,9 +13,27 @@ export default function StatsPanel() {
   const animatedCorrect = useAnimatedNumber(correctDecisions);
   const animatedTotal = useAnimatedNumber(totalDecisions);
 
+  const [milestoneHit, setMilestoneHit] = useState(false);
+  const prevStreakRef = useRef(currentStreak);
+
+  useEffect(() => {
+    const milestones = [5, 10, 25, 50];
+    const prev = prevStreakRef.current;
+    const curr = currentStreak;
+    prevStreakRef.current = curr;
+
+    if (curr > prev && milestones.includes(curr)) {
+      setMilestoneHit(true);
+      const timer = setTimeout(() => setMilestoneHit(false), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStreak]);
+
   const accDisplay = totalDecisions > 0 ? `${animatedAccuracy.toFixed(1)}%` : '—';
   const accHighlight = accuracy >= 90 && totalDecisions > 0;
   const accWarning = accuracy < 70 && totalDecisions > 5;
+
+  const streakValue = currentStreak > 0 ? animatedStreak : '—';
 
   return (
     <div
@@ -31,7 +51,22 @@ export default function StatsPanel() {
       <Sep />
       <Stat label="Correct"  value={totalDecisions > 0 ? `${animatedCorrect}/${animatedTotal}` : '—'} />
       <Sep />
-      <Stat label="Streak"   value={currentStreak > 0 ? animatedStreak : '—'} highlight={currentStreak >= 5} />
+      <div className="text-center min-w-[60px]">
+        <div className="text-white/40 uppercase tracking-widest leading-none mb-2.5" style={{ fontSize: 'var(--text-xs)' }}>Streak</div>
+        <div className={`font-black leading-none ${currentStreak >= 5 ? 'text-emerald-400' : 'text-white/80'}`} style={{ fontSize: 'var(--text-xl)' }}>
+          <motion.span
+            animate={milestoneHit ? {
+              scale: [1, 1.3, 1],
+              color: '#10b981',
+              textShadow: ['0 0 0px rgba(16,185,129,0)', '0 0 16px rgba(16,185,129,0.5)', '0 0 0px rgba(16,185,129,0)'],
+            } : {}}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            style={{ display: 'inline-block' }}
+          >
+            {streakValue}
+          </motion.span>
+        </div>
+      </div>
       <Sep />
       <Stat label="Best"     value={bestStreak > 0 ? animatedBest : '—'} />
     </div>
