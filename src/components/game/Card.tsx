@@ -24,14 +24,15 @@ export default function Card({ card, index = 0, delay = 0, smoothLayout = false,
       layout={smoothLayout}
       className="relative shrink-0"
       style={{ marginLeft: index > 0 ? '-48px' : '0', zIndex: index }}
-      initial={{ x: 350, y: -60, opacity: 0, rotateY: 180, rotate: -5 }}
-      animate={{ x: 0, y: 0, opacity: 1, rotateY: card.faceUp ? 0 : 180, rotate: 0 }}
+      initial={{ x: 300, y: -20, rotate: -8, scale: 0.92, opacity: 1 }}
+      animate={{ x: 0, y: 0, rotate: 0, scale: 1, opacity: 1, rotateY: card.faceUp ? 0 : 180 }}
       transition={{
         type: 'spring',
-        stiffness: 160,
-        damping: 20,
-        mass: 0.8,
+        stiffness: 280,
+        damping: 26,
+        mass: 0.6,
         delay,
+        rotateY: { type: 'spring', stiffness: 200, damping: 28, delay },
         layout: { type: 'spring', stiffness: 200, damping: 28 },
       }}
     >
