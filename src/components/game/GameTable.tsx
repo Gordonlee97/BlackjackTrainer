@@ -51,6 +51,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   const [chartOpen, setChartOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settleBounce, setSettleBounce] = useState(false);
+  const [correctFlash, setCorrectFlash] = useState(false);
   const [modalData, setModalData] = useState<{
     playerAction: FinalAction;
     advice: StrategyAdvice;
@@ -241,6 +242,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     stats.recordDecision(isCorrect);
 
     if (isCorrect) {
+      setCorrectFlash(true);
+      setTimeout(() => setCorrectFlash(false), 400);
       executeAction();
     } else {
       setModalData({ playerAction: action, advice });
@@ -378,6 +381,26 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               transition={{ type: 'spring', damping: 22, stiffness: 300 }}
             >
               {game.message}
+            </motion.div>
+          )}
+          {correctFlash && !game.message && (
+            <motion.div
+              key="correct-flash"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              style={{
+                padding: '8px 24px',
+                borderRadius: 'var(--radius-full)',
+                background: 'rgba(16,185,129,0.15)',
+                border: '1px solid rgba(16,185,129,0.3)',
+                color: '#10b981',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 700,
+              }}
+            >
+              ✓ Correct
             </motion.div>
           )}
         </AnimatePresence>
