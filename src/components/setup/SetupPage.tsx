@@ -1,4 +1,5 @@
 import { useSettingsStore } from '../../store/settingsStore';
+import CustomSelect from '../shared/CustomSelect';
 import type { RuleSet } from '../../strategy/types';
 
 interface SetupPageProps {
@@ -145,7 +146,6 @@ function Section({ label, children }: { label: string; children: React.ReactNode
           background: 'var(--surface-section)',
           border: '1px solid var(--border-subtle)',
           borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
         }}
       >
         {children}
@@ -170,27 +170,7 @@ function SelectRow({ label, value, options, onChange, last }: {
       }}
     >
       <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="focus:outline-none cursor-pointer"
-        style={{
-          color: 'white',
-          fontSize: '15px',
-          fontWeight: 600,
-          background: 'rgba(255,255,255,0.09)',
-          border: '1px solid var(--border-light)',
-          borderRadius: '12px',
-          padding: '12px 18px',
-          minWidth: '260px',
-        }}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} style={{ background: '#1f2937' }}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <CustomSelect value={value} options={options} onChange={onChange} minWidth="260px" />
     </div>
   );
 }

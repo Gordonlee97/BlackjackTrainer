@@ -10,16 +10,18 @@ interface DealerHandProps {
   settleBounce?: boolean;
   /** Dealer turn is active — adds dramatic shadow to card area */
   suspense?: boolean;
+  /** Cards are being swept off the table */
+  sweeping?: boolean;
 }
 
-export default function DealerHand({ hand, holeCardRevealed, showHandTotals, settleBounce, suspense }: DealerHandProps) {
+export default function DealerHand({ hand, holeCardRevealed, showHandTotals, settleBounce, suspense, sweeping }: DealerHandProps) {
   if (hand.cards.length === 0) return null;
 
   const isSettled = hand.isComplete;
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="text-sm font-bold text-white/50 tracking-[0.25em] uppercase">
+      <div className="text-sm font-bold text-white/50 tracking-[0.25em] uppercase" style={{ opacity: sweeping ? 0 : 1, transition: 'opacity 0.15s' }}>
         Dealer
       </div>
       <LayoutGroup>
@@ -51,11 +53,15 @@ export default function DealerHand({ hand, holeCardRevealed, showHandTotals, set
               smoothLayout
               settled={isSettled}
               dealId={100 + i}
+              sweeping={sweeping}
+              sweepDelay={i * 0.06}
             />
           ))}
         </motion.div>
       </LayoutGroup>
-      {showHandTotals && <HandTotal cards={hand.cards} hideHole={!holeCardRevealed} />}
+      <div style={{ opacity: sweeping ? 0 : 1, transition: 'opacity 0.15s' }}>
+        {showHandTotals && <HandTotal cards={hand.cards} hideHole={!holeCardRevealed} />}
+      </div>
     </div>
   );
 }

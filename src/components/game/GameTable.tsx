@@ -57,8 +57,11 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     advice: StrategyAdvice;
   } | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [pendingWrongAction, setPendingWrongAction] = useState<(() => void) | null>(null);
 
   const splitAnimatingRef = useRef(false);
+  const recordedDecisionRef = useRef<string | null>(null);
+  const [actionResetKey, setActionResetKey] = useState(0);
   const animatedBalance = useAnimatedNumber(game.balance);
 
   // Juice states
@@ -73,6 +76,9 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
 
   useEffect(() => { strategyRef.current = buildStrategy(rules); }, [rules]);
   useEffect(() => { game.initGame(rules); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync settings changes to gameStore so deal() uses latest practiceMode, etc.
+  useEffect(() => { useGameStore.setState({ rules }); }, [rules]);
 
   // Animated split — detect 1-card split hands and deal to them sequentially
   const splitHandCount = game.playerHands.length;
@@ -209,6 +215,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   useEffect(() => {
     if (game.phase === 'player_turn') {
       setSettleBounce(true);
+      recordedDecisionRef.current = null;
       const timer = setTimeout(() => setSettleBounce(false), 300);
       return () => clearTimeout(timer);
     }
@@ -310,7 +317,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     if (!advice) { executeAction(); return; }
 
     const isCorrect = advice.correctAction === action;
-    stats.recordDecision(isCorrect);
+    // Only record stats once per decision point — skip duplicate wrong attempts via "Try Again"
+    const decisionKey = `${game.activeHandIndex}-${game.getActiveHand()?.cards.length}`;
+    const alreadyRecorded = recordedDecisionRef.current === decisionKey;
+    if (!alreadyRecorded) {
+      stats.recordDecision(isCorrect);
+      if (!isCorrect) recordedDecisionRef.current = decisionKey;
+    }
 
     if (isCorrect) {
       setCorrectFlash(true);
@@ -321,11 +334,14 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     } else {
       setModalData({ playerAction: action, advice });
       if (rules.wrongMoveAction === 'block') {
-        setPendingAction(() => getActionExecutor(advice.correctAction));
+        // Block mode: show modal, save wrong action for "Play Anyways" option.
+        // User can try again or choose to play their original move.
+        setPendingWrongAction(() => executeAction);
         setModalOpen(true);
       } else {
+        // Feedback mode: show modal, execute correct action on dismiss.
+        setPendingAction(() => getActionExecutor(advice.correctAction));
         setModalOpen(true);
-        executeAction();
       }
     }
   }, [checkStrategy, rules.wrongMoveAction, stats]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -340,8 +356,17 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     }
   }, [game]);
 
-  const handleModalClose   = () => { setModalOpen(false); setModalData(null); setPendingAction(null); };
-  const handleForceCorrect = () => { if (pendingAction) pendingAction(); handleModalClose(); };
+  const handleModalClose = () => {
+    if (pendingAction) pendingAction();
+    else setActionResetKey(k => k + 1); // Block mode: reset button hover states
+    setModalOpen(false); setModalData(null); setPendingAction(null); setPendingWrongAction(null);
+  };
+  const handleForceCorrect = () => { handleModalClose(); };
+  const handlePlayAnyways = () => {
+    if (pendingWrongAction) pendingWrongAction();
+    setActionResetKey(k => k + 1);
+    setModalOpen(false); setModalData(null); setPendingAction(null); setPendingWrongAction(null);
+  };
 
   const shoePercent = game.shoeSize > 0 ? (game.shoe.length / game.shoeSize) * 100 : 0;
 
@@ -361,7 +386,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     >
       {/* ══ TOP BAR ══ */}
       <div
-        className="shrink-0 flex items-center justify-between h-[88px]"
+        className="shrink-0 flex items-center justify-between h-[88px] relative"
         style={{ background: 'var(--surface-dark)', borderBottom: '1px solid var(--border-subtle)', padding: '0 24px' }}
       >
         {/* Left: Settings + Charts */}
@@ -398,24 +423,35 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
 
         </div>
 
-        <StatsPanel />
+        <div className="absolute left-1/2 top-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
+          <StatsPanel />
+        </div>
 
         {/* Right: Shoe + Balance */}
         <div className="flex items-center gap-5 shrink-0">
-          <div className="flex flex-col items-end gap-1.5">
-            <div className="flex items-center gap-2.5">
-              <div className="w-28 h-2.5 bg-black/50 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full rounded-full"
-                  animate={{ width: `${shoePercent}%` }}
-                  transition={{ duration: 0.7, ease: 'easeOut' }}
+          <div className="flex items-center gap-3">
+            <div className="relative bg-black/50 rounded-full overflow-hidden" style={{ width: `${250 + rules.numDecks * 15}px`, height: '24px' }}>
+              <motion.div
+                className="h-full rounded-full"
+                animate={{ width: `${shoePercent}%` }}
+                transition={{ duration: 0.7, ease: 'easeOut' }}
+                style={{
+                  background: shoePercent > 25 ? 'rgba(250,204,21,0.75)' : 'rgba(239,68,68,0.85)',
+                }}
+              />
+              {Array.from({ length: rules.numDecks - 1 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute top-0 h-full"
                   style={{
-                    background: shoePercent > 25 ? 'rgba(250,204,21,0.75)' : 'rgba(239,68,68,0.85)',
+                    left: `${((i + 1) / rules.numDecks) * 100}%`,
+                    width: '1px',
+                    background: 'rgba(0,0,0,0.6)',
                   }}
                 />
-              </div>
-              <span className="text-sm text-white/35 w-10">{Math.round(shoePercent)}%</span>
+              ))}
             </div>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: shoePercent > 25 ? 'rgba(255,255,255,0.40)' : 'rgba(239,68,68,0.8)', minWidth: '42px' }}>{Math.round(shoePercent)}%</span>
           </div>
           <div className="text-right">
             <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-2">Balance</span>
@@ -431,19 +467,16 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             <RunningCount mode={rules.showCount} />
           </div>
         )}
-        <motion.div
-          className="flex flex-col items-center justify-center"
-          animate={sweepingCards ? { x: 350, y: -300, opacity: 0, scale: 0.85 } : { x: 0, y: 0, opacity: 1, scale: 1 }}
-          transition={sweepingCards ? { duration: 0.35, ease: 'easeIn' } : { duration: 0.01 }}
-        >
-        <DealerHand
-          hand={game.dealerHand}
-          holeCardRevealed={game.dealerHoleCardRevealed}
-          showHandTotals={rules.showHandTotals}
-          settleBounce={settleBounce}
-          suspense={dealerSuspense}
-        />
-        </motion.div>
+        <div className="flex flex-col items-center justify-center">
+          <DealerHand
+            hand={game.dealerHand}
+            holeCardRevealed={game.dealerHoleCardRevealed}
+            showHandTotals={rules.showHandTotals}
+            settleBounce={settleBounce}
+            suspense={dealerSuspense}
+            sweeping={sweepingCards}
+          />
+        </div>
       </div>
 
       {/* ══ DIVIDER — fixed height so message pill appearing/disappearing never shifts cards ══ */}
@@ -490,11 +523,9 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       {/* ══ PLAYER ZONE ══ */}
       <div className="flex-[6] flex flex-col min-h-0">
         {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
-        <motion.div
+        <div
           className="flex-1 flex items-center justify-center min-h-0"
           style={{ paddingBottom: '12px' }}
-          animate={sweepingCards ? { x: 350, y: -300, opacity: 0, scale: 0.85 } : { x: 0, y: 0, opacity: 1, scale: 1 }}
-          transition={sweepingCards ? { duration: 0.35, ease: 'easeIn', delay: 0.05 } : { duration: 0.01 }}
         >
           <div className="flex gap-14 items-start justify-center">
             {game.playerHands.map((hand, i) => (
@@ -508,10 +539,11 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 settleBounce={settleBounce}
                 lockedIn={lockedIn}
                 resultPayoff={resultPayoff}
+                hideOverlays={sweepingCards}
               />
             ))}
           </div>
-        </motion.div>
+        </div>
 
         {/* Controls — fixed height, content absolutely positioned so cards never shift */}
         <div className="shrink-0 relative" style={{ height: '260px' }}>
@@ -546,6 +578,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 exit="exit"
               >
                 <ActionButtons
+                  key={actionResetKey}
                   onHit={() => handlePlayerAction('HIT', game.hit)}
                   onStand={() => handlePlayerAction('STAND', game.stand)}
                   onDouble={() => handlePlayerAction('DOUBLE', game.double)}
@@ -609,7 +642,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                       game.newHand();
                       setSweepingCards(false);
                       playNextHand();
-                    }, 500);
+                    }, 600);
                   }}
                   className="font-black uppercase tracking-widest cta-pulse"
                   style={{
@@ -641,6 +674,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           dealerUpcard={modalData.advice.dealerUpcard}
           onClose={handleModalClose}
           onForceCorrect={rules.wrongMoveAction === 'block' ? handleForceCorrect : undefined}
+          onPlayAnyways={rules.wrongMoveAction === 'block' ? handlePlayAnyways : undefined}
           blockMode={rules.wrongMoveAction === 'block'}
         />
       )}

@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSettingsStore } from '../../store/settingsStore';
+import { useStatsStore } from '../../store/statsStore';
+import CustomSelect from '../shared/CustomSelect';
 import type { RuleSet } from '../../strategy/types';
 
 interface Props {
@@ -10,6 +13,8 @@ interface Props {
 
 export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) {
   const { rules, setRules } = useSettingsStore();
+  const resetStats = useStatsStore(s => s.reset);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   return (
     <AnimatePresence>
@@ -151,6 +156,79 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   />
                 </Section>
 
+                {/* Data */}
+                <Section label="Data">
+                  <div
+                    className="flex items-center justify-between"
+                    style={{ padding: 'var(--row-padding)' }}
+                  >
+                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>Reset All Stats</span>
+                    {!confirmReset ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmReset(true)}
+                        className="cursor-pointer"
+                        style={{
+                          padding: '10px 24px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: 'rgba(239,68,68,0.85)',
+                          background: 'rgba(239,68,68,0.10)',
+                          border: '1px solid rgba(239,68,68,0.20)',
+                          borderRadius: '12px',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.10)')}
+                      >
+                        Reset
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 500 }}>Are you sure?</span>
+                        <button
+                          type="button"
+                          onClick={() => { resetStats(); setConfirmReset(false); }}
+                          className="cursor-pointer"
+                          style={{
+                            padding: '10px 20px',
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            color: 'white',
+                            background: 'rgba(239,68,68,0.65)',
+                            border: '1px solid rgba(239,68,68,0.5)',
+                            borderRadius: '12px',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.8)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.65)')}
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmReset(false)}
+                          className="cursor-pointer"
+                          style={{
+                            padding: '10px 16px',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: 'rgba(255,255,255,0.5)',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.10)',
+                            borderRadius: '12px',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Section>
+
               </div>
             </div>
 
@@ -193,7 +271,6 @@ function Section({ label, children }: { label: string; children: React.ReactNode
           background: 'rgba(0,0,0,0.25)',
           border: '1px solid rgba(255,255,255,0.08)',
           borderRadius: '16px',
-          overflow: 'hidden',
         }}
       >
         {children}
@@ -220,27 +297,7 @@ function SelectRow({ label, value, options, onChange, last }: {
       }}
     >
       <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="focus:outline-none cursor-pointer"
-        style={{
-          color: 'white',
-          fontSize: '14px',
-          fontWeight: 600,
-          background: 'rgba(255,255,255,0.09)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          borderRadius: '12px',
-          padding: '10px 18px',
-          minWidth: '220px',
-        }}
-      >
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value} style={{ background: '#1f2937' }}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+      <CustomSelect value={value} options={options} onChange={onChange} />
     </div>
   );
 }
