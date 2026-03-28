@@ -11,7 +11,7 @@ import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
 import type { HandState } from '../../engine/types';
-import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, setMasterVolume } from '../../engine/sounds';
+import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playTensionStart, playTensionStop, playSweep, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import ActionButtons from './ActionButtons';
@@ -61,6 +61,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   const splitAnimatingRef = useRef(false);
   const animatedBalance = useAnimatedNumber(game.balance);
 
+  // Juice states
+  const [lockedIn, setLockedIn] = useState(false);
+  const [dealerSuspense, setDealerSuspense] = useState(false);
+  const [resultPayoff, setResultPayoff] = useState<'win' | 'blackjack' | 'lose' | 'push' | null>(null);
+  const [sweepingCards, setSweepingCards] = useState(false);
+  const [goldVignette, setGoldVignette] = useState(false);
+
   // Sync volume setting
   useEffect(() => { setMasterVolume(rules.soundVolume / 100); }, [rules.soundVolume]);
 
@@ -104,18 +111,29 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
 
   }, [splitHandCount, game.phase]);
 
-  // Dealer play — apply steps sequentially for smooth card-by-card animation
+  // Dealer play — with suspense: lock-in pause → reveal → escalating draws → settle
   useEffect(() => {
     if (game.phase === 'dealer_turn') {
       const steps = playDealerSteps(game);
       const timers: ReturnType<typeof setTimeout>[] = [];
 
-      // Step 0: reveal hole card after short pause
-      // Steps 1..n-2: draw cards one at a time
-      // Final step: settle
-      let delay = 400;
-      const DRAW_INTERVAL = 650;
+      // Lock-in pause before dealer starts (500ms breath)
+      const LOCK_IN_PAUSE = 500;
+      // Delay before hole card flip after lock-in
+      const REVEAL_DELAY = 200;
+      // Base draw interval, escalates per card
+      const BASE_DRAW = 700;
+      const DRAW_ESCALATION = 100;
+      const MAX_DRAW = 1000;
       const SETTLE_DELAY = 450;
+
+      let delay = LOCK_IN_PAUSE + REVEAL_DELAY;
+
+      // Start tension audio after lock-in pause
+      timers.push(setTimeout(() => {
+        setDealerSuspense(true);
+        playTensionStart();
+      }, LOCK_IN_PAUSE));
 
       steps.forEach((step, i) => {
         const isLast = i === steps.length - 1;
@@ -125,21 +143,56 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           if (step.countCards.length > 0) {
             useCountStore.getState().updateCount(step.countCards);
           }
-          // Card slide sound for each dealer draw (skip the final settle step)
           if (!isLast) playCardSlide();
+
+          // Stop tension and resolve on final step
+          if (isLast) {
+            playTensionStop();
+            setDealerSuspense(false);
+          }
         }, delay));
 
-        delay += isLast ? 0 : (i === 0 ? DRAW_INTERVAL : (i === steps.length - 2 ? SETTLE_DELAY : DRAW_INTERVAL));
+        if (!isLast) {
+          if (i === 0) {
+            delay += BASE_DRAW;
+          } else if (i === steps.length - 2) {
+            delay += SETTLE_DELAY;
+          } else {
+            const drawTime = Math.min(BASE_DRAW + i * DRAW_ESCALATION, MAX_DRAW);
+            delay += drawTime;
+          }
+        }
       });
 
-      return () => timers.forEach(clearTimeout);
+      return () => {
+        timers.forEach(clearTimeout);
+        playTensionStop();
+      };
     }
   }, [game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Stats + sound on complete (delay sound so card-flip animation plays first)
+  // Stats + sound + result payoff on complete
   useEffect(() => {
     if (game.phase === 'complete') {
       stats.recordHandPlayed();
+      const results = game.playerHands.map(h => h.result);
+      const hasBlackjack = results.includes('blackjack');
+      const hasWin = results.includes('win');
+      const hasLose = results.includes('lose') && !hasWin && !hasBlackjack;
+
+      // Determine payoff state
+      if (hasBlackjack) {
+        setResultPayoff('blackjack');
+        setGoldVignette(true);
+        setTimeout(() => setGoldVignette(false), 600);
+      } else if (hasWin) {
+        setResultPayoff('win');
+      } else if (hasLose) {
+        setResultPayoff('lose');
+      } else {
+        setResultPayoff('push');
+      }
+
       const t = setTimeout(() => pickResultSound(game.playerHands)(), 100);
       return () => clearTimeout(t);
     }
@@ -161,6 +214,19 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       setSettleBounce(true);
       const timer = setTimeout(() => setSettleBounce(false), 300);
       return () => clearTimeout(timer);
+    }
+  }, [game.phase]);
+
+  // Lock-in effect — when player turn ends and dealer begins
+  useEffect(() => {
+    if (game.phase === 'dealer_turn') {
+      setLockedIn(true);
+      playLockIn();
+    } else if (game.phase === 'betting') {
+      setLockedIn(false);
+      setResultPayoff(null);
+      setDealerSuspense(false);
+      setGoldVignette(false);
     }
   }, [game.phase]);
 
@@ -362,7 +428,11 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ DEALER ZONE ══ */}
-      <div className="flex-[4] flex flex-col items-center justify-center min-h-0 relative">
+      <motion.div
+        className="flex-[4] flex flex-col items-center justify-center min-h-0 relative"
+        animate={sweepingCards ? { x: 600, opacity: 0, rotate: 8 } : { x: 0, opacity: 1, rotate: 0 }}
+        transition={sweepingCards ? { duration: 0.35, ease: 'easeIn' } : { duration: 0.01 }}
+      >
         {rules.showCount !== 'off' && (
           <div className="absolute top-4 left-6 z-10">
             <RunningCount mode={rules.showCount} />
@@ -373,8 +443,9 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           holeCardRevealed={game.dealerHoleCardRevealed}
           showHandTotals={rules.showHandTotals}
           settleBounce={settleBounce}
+          suspense={dealerSuspense}
         />
-      </div>
+      </motion.div>
 
       {/* ══ DIVIDER — fixed height so message pill appearing/disappearing never shifts cards ══ */}
       <div className="shrink-0 flex items-center gap-6 px-12" style={{ height: '52px' }}>
@@ -420,7 +491,12 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       {/* ══ PLAYER ZONE ══ */}
       <div className="flex-[6] flex flex-col min-h-0">
         {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
-        <div className="flex-1 flex items-center justify-center min-h-0" style={{ paddingBottom: '12px' }}>
+        <motion.div
+          className="flex-1 flex items-center justify-center min-h-0"
+          style={{ paddingBottom: '12px' }}
+          animate={sweepingCards ? { x: 600, opacity: 0, rotate: 8 } : { x: 0, opacity: 1, rotate: 0 }}
+          transition={sweepingCards ? { duration: 0.35, ease: 'easeIn', delay: 0.05 } : { duration: 0.01 }}
+        >
           <div className="flex gap-14 items-start justify-center">
             {game.playerHands.map((hand, i) => (
               <PlayerHand
@@ -431,10 +507,12 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 totalHands={game.playerHands.length}
                 showHandTotals={rules.showHandTotals}
                 settleBounce={settleBounce}
+                lockedIn={lockedIn}
+                resultPayoff={resultPayoff}
               />
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Controls — fixed height, content absolutely positioned so cards never shift */}
         <div className="shrink-0 relative" style={{ height: '260px' }}>
@@ -525,7 +603,15 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 <motion.button
                   whileHover={{ scale: 1.04, y: -3 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => { playNextHand(); game.newHand(); }}
+                  onClick={() => {
+                    playSweep();
+                    setSweepingCards(true);
+                    setTimeout(() => {
+                      game.newHand();
+                      setSweepingCards(false);
+                      playNextHand();
+                    }, 500);
+                  }}
                   className="font-black uppercase tracking-widest cta-pulse"
                   style={{
                     padding: '22px 120px',
@@ -573,6 +659,17 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         onClose={() => setSettingsOpen(false)}
         onBackToMenu={onBackToMenu}
       />
+
+      {/* ══ GOLD VIGNETTE — blackjack celebration flash ══ */}
+      {goldVignette && (
+        <div
+          className="fixed inset-0 pointer-events-none gold-vignette"
+          style={{
+            background: 'radial-gradient(ellipse at center, transparent 50%, rgba(250,204,21,0.15) 100%)',
+            zIndex: 100,
+          }}
+        />
+      )}
     </div>
   );
 }
