@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { playChip } from '../../engine/sounds';
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 
 interface BetControlsProps {
   currentBet: number;
@@ -18,6 +19,7 @@ const CHIPS = [
 export default function BetControls({ currentBet, balance, onBetChange, onDeal }: BetControlsProps) {
   const canDeal = currentBet > 0 && currentBet <= balance;
   const showClear = currentBet > 0;
+  const animatedBet = useAnimatedNumber(currentBet);
 
   const handleChipClick = (chipValue: number) => {
     if (currentBet + chipValue <= balance) {
@@ -38,7 +40,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         <div className="text-center">
           <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Your Bet</div>
           <div className="text-3xl font-black text-yellow-400 min-w-[80px]">
-            {currentBet > 0 ? `$${currentBet.toLocaleString()}` : '—'}
+            {currentBet > 0 ? `$${animatedBet.toLocaleString()}` : '—'}
           </div>
         </div>
       </div>

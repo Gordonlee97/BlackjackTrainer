@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore, playDealerSteps } from '../../store/gameStore';
 import { calculatePayout } from '../../engine/payout';
@@ -57,6 +58,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
   const splitAnimatingRef = useRef(false);
+  const animatedBalance = useAnimatedNumber(game.balance);
 
   // Sync volume setting
   useEffect(() => { setMasterVolume(rules.soundVolume / 100); }, [rules.soundVolume]);
@@ -341,7 +343,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           </div>
           <div className="text-right">
             <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-2">Balance</span>
-            <span className="font-black text-yellow-400 leading-none whitespace-nowrap" style={{ fontSize: 'var(--text-3xl)' }}>${game.balance.toLocaleString()}</span>
+            <span className="font-black text-yellow-400 leading-none whitespace-nowrap" style={{ fontSize: 'var(--text-3xl)' }}>${animatedBalance.toLocaleString()}</span>
           </div>
         </div>
       </div>

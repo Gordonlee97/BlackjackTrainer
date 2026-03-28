@@ -1,9 +1,17 @@
 import { useStatsStore } from '../../store/statsStore';
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 
 export default function StatsPanel() {
   const { handsPlayed, correctDecisions, totalDecisions, accuracy, currentStreak, bestStreak } = useStatsStore();
 
-  const accDisplay = totalDecisions > 0 ? `${accuracy.toFixed(1)}%` : '—';
+  const animatedHands = useAnimatedNumber(handsPlayed);
+  const animatedAccuracy = useAnimatedNumber(accuracy, 400);
+  const animatedStreak = useAnimatedNumber(currentStreak);
+  const animatedBest = useAnimatedNumber(bestStreak);
+  const animatedCorrect = useAnimatedNumber(correctDecisions);
+  const animatedTotal = useAnimatedNumber(totalDecisions);
+
+  const accDisplay = totalDecisions > 0 ? `${animatedAccuracy.toFixed(1)}%` : '—';
   const accHighlight = accuracy >= 90 && totalDecisions > 0;
   const accWarning = accuracy < 70 && totalDecisions > 5;
 
@@ -17,15 +25,15 @@ export default function StatsPanel() {
         border: '1px solid var(--border-subtle)',
       }}
     >
-      <Stat label="Hands"    value={handsPlayed || '—'} />
+      <Stat label="Hands"    value={handsPlayed > 0 ? animatedHands : '—'} />
       <Sep />
       <Stat label="Accuracy" value={accDisplay} highlight={accHighlight} warn={accWarning} />
       <Sep />
-      <Stat label="Correct"  value={totalDecisions > 0 ? `${correctDecisions}/${totalDecisions}` : '—'} />
+      <Stat label="Correct"  value={totalDecisions > 0 ? `${animatedCorrect}/${animatedTotal}` : '—'} />
       <Sep />
-      <Stat label="Streak"   value={currentStreak || '—'} highlight={currentStreak >= 5} />
+      <Stat label="Streak"   value={currentStreak > 0 ? animatedStreak : '—'} highlight={currentStreak >= 5} />
       <Sep />
-      <Stat label="Best"     value={bestStreak || '—'} />
+      <Stat label="Best"     value={bestStreak > 0 ? animatedBest : '—'} />
     </div>
   );
 }
