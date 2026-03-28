@@ -11,7 +11,7 @@ import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
 import type { HandState } from '../../engine/types';
-import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playTensionStart, playTensionStop, playSweep, setMasterVolume } from '../../engine/sounds';
+import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playSweep, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import ActionButtons from './ActionButtons';
@@ -118,21 +118,20 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       const timers: ReturnType<typeof setTimeout>[] = [];
 
       // Lock-in pause before dealer starts (500ms breath)
-      const LOCK_IN_PAUSE = 500;
+      const LOCK_IN_PAUSE = 350;
       // Delay before hole card flip after lock-in
-      const REVEAL_DELAY = 200;
+      const REVEAL_DELAY = 150;
       // Base draw interval, escalates per card
-      const BASE_DRAW = 700;
-      const DRAW_ESCALATION = 100;
-      const MAX_DRAW = 1000;
+      const BASE_DRAW = 550;
+      const DRAW_ESCALATION = 80;
+      const MAX_DRAW = 800;
       const SETTLE_DELAY = 450;
 
       let delay = LOCK_IN_PAUSE + REVEAL_DELAY;
 
-      // Start tension audio after lock-in pause
+      // Start dealer suspense visuals after lock-in pause
       timers.push(setTimeout(() => {
         setDealerSuspense(true);
-        playTensionStart();
       }, LOCK_IN_PAUSE));
 
       steps.forEach((step, i) => {
@@ -147,7 +146,6 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
 
           // Stop tension and resolve on final step
           if (isLast) {
-            playTensionStop();
             setDealerSuspense(false);
           }
         }, delay));
@@ -166,7 +164,6 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
 
       return () => {
         timers.forEach(clearTimeout);
-        playTensionStop();
       };
     }
   }, [game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -428,16 +425,17 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ DEALER ZONE ══ */}
-      <motion.div
-        className="flex-[4] flex flex-col items-center justify-center min-h-0 relative"
-        animate={sweepingCards ? { x: 600, opacity: 0, rotate: 8 } : { x: 0, opacity: 1, rotate: 0 }}
-        transition={sweepingCards ? { duration: 0.35, ease: 'easeIn' } : { duration: 0.01 }}
-      >
+      <div className="flex-[4] flex flex-col items-center justify-center min-h-0 relative">
         {rules.showCount !== 'off' && (
           <div className="absolute top-4 left-6 z-10">
             <RunningCount mode={rules.showCount} />
           </div>
         )}
+        <motion.div
+          className="flex flex-col items-center justify-center"
+          animate={sweepingCards ? { x: 350, y: -300, opacity: 0, scale: 0.85 } : { x: 0, y: 0, opacity: 1, scale: 1 }}
+          transition={sweepingCards ? { duration: 0.35, ease: 'easeIn' } : { duration: 0.01 }}
+        >
         <DealerHand
           hand={game.dealerHand}
           holeCardRevealed={game.dealerHoleCardRevealed}
@@ -445,7 +443,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           settleBounce={settleBounce}
           suspense={dealerSuspense}
         />
-      </motion.div>
+        </motion.div>
+      </div>
 
       {/* ══ DIVIDER — fixed height so message pill appearing/disappearing never shifts cards ══ */}
       <div className="shrink-0 flex items-center gap-6 px-12" style={{ height: '52px' }}>
@@ -494,7 +493,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         <motion.div
           className="flex-1 flex items-center justify-center min-h-0"
           style={{ paddingBottom: '12px' }}
-          animate={sweepingCards ? { x: 600, opacity: 0, rotate: 8 } : { x: 0, opacity: 1, rotate: 0 }}
+          animate={sweepingCards ? { x: 350, y: -300, opacity: 0, scale: 0.85 } : { x: 0, y: 0, opacity: 1, scale: 1 }}
           transition={sweepingCards ? { duration: 0.35, ease: 'easeIn', delay: 0.05 } : { duration: 0.01 }}
         >
           <div className="flex gap-14 items-start justify-center">

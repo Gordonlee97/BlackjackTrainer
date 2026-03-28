@@ -37,7 +37,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
 
   return (
     <div
-      className={`flex flex-col items-center gap-4 transition-all duration-200 ${
+      className={`flex flex-col items-center gap-6 transition-all duration-200 ${
         shouldDim ? 'opacity-50 scale-95' : ''
       }`}
     >

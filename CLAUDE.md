@@ -53,6 +53,16 @@ Controls container is fixed height (260px) with `position: relative`. All phase 
 ### 4. Nothing should touch screen edges
 Top bar: `padding: 0 24px`. Balance text: `whitespace-nowrap`. Footer areas: `px-8 pb-8`.
 
+## Workflow Rules
+
+### Update memory on every git push
+Every time changes are committed and pushed to git, update the memory system with relevant information from the changes. This includes:
+- New features, architectural patterns, or design decisions worth remembering
+- UI/UX feedback and preferences expressed during the session
+- Project state changes (current branch focus, what's been completed, what's next)
+
+Do NOT save code patterns, file paths, or anything derivable from the codebase itself — only context, decisions, and preferences that would be lost between sessions.
+
 ## TypeScript Conventions
 
 - `verbatimModuleSyntax` enabled — use `import type { ... }` for type-only imports
