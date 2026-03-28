@@ -101,7 +101,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       useGameStore.setState({});
     }, (pendingIndices.length + 1) * 600);
 
-  }, [splitHandCount, game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [splitHandCount, game.phase]);
 
   // Dealer play — apply steps sequentially for smooth card-by-card animation
   useEffect(() => {

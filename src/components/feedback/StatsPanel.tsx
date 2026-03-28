@@ -23,9 +23,9 @@ export default function StatsPanel() {
     prevStreakRef.current = curr;
 
     if (curr > prev && milestones.includes(curr)) {
-      setMilestoneHit(true);
-      const timer = setTimeout(() => setMilestoneHit(false), 1000);
-      return () => clearTimeout(timer);
+      const start = setTimeout(() => setMilestoneHit(true), 0);
+      const end = setTimeout(() => setMilestoneHit(false), 1000);
+      return () => { clearTimeout(start); clearTimeout(end); };
     }
   }, [currentStreak]);
 
