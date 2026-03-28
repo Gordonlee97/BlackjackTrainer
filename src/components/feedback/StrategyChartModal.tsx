@@ -120,7 +120,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
           {/* Backdrop */}
           <div
             className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.80)', backdropFilter: 'blur(10px)' }}
+            style={{ background: 'var(--surface-overlay)', backdropFilter: 'blur(10px)' }}
             onClick={onClose}
           />
 
@@ -131,10 +131,10 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             style={{
               width: 'min(92vw, 920px)',
               maxHeight: '88vh',
-              background: 'linear-gradient(160deg, #1c2b22 0%, #0f1c15 55%, #090f0b 100%)',
-              border: '1px solid rgba(255,255,255,0.11)',
-              borderRadius: '24px',
-              boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
+              background: 'var(--modal-bg)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-modal)',
               margin: '24px',
             }}
             initial={{ scale: 0.97, opacity: 0 }}

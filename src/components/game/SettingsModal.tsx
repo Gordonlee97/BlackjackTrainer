@@ -25,7 +25,7 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
           {/* Backdrop */}
           <div
             className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}
+            style={{ background: 'var(--surface-overlay)', backdropFilter: 'blur(10px)' }}
             onClick={onClose}
           />
 
@@ -36,10 +36,10 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
             style={{
               width: 'min(92vw, 720px)',
               maxHeight: '85vh',
-              background: 'linear-gradient(160deg, #1c2b22 0%, #0f1c15 55%, #090f0b 100%)',
-              border: '1px solid rgba(255,255,255,0.11)',
-              borderRadius: '28px',
-              boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
+              background: 'var(--modal-bg)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-modal)',
             }}
             initial={{ y: 32, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -215,7 +215,7 @@ function SelectRow({ label, value, options, onChange, last }: {
     <div
       className="flex items-center justify-between"
       style={{
-        padding: '18px 24px',
+        padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
       }}
     >
@@ -255,7 +255,7 @@ function ToggleRow({ label, checked, onChange, last }: {
     <div
       className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
       style={{
-        padding: '18px 24px',
+        padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
       }}
       onClick={() => onChange(!checked)}
@@ -264,7 +264,7 @@ function ToggleRow({ label, checked, onChange, last }: {
       <div
         className="relative shrink-0 transition-all duration-200"
         style={{
-          width: 52, height: 30,
+          width: 58, height: 34,
           marginLeft: '16px',
           borderRadius: 9999,
           background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
@@ -276,10 +276,10 @@ function ToggleRow({ label, checked, onChange, last }: {
           className="absolute transition-transform duration-200"
           style={{
             top: 3, left: 3,
-            width: 22, height: 22,
+            width: 26, height: 26,
             borderRadius: 9999,
             background: checked ? '#f59e0b' : 'rgba(255,255,255,0.4)',
-            transform: checked ? 'translateX(22px)' : 'translateX(0)',
+            transform: checked ? 'translateX(26px)' : 'translateX(0)',
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />
@@ -298,7 +298,7 @@ function SliderRow({ label, value, onChange, last }: {
     <div
       className="flex items-center justify-between"
       style={{
-        padding: '18px 24px',
+        padding: 'var(--row-padding)',
         gap: '24px',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
       }}

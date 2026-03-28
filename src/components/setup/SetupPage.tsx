@@ -20,7 +20,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
         className="shrink-0 flex items-center justify-center gap-6"
         style={{
           padding: '40px 32px 32px 32px',
-          background: 'rgba(0,0,0,0.25)',
+          background: 'var(--surface-section)',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
@@ -136,15 +136,15 @@ function Section({ label, children }: { label: string; children: React.ReactNode
     <div>
       <p
         className="uppercase tracking-[0.18em]"
-        style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', padding: '0 4px', marginBottom: '10px' }}
+        style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'rgba(255,255,255,0.4)', padding: '0 4px', marginBottom: '10px' }}
       >
         {label}
       </p>
       <div
         style={{
-          background: 'rgba(0,0,0,0.25)',
-          border: '1px solid rgba(255,255,255,0.07)',
-          borderRadius: '16px',
+          background: 'var(--surface-section)',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
         }}
       >
@@ -165,7 +165,7 @@ function SelectRow({ label, value, options, onChange, last }: {
     <div
       className="flex items-center justify-between"
       style={{
-        padding: '16px 24px',
+        padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
       }}
     >
@@ -179,7 +179,7 @@ function SelectRow({ label, value, options, onChange, last }: {
           fontSize: '15px',
           fontWeight: 600,
           background: 'rgba(255,255,255,0.09)',
-          border: '1px solid rgba(255,255,255,0.12)',
+          border: '1px solid var(--border-light)',
           borderRadius: '12px',
           padding: '12px 18px',
           minWidth: '260px',
@@ -205,7 +205,7 @@ function ToggleRow({ label, checked, onChange, last }: {
     <div
       className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
       style={{
-        padding: '16px 24px',
+        padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
       }}
       onClick={() => onChange(!checked)}
@@ -219,7 +219,7 @@ function ToggleRow({ label, checked, onChange, last }: {
           marginLeft: '16px',
           borderRadius: 9999,
           background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
-          border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
+          border: checked ? '1.5px solid rgba(245,158,11,0.7)' : `1.5px solid var(--border-light)`,
           boxShadow: checked ? '0 0 14px rgba(245,158,11,0.25)' : 'none',
         }}
       >
@@ -251,7 +251,7 @@ function SliderRow({ label, value, onChange, last }: {
     <div
       className="flex items-center justify-between"
       style={{
-        padding: '16px 24px',
+        padding: 'var(--row-padding)',
         gap: '24px',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
       }}

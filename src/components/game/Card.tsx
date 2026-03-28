@@ -7,6 +7,8 @@ interface CardProps {
   delay?: number;
   smoothLayout?: boolean;
   settled?: boolean;
+  /** Unique index across all cards on table, used for rotation variation */
+  dealId?: number;
 }
 
 const SUIT_SYMBOLS: Record<string, string> = {
@@ -16,7 +18,7 @@ const SUIT_SYMBOLS: Record<string, string> = {
   spades: '\u2660',
 };
 
-export default function Card({ card, index = 0, delay = 0, smoothLayout = false, settled = false }: CardProps) {
+export default function Card({ card, index = 0, delay = 0, smoothLayout = false, settled = false, dealId = 0 }: CardProps) {
   const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
 
   return (
@@ -24,15 +26,32 @@ export default function Card({ card, index = 0, delay = 0, smoothLayout = false,
       layout={smoothLayout}
       className="relative shrink-0"
       style={{ marginLeft: index > 0 ? '-48px' : '0', zIndex: index }}
-      initial={{ x: 350, y: -60, opacity: 0, rotateY: 180, rotate: -5 }}
-      animate={{ x: 0, y: 0, opacity: 1, rotateY: card.faceUp ? 0 : 180, rotate: 0 }}
+      initial={{
+        x: 350,
+        y: -300,
+        rotate: 18 + ((dealId % 5) - 2) * 2.5,
+        scale: 0.85,
+        opacity: 0.7,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+      }}
+      animate={{
+        x: 0,
+        y: 0,
+        rotate: 0,
+        scale: 1,
+        opacity: 1,
+        rotateY: card.faceUp ? 0 : 180,
+        boxShadow: '0 10px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3)',
+      }}
       transition={{
         type: 'spring',
-        stiffness: 160,
+        stiffness: 380,
         damping: 20,
-        mass: 0.8,
+        mass: 0.7,
         delay,
+        rotateY: { type: 'spring', stiffness: 200, damping: 28, delay },
         layout: { type: 'spring', stiffness: 200, damping: 28 },
+        opacity: { duration: 0.15, delay },
       }}
     >
       <div

@@ -67,15 +67,16 @@ export default function ResultAnnouncement({ hands }: ResultAnnouncementProps) {
       initial={{ scale: 0.6, opacity: 0, y: 10 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-      className={`flex flex-col items-center justify-center px-12 py-5 rounded-2xl shadow-2xl ${cfg.textClass}`}
+      className={`flex flex-col items-center justify-center px-12 py-5 shadow-2xl ${cfg.textClass}`}
       style={{
         background: cfg.bg,
         border: `1.5px solid ${cfg.border}`,
         minWidth: '240px',
+        borderRadius: 'var(--radius-lg)',
       }}
     >
-      <div className="text-3xl font-black tracking-tight leading-none">{cfg.label}</div>
-      <div className="text-sm opacity-70 mt-1.5 font-medium tracking-wide">{cfg.sub}</div>
+      <div className="font-black tracking-tight leading-none" style={{ fontSize: 'var(--text-3xl)' }}>{cfg.label}</div>
+      <div className="opacity-70 mt-1.5 font-medium tracking-wide" style={{ fontSize: 'var(--text-sm)' }}>{cfg.sub}</div>
     </motion.div>
   );
 }

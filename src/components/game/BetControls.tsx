@@ -1,5 +1,6 @@
-import { motion } from 'framer-motion';
-import { playChip } from '../../engine/sounds';
+import { motion, AnimatePresence } from 'framer-motion';
+import { playChip, playDealButton } from '../../engine/sounds';
+import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 
 interface BetControlsProps {
   currentBet: number;
@@ -15,9 +16,35 @@ const CHIPS = [
   { value: 500, label: '$500', bg: '#581c87', ring: '#c4b5fd', innerRing: 'rgba(196,181,253,0.25)' },
 ];
 
+interface StackChip {
+  value: number;
+  color: string;
+  borderColor: string;
+}
+
+const CHIP_DENOM = [
+  { value: 500, color: '#581c87', borderColor: 'rgba(139,92,246,0.6)' },
+  { value: 100, color: '#1e3a5f', borderColor: 'rgba(59,130,246,0.6)' },
+  { value: 25, color: '#166534', borderColor: 'rgba(16,185,129,0.6)' },
+  { value: 5, color: '#991b1b', borderColor: 'rgba(239,68,68,0.6)' },
+];
+
+function betToChips(amount: number): StackChip[] {
+  const chips: StackChip[] = [];
+  let remaining = amount;
+  for (const denom of CHIP_DENOM) {
+    while (remaining >= denom.value) {
+      chips.push({ value: denom.value, color: denom.color, borderColor: denom.borderColor });
+      remaining -= denom.value;
+    }
+  }
+  return chips;
+}
+
 export default function BetControls({ currentBet, balance, onBetChange, onDeal }: BetControlsProps) {
   const canDeal = currentBet > 0 && currentBet <= balance;
   const showClear = currentBet > 0;
+  const animatedBet = useAnimatedNumber(currentBet);
 
   const handleChipClick = (chipValue: number) => {
     if (currentBet + chipValue <= balance) {
@@ -38,9 +65,63 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         <div className="text-center">
           <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Your Bet</div>
           <div className="text-3xl font-black text-yellow-400 min-w-[80px]">
-            {currentBet > 0 ? `$${currentBet.toLocaleString()}` : '—'}
+            {currentBet > 0 ? `$${animatedBet.toLocaleString()}` : '—'}
           </div>
         </div>
+      </div>
+
+      {/* Chip stack visualization — always rendered to prevent layout shift */}
+      <div style={{ position: 'relative', height: 80, width: 64, margin: '16px auto 0', visibility: currentBet > 0 ? 'visible' : 'hidden' }}>
+        <AnimatePresence>
+          {betToChips(currentBet).slice(0, 10).map((chip, i) => (
+            <motion.div
+              key={`${chip.value}-${i}`}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0, opacity: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 500,
+                damping: 25,
+                delay: i * 0.08,
+              }}
+              style={{
+                position: 'absolute',
+                bottom: i * 4,
+                left: 0,
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                background: chip.color,
+                border: `3px dashed ${chip.borderColor}`,
+                boxShadow: `0 2px 8px rgba(0,0,0,0.4), inset 0 0 0 10px rgba(255,255,255,0.08)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 13,
+                fontWeight: 800,
+                color: 'white',
+                zIndex: i,
+              }}
+            >
+              ${chip.value}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {betToChips(currentBet).length > 10 && (
+          <div style={{
+            position: 'absolute',
+            bottom: 44,
+            left: 0,
+            width: 64,
+            textAlign: 'center',
+            fontSize: 11,
+            fontWeight: 700,
+            color: 'rgba(255,255,255,0.5)',
+          }}>
+            x{betToChips(currentBet).length}
+          </div>
+        )}
       </div>
 
       {/* Chips row */}
@@ -58,7 +139,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
               style={{
                 width: '116px',
                 height: '116px',
-                fontSize: '18px',
+                fontSize: 'var(--text-lg)',
                 backgroundColor: canAdd ? chip.bg : '#1f2937',
                 border: `3px dashed ${canAdd ? chip.ring : '#374151'}`,
                 color: canAdd ? 'white' : '#4b5563',
@@ -83,9 +164,9 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
           title="Clear bet"
           className="w-12 h-12 rounded-full flex items-center justify-center text-base transition-all"
           style={{
-            border: '1.5px solid rgba(255,255,255,0.12)',
+            border: '1.5px solid var(--border-light)',
             color: showClear ? 'rgba(255,255,255,0.4)' : 'transparent',
-            borderColor: showClear ? 'rgba(255,255,255,0.12)' : 'transparent',
+            borderColor: showClear ? 'var(--border-light)' : 'transparent',
             cursor: showClear ? 'pointer' : 'default',
           }}
         >
@@ -97,13 +178,13 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
       <motion.button
         whileHover={canDeal ? { scale: 1.03, y: -2 } : {}}
         whileTap={canDeal ? { scale: 0.97 } : {}}
-        onClick={onDeal}
+        onClick={() => { playDealButton(); onDeal(); }}
         disabled={!canDeal}
         className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
         style={canDeal ? {
           marginTop: '28px',
           padding: '22px 120px',
-          fontSize: '22px',
+          fontSize: 'var(--text-xl)',
           borderRadius: '18px',
           background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
           border: 'none',
@@ -113,7 +194,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         } : {
           marginTop: '28px',
           padding: '22px 120px',
-          fontSize: '22px',
+          fontSize: 'var(--text-xl)',
           borderRadius: '18px',
           background: 'rgba(255,255,255,0.04)',
           border: 'none',
