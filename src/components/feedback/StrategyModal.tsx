@@ -60,17 +60,17 @@ export default function StrategyModal({
         >
           <div
             className="absolute inset-0 backdrop-blur-sm"
-            style={{ background: 'rgba(0,0,0,0.70)' }}
+            style={{ background: 'var(--surface-overlay)' }}
             onClick={!blockMode ? onClose : undefined}
           />
           <motion.div
             className="relative flex flex-col"
             style={{
               width: 'min(92vw, 520px)',
-              background: 'linear-gradient(160deg, #1e2535 0%, #151c2c 55%, #0f1520 100%)',
-              border: '1px solid rgba(255,255,255,0.11)',
-              borderRadius: '28px',
-              boxShadow: '0 32px 100px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04)',
+              background: 'var(--modal-bg)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-xl)',
+              boxShadow: 'var(--shadow-modal)',
             }}
             initial={{ scale: 0.85, y: 40, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
