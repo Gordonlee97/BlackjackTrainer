@@ -1,4 +1,4 @@
-import { LayoutGroup } from 'framer-motion';
+import { motion, LayoutGroup } from 'framer-motion';
 import Card from './Card';
 import HandTotal from './HandTotal';
 import type { HandState } from '../../engine/types';
@@ -7,9 +7,10 @@ interface DealerHandProps {
   hand: HandState;
   holeCardRevealed: boolean;
   showHandTotals: boolean;
+  settleBounce?: boolean;
 }
 
-export default function DealerHand({ hand, holeCardRevealed, showHandTotals }: DealerHandProps) {
+export default function DealerHand({ hand, holeCardRevealed, showHandTotals, settleBounce }: DealerHandProps) {
   if (hand.cards.length === 0) return null;
 
   const isSettled = hand.isComplete;
@@ -20,7 +21,11 @@ export default function DealerHand({ hand, holeCardRevealed, showHandTotals }: D
         Dealer
       </div>
       <LayoutGroup>
-        <div className="flex items-center justify-center">
+        <motion.div
+          className="flex items-center justify-center"
+          animate={settleBounce ? { y: [0, -3, 0], scale: [1, 1.008, 1] } : {}}
+          transition={{ duration: 0.15, ease: 'easeOut' }}
+        >
           {hand.cards.map((card, i) => (
             <Card
               key={`dealer-${i}`}
@@ -31,7 +36,7 @@ export default function DealerHand({ hand, holeCardRevealed, showHandTotals }: D
               settled={isSettled}
             />
           ))}
-        </div>
+        </motion.div>
       </LayoutGroup>
       {showHandTotals && <HandTotal cards={hand.cards} hideHole={!holeCardRevealed} />}
     </div>

@@ -49,6 +49,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [chartOpen, setChartOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settleBounce, setSettleBounce] = useState(false);
   const [modalData, setModalData] = useState<{
     playerAction: FinalAction;
     advice: StrategyAdvice;
@@ -141,6 +142,15 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   // Deal sound
   useEffect(() => {
     if (game.phase === 'dealing') playDeal();
+  }, [game.phase]);
+
+  // Settle bounce — fires once when dealing completes and player_turn begins
+  useEffect(() => {
+    if (game.phase === 'player_turn') {
+      setSettleBounce(true);
+      const timer = setTimeout(() => setSettleBounce(false), 300);
+      return () => clearTimeout(timer);
+    }
   }, [game.phase]);
 
   // Dramatic natural reveal — cards deal normally, then hole card flips, then settle
@@ -347,6 +357,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           hand={game.dealerHand}
           holeCardRevealed={game.dealerHoleCardRevealed}
           showHandTotals={rules.showHandTotals}
+          settleBounce={settleBounce}
         />
       </div>
 
@@ -384,6 +395,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 handIndex={i}
                 totalHands={game.playerHands.length}
                 showHandTotals={rules.showHandTotals}
+                settleBounce={settleBounce}
               />
             ))}
           </div>
