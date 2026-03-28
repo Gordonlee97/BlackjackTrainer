@@ -10,6 +10,10 @@ interface PlayerHandProps {
   totalHands: number;
   showHandTotals: boolean;
   settleBounce?: boolean;
+  /** Cards are locked in (stand/double/surrender) — compress and darken */
+  lockedIn?: boolean;
+  /** Result payoff state: 'win' brightens cards, 'lose' keeps dark, null = normal */
+  resultPayoff?: 'win' | 'blackjack' | 'lose' | 'push' | null;
 }
 
 const RESULT_CONFIG: Record<string, { classes: string; label: string; glow: string; shimmer?: boolean }> = {
@@ -20,7 +24,7 @@ const RESULT_CONFIG: Record<string, { classes: string; label: string; glow: stri
   surrender: { classes: 'bg-slate-500 text-white',    label: 'Surrender',  glow: '0 0 16px rgba(100,116,139,0.3)' },
 };
 
-export default function PlayerHand({ hand, isActive, handIndex, totalHands, showHandTotals, settleBounce }: PlayerHandProps) {
+export default function PlayerHand({ hand, isActive, handIndex, totalHands, showHandTotals, settleBounce, lockedIn, resultPayoff }: PlayerHandProps) {
   if (hand.cards.length === 0) return null;
 
   const result = hand.result ? RESULT_CONFIG[hand.result] : null;
@@ -46,8 +50,30 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
       <LayoutGroup>
         <motion.div
           className="flex items-center justify-center"
-          animate={settleBounce ? { y: [0, -3, 0], scale: [1, 1.008, 1] } : {}}
-          transition={{ duration: 0.15, ease: 'easeOut' }}
+          animate={
+            settleBounce
+              ? { y: [0, -3, 0], scale: [1, 1.008, 1] }
+              : lockedIn && !resultPayoff
+                ? { y: 2, scale: 0.98 }
+                : resultPayoff === 'win' || resultPayoff === 'blackjack'
+                  ? { y: -4, scale: 1.02 }
+                  : resultPayoff === 'lose'
+                    ? { y: 2, scale: 0.98 }
+                    : {}
+          }
+          transition={
+            settleBounce
+              ? { duration: 0.15, ease: 'easeOut' }
+              : { type: 'spring', stiffness: 300, damping: 22 }
+          }
+          style={{
+            filter:
+              lockedIn && resultPayoff !== 'win' && resultPayoff !== 'blackjack' && resultPayoff !== 'push'
+                ? 'brightness(0.85) saturate(0.9)'
+                : 'brightness(1) saturate(1)',
+            transition: 'filter 0.25s ease',
+            gap: lockedIn ? '-58px' : undefined,
+          }}
         >
           {hand.cards.map((card, i) => (
             <Card
@@ -57,6 +83,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
               delay={i < 2 ? i * 0.2 : 0}
               smoothLayout
               settled={isSettled}
+              dealId={handIndex * 10 + i}
             />
           ))}
         </motion.div>
