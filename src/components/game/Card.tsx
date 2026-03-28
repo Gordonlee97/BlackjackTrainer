@@ -9,6 +9,10 @@ interface CardProps {
   settled?: boolean;
   /** Unique index across all cards on table, used for rotation variation */
   dealId?: number;
+  /** Card is being swept off the table */
+  sweeping?: boolean;
+  /** Stagger delay for sweep animation */
+  sweepDelay?: number;
 }
 
 const SUIT_SYMBOLS: Record<string, string> = {
@@ -18,13 +22,15 @@ const SUIT_SYMBOLS: Record<string, string> = {
   spades: '\u2660',
 };
 
-export default function Card({ card, index = 0, delay = 0, smoothLayout = false, settled = false, dealId = 0 }: CardProps) {
+export default function Card({ card, index = 0, delay = 0, smoothLayout = false, settled = false, dealId = 0, sweeping = false, sweepDelay = 0 }: CardProps) {
   const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
+
+  const sweepRotate = -5 + ((dealId % 7) - 3) * 3;
 
   return (
     <motion.div
       layout={smoothLayout}
-      className="relative shrink-0"
+      className="relative shrink-0 rounded-2xl"
       style={{ marginLeft: index > 0 ? '-48px' : '0', zIndex: index }}
       initial={{
         x: 350,
@@ -34,7 +40,14 @@ export default function Card({ card, index = 0, delay = 0, smoothLayout = false,
         opacity: 0.7,
         boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
       }}
-      animate={{
+      animate={sweeping ? {
+        x: 350,
+        y: -300,
+        rotate: sweepRotate,
+        scale: 0.85,
+        opacity: 0,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+      } : {
         x: 0,
         y: 0,
         rotate: 0,
@@ -43,7 +56,12 @@ export default function Card({ card, index = 0, delay = 0, smoothLayout = false,
         rotateY: card.faceUp ? 0 : 180,
         boxShadow: '0 10px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3)',
       }}
-      transition={{
+      transition={sweeping ? {
+        duration: 0.35,
+        ease: [0.4, 0, 0.8, 0.2],
+        delay: sweepDelay,
+        opacity: { duration: 0.25, delay: sweepDelay + 0.08 },
+      } : {
         type: 'spring',
         stiffness: 380,
         damping: 20,

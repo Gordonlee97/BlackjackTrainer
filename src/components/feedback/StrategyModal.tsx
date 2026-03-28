@@ -11,6 +11,7 @@ interface StrategyModalProps {
   dealerUpcard: number;
   onClose: () => void;
   onForceCorrect?: () => void;
+  onPlayAnyways?: () => void;
   blockMode: boolean;
 }
 
@@ -37,6 +38,7 @@ export default function StrategyModal({
   dealerUpcard,
   onClose,
   onForceCorrect,
+  onPlayAnyways,
   blockMode,
 }: StrategyModalProps) {
   const explanation = getExplanation({
@@ -140,25 +142,45 @@ export default function StrategyModal({
               </div>
             </div>
 
-            {/* Action button */}
-            <div style={{ padding: '28px 40px 36px 40px' }}>
+            {/* Action buttons */}
+            <div style={{ padding: '28px 40px 36px 40px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {blockMode && onForceCorrect ? (
-                <motion.button
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={onForceCorrect}
-                  className="w-full font-black uppercase tracking-widest text-white"
-                  style={{
-                    padding: '20px 32px',
-                    fontSize: '17px',
-                    borderRadius: '16px',
-                    background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
-                    border: 'none',
-                    boxShadow: '0 8px 32px rgba(16,185,129,0.35), 0 2px 8px rgba(0,0,0,0.3)',
-                  }}
-                >
-                  Play Correct Move
-                </motion.button>
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={onForceCorrect}
+                    className="w-full font-black uppercase tracking-widest text-white"
+                    style={{
+                      padding: '20px 32px',
+                      fontSize: '17px',
+                      borderRadius: '16px',
+                      background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
+                      border: 'none',
+                      boxShadow: '0 8px 32px rgba(16,185,129,0.35), 0 2px 8px rgba(0,0,0,0.3)',
+                    }}
+                  >
+                    Try Again
+                  </motion.button>
+                  {onPlayAnyways && (
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={onPlayAnyways}
+                      className="w-full font-semibold uppercase tracking-widest"
+                      style={{
+                        padding: '14px 32px',
+                        fontSize: '13px',
+                        borderRadius: '16px',
+                        background: 'rgba(255,255,255,0.06)',
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        color: 'rgba(255,255,255,0.40)',
+                      }}
+                    >
+                      Play Anyways
+                    </motion.button>
+                  )}
+                </>
               ) : (
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
