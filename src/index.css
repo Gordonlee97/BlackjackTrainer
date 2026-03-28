@@ -179,3 +179,14 @@ input[type="range"]::-moz-range-thumb {
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
 }
+
+/* ── Gold vignette flash — blackjack celebration ── */
+@keyframes gold-vignette {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.gold-vignette {
+  animation: gold-vignette 0.55s ease-out forwards;
+}
