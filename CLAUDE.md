@@ -24,7 +24,8 @@ npm run lint       # ESLint (3 pre-existing errors: 2 access-before-declare, 1 c
 - `src/components/game/` — GameTable (orchestrator), Card, DealerHand, PlayerHand, ActionButtons, BetControls, RunningCount, SettingsModal
 - `src/components/feedback/` — StrategyModal, StrategyChartModal, StatsPanel, ResultAnnouncement
 - `src/components/setup/` — SetupPage
-- `src/index.css` — Global styles, CSS variables, keyframe animations (cta-glow, card-float, shimmer)
+- `src/hooks/` — Custom hooks: `useAnimatedNumber` (rAF number tween)
+- `src/index.css` — Design tokens (~30 CSS custom properties), keyframe animations
 
 ## Architecture
 
@@ -47,7 +48,7 @@ Always render elements. Use `invisible` CSS class to hide while preserving layou
 Modal header padding MUST exceed border-radius. Use inline `style={{}}` for precise control. Minimum padding: `10px 28px` for badges, `12px 40px` for pills, `28px 36px` for modal content.
 
 ### 3. Use absolute positioning for AnimatePresence phase transitions
-Controls container is fixed height (320px) with `position: relative`. All phase content is `position: absolute`. Prevents exit/enter overlap from shifting cards.
+Controls container is fixed height (260px) with `position: relative`. All phase content is `position: absolute`. Prevents exit/enter overlap from shifting cards.
 
 ### 4. Nothing should touch screen edges
 Top bar: `padding: 0 24px`. Balance text: `whitespace-nowrap`. Footer areas: `px-8 pb-8`.

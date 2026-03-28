@@ -73,7 +73,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
             transition={{ type: 'spring', stiffness: 400, damping: 15, mass: 0.8 }}
             className={`text-lg font-black rounded-full whitespace-nowrap ${result.classes} ${result.shimmer ? 'result-shimmer' : ''}`}
             style={{
-              padding: '10px 28px',
+              padding: '12px 32px',
               boxShadow: result.glow,
               ...(result.shimmer ? {
                 background: 'linear-gradient(90deg, #facc15 0%, #fde68a 40%, #fbbf24 60%, #facc15 100%)',

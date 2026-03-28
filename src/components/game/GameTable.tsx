@@ -11,7 +11,7 @@ import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
 import type { HandState } from '../../engine/types';
-import { playWin, playBlackjack, playLose, playPush, playDeal, setMasterVolume } from '../../engine/sounds';
+import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import ActionButtons from './ActionButtons';
@@ -92,6 +92,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     pendingIndices.forEach((handIndex, i) => {
       setTimeout(() => {
         useGameStore.getState().dealToSplitHand(handIndex);
+        playCardSlide();
       }, (i + 1) * 600);
     });
 
@@ -124,6 +125,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           if (step.countCards.length > 0) {
             useCountStore.getState().updateCount(step.countCards);
           }
+          // Card slide sound for each dealer draw (skip the final settle step)
+          if (!isLast) playCardSlide();
         }, delay));
 
         delay += isLast ? 0 : (i === 0 ? DRAW_INTERVAL : (i === steps.length - 2 ? SETTLE_DELAY : DRAW_INTERVAL));
@@ -142,9 +145,14 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     }
   }, [game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Deal sound
+  // Deal sound — card slide per card (4 cards, 150ms stagger matching card animation)
   useEffect(() => {
-    if (game.phase === 'dealing') playDeal();
+    if (game.phase === 'dealing') {
+      const timers = [0, 150, 300, 450].map((d) =>
+        setTimeout(() => playCardSlide(), d)
+      );
+      return () => timers.forEach(clearTimeout);
+    }
   }, [game.phase]);
 
   // Settle bounce — fires once when dealing completes and player_turn begins
@@ -244,6 +252,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     if (isCorrect) {
       setCorrectFlash(true);
       setTimeout(() => setCorrectFlash(false), 400);
+      playButtonPress();
+      if (action === 'HIT' || action === 'DOUBLE') setTimeout(() => playCardSlide(), 50);
       executeAction();
     } else {
       setModalData({ playerAction: action, advice });
@@ -410,7 +420,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       {/* ══ PLAYER ZONE ══ */}
       <div className="flex-[6] flex flex-col min-h-0">
         {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
-        <div className="flex-1 flex items-end justify-center min-h-0" style={{ paddingBottom: '12px' }}>
+        <div className="flex-1 flex items-center justify-center min-h-0" style={{ paddingBottom: '12px' }}>
           <div className="flex gap-14 items-start justify-center">
             {game.playerHands.map((hand, i) => (
               <PlayerHand
@@ -427,13 +437,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         </div>
 
         {/* Controls — fixed height, content absolutely positioned so cards never shift */}
-        <div className="shrink-0 relative" style={{ height: '320px' }}>
+        <div className="shrink-0 relative" style={{ height: '260px' }}>
           <AnimatePresence mode="wait">
             {game.phase === 'betting' && (
               <motion.div
                 key="betting"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
-                style={{ paddingBottom: '48px' }}
+                style={{ paddingBottom: '24px' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -452,7 +462,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               <motion.div
                 key="player"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
-                style={{ paddingBottom: '48px' }}
+                style={{ paddingBottom: '24px' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -476,7 +486,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               <motion.div
                 key="dealer"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end gap-3"
-                style={{ paddingBottom: '48px' }}
+                style={{ paddingBottom: '24px' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -506,7 +516,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               <motion.div
                 key={`complete-${controlsKey}`}
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
-                style={{ paddingBottom: '48px' }}
+                style={{ paddingBottom: '24px' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -515,7 +525,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 <motion.button
                   whileHover={{ scale: 1.04, y: -3 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={game.newHand}
+                  onClick={() => { playNextHand(); game.newHand(); }}
                   className="font-black uppercase tracking-widest cta-pulse"
                   style={{
                     padding: '22px 120px',
