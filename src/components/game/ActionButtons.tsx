@@ -49,8 +49,8 @@ function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }:
   onClick: () => void;
 }) {
   const off = disabled || !enabled;
-  const w = size === 'lg' ? 230 : 180;
-  const h = size === 'lg' ? 110 : 90;
+  const w = size === 'lg' ? 'var(--btn-lg-w)' : 'var(--btn-md-w)';
+  const h = size === 'lg' ? 'var(--btn-lg-h)' : 'var(--btn-md-h)';
 
   const baseShadow = `0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.18)`;
   const hoverShadow = `0 8px 32px ${style.glow}, 0 6px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.22)`;
@@ -67,7 +67,7 @@ function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }:
       style={{
         width: w,
         height: h,
-        borderRadius: '22px',
+        borderRadius: 'var(--btn-radius)',
         background: off ? 'rgba(255,255,255,0.04)' : style.gradient,
         border: off ? `1px solid var(--border-subtle)` : '1.5px solid rgba(255,255,255,0.2)',
         boxShadow: off ? 'none' : baseShadow,
@@ -76,7 +76,7 @@ function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }:
         transition: 'box-shadow 0.2s ease, opacity 0.15s',
       }}
     >
-      <span style={{ fontSize: size === 'lg' ? '1.7rem' : '1.35rem', lineHeight: 1 }}>{label}</span>
+      <span style={{ fontSize: size === 'lg' ? 'var(--btn-lg-font)' : 'var(--btn-md-font)', lineHeight: 1 }}>{label}</span>
       <span style={{ fontSize: 'var(--text-sm)', opacity: off ? 0.3 : 0.5, lineHeight: 1 }}>[{shortcut}]</span>
     </motion.button>
   );

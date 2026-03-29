@@ -71,7 +71,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
       </div>
 
       {/* Chip stack visualization — always rendered to prevent layout shift */}
-      <div style={{ position: 'relative', height: 80, width: 64, margin: '16px auto 0', visibility: currentBet > 0 ? 'visible' : 'hidden' }}>
+      <div style={{ position: 'relative', height: 'var(--chip-stack-h)', width: 'var(--chip-size)', margin: 'var(--space-md) auto 0', visibility: currentBet > 0 ? 'visible' : 'hidden' }}>
         <AnimatePresence>
           {betToChips(currentBet).slice(0, 10).map((chip, i) => (
             <motion.div
@@ -89,8 +89,8 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
                 position: 'absolute',
                 bottom: i * 4,
                 left: 0,
-                width: 64,
-                height: 64,
+                width: 'var(--chip-size)',
+                height: 'var(--chip-size)',
                 borderRadius: '50%',
                 background: chip.color,
                 border: `3px dashed ${chip.borderColor}`,
@@ -113,7 +113,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
             position: 'absolute',
             bottom: 44,
             left: 0,
-            width: 64,
+            width: 'var(--chip-size)',
             textAlign: 'center',
             fontSize: 11,
             fontWeight: 700,
@@ -125,7 +125,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
       </div>
 
       {/* Chips row */}
-      <div className="flex items-center" style={{ gap: '20px', marginTop: '24px' }}>
+      <div className="flex items-center" style={{ gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
         {CHIPS.map((chip) => {
           const canAdd = currentBet + chip.value <= balance;
           return (
@@ -137,8 +137,8 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
               disabled={!canAdd}
               className="relative rounded-full flex items-center justify-center font-black select-none"
               style={{
-                width: '116px',
-                height: '116px',
+                width: 'var(--chip-btn-size)',
+                height: 'var(--chip-btn-size)',
                 fontSize: 'var(--text-lg)',
                 backgroundColor: canAdd ? chip.bg : '#1f2937',
                 border: `3px dashed ${canAdd ? chip.ring : '#374151'}`,
@@ -182,20 +182,20 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         disabled={!canDeal}
         className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
         style={canDeal ? {
-          marginTop: '28px',
-          padding: '22px 120px',
+          marginTop: 'var(--space-xl)',
+          padding: 'var(--cta-padding-y) var(--cta-padding-x)',
           fontSize: 'var(--text-xl)',
-          borderRadius: '18px',
+          borderRadius: 'var(--cta-radius)',
           background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
           border: 'none',
           color: '#1a1a1a',
           cursor: 'pointer',
           boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
         } : {
-          marginTop: '28px',
-          padding: '22px 120px',
+          marginTop: 'var(--space-xl)',
+          padding: 'var(--cta-padding-y) var(--cta-padding-x)',
           fontSize: 'var(--text-xl)',
-          borderRadius: '18px',
+          borderRadius: 'var(--cta-radius)',
           background: 'rgba(255,255,255,0.04)',
           border: 'none',
           color: 'rgba(255,255,255,0.18)',

@@ -31,7 +31,7 @@ export default function Card({ card, index = 0, delay = 0, smoothLayout = false,
     <motion.div
       layout={smoothLayout}
       className="relative shrink-0 rounded-2xl"
-      style={{ marginLeft: index > 0 ? '-48px' : '0', zIndex: index }}
+      style={{ marginLeft: index > 0 ? 'var(--card-overlap)' : '0', zIndex: index }}
       initial={{
         x: 350,
         y: -300,
@@ -73,8 +73,8 @@ export default function Card({ card, index = 0, delay = 0, smoothLayout = false,
       }}
     >
       <div
-        className={`w-[164px] h-[230px] rounded-2xl ${settled ? 'card-float' : ''}`}
-        style={settled ? { animationDelay: `${index * 0.4}s` } : undefined}
+        className={`rounded-2xl ${settled ? 'card-float' : ''}`}
+        style={{ width: 'var(--card-w)', height: 'var(--card-h)', ...(settled ? { animationDelay: `${index * 0.4}s` } : {}) }}
       >
         {card.faceUp ? (
           <CardFront rank={card.rank} suit={card.suit} isRed={isRed} />
@@ -94,7 +94,7 @@ function CardFront({ rank, suit, isRed }: { rank: string; suit: string; isRed: b
     <div
       className="w-full h-full rounded-2xl flex flex-col justify-between select-none"
       style={{
-        padding: '14px 16px',
+        padding: 'var(--card-padding)',
         backgroundColor: '#f9f9f7',
         color,
         border: '1px solid rgba(0,0,0,0.12)',
@@ -102,13 +102,13 @@ function CardFront({ rank, suit, isRed }: { rank: string; suit: string; isRed: b
       }}
     >
       <div className="text-left leading-none">
-        <div className="font-black leading-none tracking-tight" style={{ fontSize: '28px' }}>{rank}</div>
-        <div className="leading-none mt-1" style={{ fontSize: '21px' }}>{symbol}</div>
+        <div className="font-black leading-none tracking-tight" style={{ fontSize: 'var(--card-rank-size)' }}>{rank}</div>
+        <div className="leading-none mt-1" style={{ fontSize: 'var(--card-suit-sm)' }}>{symbol}</div>
       </div>
-      <div className="text-center leading-none" style={{ fontSize: '64px' }}>{symbol}</div>
+      <div className="text-center leading-none" style={{ fontSize: 'var(--card-suit-lg)' }}>{symbol}</div>
       <div className="text-right leading-none rotate-180">
-        <div className="font-black leading-none tracking-tight" style={{ fontSize: '28px' }}>{rank}</div>
-        <div className="leading-none mt-1" style={{ fontSize: '21px' }}>{symbol}</div>
+        <div className="font-black leading-none tracking-tight" style={{ fontSize: 'var(--card-rank-size)' }}>{rank}</div>
+        <div className="leading-none mt-1" style={{ fontSize: 'var(--card-suit-sm)' }}>{symbol}</div>
       </div>
     </div>
   );
@@ -124,7 +124,7 @@ function CardBack() {
         boxShadow: '0 10px 30px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.3)',
       }}
     >
-      <div className="w-full h-full" style={{ padding: '12px' }}>
+      <div className="w-full h-full" style={{ padding: 'var(--space-sm)' }}>
         <div
           className="w-full h-full rounded-xl"
           style={{

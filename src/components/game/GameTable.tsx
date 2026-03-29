@@ -386,8 +386,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     >
       {/* ══ TOP BAR ══ */}
       <div
-        className="shrink-0 flex items-center justify-between h-[88px] relative"
-        style={{ background: 'var(--surface-dark)', borderBottom: '1px solid var(--border-subtle)', padding: '0 24px' }}
+        className="shrink-0 flex items-center justify-between relative"
+        style={{ background: 'var(--surface-dark)', borderBottom: '1px solid var(--border-subtle)', padding: '0 var(--space-lg)', height: 'var(--topbar-h)' }}
       >
         {/* Left: Settings + Charts */}
         <div className="flex items-center gap-3 shrink-0">
@@ -397,7 +397,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             onClick={() => setSettingsOpen(true)}
             className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
-              padding: '12px 24px',
+              padding: 'var(--space-sm) var(--space-lg)',
               background: 'var(--surface-glass)',
               border: '1px solid var(--border-light)',
             }}
@@ -412,7 +412,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             onClick={() => setChartOpen(true)}
             className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
-              padding: '12px 24px',
+              padding: 'var(--space-sm) var(--space-lg)',
               background: 'var(--surface-glass)',
               border: '1px solid var(--border-light)',
             }}
@@ -430,7 +430,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         {/* Right: Shoe + Balance */}
         <div className="flex items-center gap-5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="relative bg-black/50 rounded-full overflow-hidden" style={{ width: `${250 + rules.numDecks * 15}px`, height: '24px' }}>
+            <div className="relative bg-black/50 rounded-full overflow-hidden" style={{ width: `clamp(${150 + rules.numDecks * 10}px, ${17 + rules.numDecks}vw, ${250 + rules.numDecks * 15}px)`, height: 'var(--shoe-bar-h)' }}>
               <motion.div
                 className="h-full rounded-full"
                 animate={{ width: `${shoePercent}%` }}
@@ -451,7 +451,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 />
               ))}
             </div>
-            <span style={{ fontSize: '16px', fontWeight: 700, color: shoePercent > 25 ? 'rgba(255,255,255,0.40)' : 'rgba(239,68,68,0.8)', minWidth: '42px' }}>{Math.round(shoePercent)}%</span>
+            <span style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: shoePercent > 25 ? 'rgba(255,255,255,0.40)' : 'rgba(239,68,68,0.8)', minWidth: '42px' }}>{Math.round(shoePercent)}%</span>
           </div>
           <div className="text-right">
             <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-2">Balance</span>
@@ -480,14 +480,14 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ DIVIDER — fixed height so message pill appearing/disappearing never shifts cards ══ */}
-      <div className="shrink-0 flex items-center gap-6 px-12" style={{ height: '52px' }}>
+      <div className="shrink-0 flex items-center gap-6 px-12" style={{ height: 'var(--divider-h)' }}>
         <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.09)' }} />
         <AnimatePresence mode="wait">
           {game.message && (
             <motion.div
               key={game.message}
               className="shrink-0 text-base font-semibold text-white/85 whitespace-nowrap rounded-full"
-              style={{ padding: '12px 40px', background: 'var(--surface-dark)', border: '1px solid var(--border-light)' }}
+              style={{ padding: 'var(--space-sm) var(--modal-padding-x)', background: 'var(--surface-dark)', border: '1px solid var(--border-light)' }}
               initial={{ opacity: 0, scale: 0.88 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
@@ -504,7 +504,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15 }}
               style={{
-                padding: '8px 24px',
+                padding: 'var(--space-sm) var(--space-lg)',
                 borderRadius: 'var(--radius-full)',
                 background: 'rgba(16,185,129,0.15)',
                 border: '1px solid rgba(16,185,129,0.3)',
@@ -525,9 +525,9 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
         <div
           className="flex-1 flex items-center justify-center min-h-0"
-          style={{ paddingBottom: '12px' }}
+          style={{ paddingBottom: 'var(--space-sm)' }}
         >
-          <div className="flex gap-14 items-start justify-center">
+          <div className="flex items-start justify-center" style={{ gap: 'var(--gap-cards)' }}>
             {game.playerHands.map((hand, i) => (
               <PlayerHand
                 key={i}
@@ -546,13 +546,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
         </div>
 
         {/* Controls — fixed height, content absolutely positioned so cards never shift */}
-        <div className="shrink-0 relative" style={{ height: '260px' }}>
+        <div className="shrink-0 relative" style={{ height: 'var(--controls-h)' }}>
           <AnimatePresence mode="wait">
             {game.phase === 'betting' && (
               <motion.div
                 key="betting"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
-                style={{ paddingBottom: '24px' }}
+                style={{ paddingBottom: 'var(--space-lg)' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -571,7 +571,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               <motion.div
                 key="player"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
-                style={{ paddingBottom: '24px' }}
+                style={{ paddingBottom: 'var(--space-lg)' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -596,7 +596,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               <motion.div
                 key="dealer"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end gap-3"
-                style={{ paddingBottom: '24px' }}
+                style={{ paddingBottom: 'var(--space-lg)' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -626,7 +626,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               <motion.div
                 key={`complete-${controlsKey}`}
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
-                style={{ paddingBottom: '24px' }}
+                style={{ paddingBottom: 'var(--space-lg)' }}
                 variants={controlVariants}
                 initial="enter"
                 animate="show"
@@ -646,9 +646,9 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   }}
                   className="font-black uppercase tracking-widest cta-pulse"
                   style={{
-                    padding: '22px 120px',
+                    padding: 'var(--cta-padding-y) var(--cta-padding-x)',
                     fontSize: 'var(--text-xl)',
-                    borderRadius: '18px',
+                    borderRadius: 'var(--cta-radius)',
                     background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
                     border: 'none',
                     color: '#1a1a1a',
