@@ -135,7 +135,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
               border: '1px solid var(--border-light)',
               borderRadius: 'var(--radius-xl)',
               boxShadow: 'var(--shadow-modal)',
-              margin: '24px',
+              margin: 'var(--space-lg)',
             }}
             initial={{ scale: 0.97, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -147,20 +147,20 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             <div
               className="shrink-0 flex items-start justify-between"
               style={{
-                padding: '32px 36px 20px 36px',
+                padding: 'var(--space-xl) var(--modal-padding-x) var(--space-md) var(--modal-padding-x)',
                 borderBottom: '1px solid rgba(255,255,255,0.07)',
               }}
             >
               <div>
-                <h2 className="text-white font-black tracking-wide leading-tight" style={{ fontSize: '24px' }}>
+                <h2 className="text-white font-black tracking-wide leading-tight" style={{ fontSize: 'var(--modal-title-font)' }}>
                   Perfect Basic Strategy
                 </h2>
-                <p className="text-white/40 mt-2 font-medium tracking-wide" style={{ fontSize: '14px' }}>{rulesDesc}</p>
+                <p className="text-white/40 mt-2 font-medium tracking-wide" style={{ fontSize: 'var(--text-sm)' }}>{rulesDesc}</p>
               </div>
               <button
                 onClick={onClose}
                 className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors shrink-0"
-                style={{ fontSize: '22px' }}
+                style={{ fontSize: 'var(--text-xl)' }}
               >
                 ✕
               </button>
@@ -170,7 +170,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             <div
               className="shrink-0 flex gap-3"
               style={{
-                padding: '16px 36px',
+                padding: 'var(--space-md) var(--modal-padding-x)',
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
               }}
             >
@@ -182,8 +182,8 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                   onClick={() => setActiveTab(tab.id)}
                   className="rounded-full font-bold"
                   style={{
-                    padding: '10px 24px',
-                    fontSize: '15px',
+                    padding: 'var(--space-sm) var(--space-lg)',
+                    fontSize: 'var(--text-base)',
                     color: activeTab === tab.id ? '#111827' : 'rgba(255,255,255,0.45)',
                     background: activeTab === tab.id
                       ? 'linear-gradient(135deg, #b45309, #f59e0b)'
@@ -204,7 +204,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             </div>
 
             {/* Table — fixed height so panel doesn't resize when switching tabs */}
-            <div className="overflow-auto" style={{ padding: '20px 28px 16px 28px', height: '520px' }}>
+            <div className="overflow-auto" style={{ padding: 'var(--space-md) var(--space-xl) var(--space-md) var(--space-xl)', height: 'var(--chart-table-h)' }}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeTab}
@@ -220,7 +220,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                   </div>
                   <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                     <colgroup>
-                      <col style={{ width: '72px' }} />
+                      <col style={{ width: 'var(--chart-row-header-w)' }} />
                       {DEALER_COLS.map(d => <col key={d} />)}
                     </colgroup>
                     <thead>
@@ -241,7 +241,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                             <td
                               className="text-white/85 font-black text-center"
                               style={{
-                                fontSize: '13px',
+                                fontSize: 'var(--chart-cell-font)',
                                 padding: '3px 6px',
                                 background: 'rgba(255,255,255,0.07)',
                                 borderRadius: '7px',
@@ -262,9 +262,9 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                                   <div
                                     className="flex items-center justify-center font-black text-white rounded-md"
                                     style={{
-                                      height: 42,
+                                      height: 'var(--chart-cell-h)',
                                       background: cfg.bg,
-                                      fontSize: '14px',
+                                      fontSize: 'var(--chart-cell-font)',
                                       letterSpacing: '0.04em',
                                     }}
                                   >
@@ -286,7 +286,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             <div
               className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-3"
               style={{
-                padding: '20px 36px',
+                padding: 'var(--space-md) var(--modal-padding-x)',
                 borderTop: '1px solid rgba(255,255,255,0.07)',
               }}
             >
@@ -295,9 +295,9 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                   <div
                     className="flex items-center justify-center font-black text-white rounded-md"
                     style={{
-                      width: 34, height: 34,
+                      width: 'var(--chart-legend-size)', height: 'var(--chart-legend-size)',
                       background: ACTION_CONFIG[key].bg,
-                      fontSize: '14px',
+                      fontSize: 'var(--chart-cell-font)',
                     }}
                   >
                     {key}

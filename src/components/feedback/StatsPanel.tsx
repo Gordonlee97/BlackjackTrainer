@@ -39,8 +39,8 @@ export default function StatsPanel() {
     <div
       className="flex items-center rounded-2xl"
       style={{
-        padding: '18px 40px',
-        gap: '36px',
+        padding: 'var(--stats-padding)',
+        gap: 'var(--stats-gap)',
         background: 'var(--surface-section)',
         border: '1px solid var(--border-subtle)',
       }}
