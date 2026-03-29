@@ -20,15 +20,15 @@ export default function SetupPage({ onStart }: SetupPageProps) {
       <div
         className="shrink-0 flex items-center justify-center gap-6"
         style={{
-          padding: '40px 32px 32px 32px',
+          padding: 'var(--modal-padding-y) var(--space-xl) var(--space-xl) var(--space-xl)',
           background: 'var(--surface-section)',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <span style={{ fontSize: '72px', lineHeight: 1 }}>🃏</span>
+        <span style={{ fontSize: 'var(--setup-logo)', lineHeight: 1 }}>🃏</span>
         <div>
-          <h1 style={{ fontSize: '44px', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', lineHeight: 1 }}>Blackjack Trainer</h1>
-          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: '16px' }}>Practice perfect basic strategy</p>
+          <h1 style={{ fontSize: 'var(--setup-title)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', lineHeight: 1 }}>Blackjack Trainer</h1>
+          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: 'var(--text-base)' }}>Practice perfect basic strategy</p>
         </div>
       </div>
 
@@ -111,9 +111,9 @@ export default function SetupPage({ onStart }: SetupPageProps) {
           onClick={onStart}
           className="w-full max-w-2xl font-black uppercase tracking-widest transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse"
           style={{
-            padding: '24px',
-            fontSize: '22px',
-            borderRadius: '18px',
+            padding: 'var(--cta-padding-y)',
+            fontSize: 'var(--text-xl)',
+            borderRadius: 'var(--cta-radius)',
             background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
             border: 'none',
             color: '#1a1a1a',
@@ -169,7 +169,7 @@ function SelectRow({ label, value, options, onChange, last }: {
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
       }}
     >
-      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
       <CustomSelect value={value} options={options} onChange={onChange} minWidth="260px" />
     </div>
   );

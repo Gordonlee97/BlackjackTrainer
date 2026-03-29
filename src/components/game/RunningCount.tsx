@@ -42,10 +42,10 @@ export default function RunningCount({ mode }: RunningCountProps) {
     <div
       className="flex flex-col rounded-3xl transition-colors duration-200"
       style={{
-        padding: '20px 36px 32px 36px',
+        padding: 'var(--space-md) var(--modal-padding-x) var(--space-xl) var(--modal-padding-x)',
         background: bgColor,
         border: `1px solid ${borderColor}`,
-        width: '256px',
+        width: 'var(--count-width)',
         cursor: mode === 'hover' ? 'pointer' : 'default',
       }}
       onMouseEnter={() => setHovered(true)}
@@ -53,30 +53,30 @@ export default function RunningCount({ mode }: RunningCountProps) {
     >
       <span
         className="uppercase tracking-[0.18em] leading-none whitespace-nowrap text-center w-full"
-        style={{ color: 'rgba(255,255,255,0.35)', fontSize: '16px', fontWeight: 700, marginBottom: '16px' }}
+        style={{ color: 'rgba(255,255,255,0.35)', fontSize: 'var(--text-base)', fontWeight: 700, marginBottom: 'var(--space-md)' }}
       >
         Running Count
       </span>
-      <div style={{ height: '72px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: 'var(--count-font)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <AnimatePresence mode="wait">
           {revealed ? (
             <motion.span
               key={count}
               className={`font-black leading-none ${color}`}
-              style={{ fontSize: '64px', display: 'inline-flex', alignItems: 'baseline', marginLeft: '-8px' }}
+              style={{ fontSize: 'var(--count-font)', display: 'inline-flex', alignItems: 'baseline', marginLeft: '-8px' }}
               initial={{ scale: 1.2, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
               transition={{ type: 'spring', damping: 20, stiffness: 300 }}
             >
-              {sign && <span style={{ fontSize: '36px', marginRight: '2px', width: '22px', textAlign: 'right', position: 'relative', top: '-4px', left: '-3px' }}>{sign}</span>}
+              {sign && <span style={{ fontSize: 'var(--count-sign-font)', marginRight: '2px', width: '22px', textAlign: 'right', position: 'relative', top: '-4px', left: '-3px' }}>{sign}</span>}
               {absCount}
             </motion.span>
           ) : (
             <motion.span
               key="hidden"
               className="font-black leading-none text-white/15"
-              style={{ fontSize: '64px' }}
+              style={{ fontSize: 'var(--count-font)' }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -90,7 +90,7 @@ export default function RunningCount({ mode }: RunningCountProps) {
       {mode === 'hover' && (
         <span
           className={`leading-none text-center ${hovered ? 'invisible' : ''}`}
-          style={{ color: 'rgba(255,255,255,0.30)', fontSize: '14px', fontWeight: 600, marginTop: '12px', letterSpacing: '0.04em' }}
+          style={{ color: 'rgba(255,255,255,0.30)', fontSize: 'var(--text-sm)', fontWeight: 600, marginTop: 'var(--space-sm)', letterSpacing: '0.04em' }}
         >
           Hover to reveal
         </span>
