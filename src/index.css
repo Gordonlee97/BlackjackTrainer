@@ -26,27 +26,27 @@
   --modal-bg: linear-gradient(to bottom, #1c2b22, #0f1c15, #090f0b);
 
   /* ── Spacing scale ── */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
+  --space-xs: clamp(3px, 0.3vw, 4px);
+  --space-sm: clamp(5px, 0.6vw, 8px);
+  --space-md: clamp(10px, 1.2vw, 16px);
+  --space-lg: clamp(14px, 1.7vw, 24px);
+  --space-xl: clamp(18px, 2.2vw, 32px);
+  --space-2xl: clamp(24px, 3.3vw, 48px);
 
   /* ── Type scale ── */
-  --text-xs: 11px;
-  --text-sm: 13px;
-  --text-base: 15px;
-  --text-lg: 18px;
-  --text-xl: 22px;
-  --text-2xl: 28px;
-  --text-3xl: 36px;
+  --text-xs: clamp(10px, 0.8vw, 11px);
+  --text-sm: clamp(11px, 0.95vw, 13px);
+  --text-base: clamp(13px, 1.1vw, 15px);
+  --text-lg: clamp(15px, 1.3vw, 18px);
+  --text-xl: clamp(17px, 1.55vw, 22px);
+  --text-2xl: clamp(20px, 2vw, 28px);
+  --text-3xl: clamp(24px, 2.5vw, 36px);
 
   /* ── Border radius ── */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: clamp(6px, 0.6vw, 8px);
+  --radius-md: clamp(8px, 0.85vw, 12px);
+  --radius-lg: clamp(10px, 1.1vw, 16px);
+  --radius-xl: clamp(14px, 1.7vw, 24px);
   --radius-full: 9999px;
 
   /* ── Shadow tiers ── */
@@ -56,7 +56,85 @@
   --shadow-modal: 0 32px 100px rgba(0, 0, 0, 0.85);
 
   /* ── Row padding (unified Setup + Settings) ── */
-  --row-padding: 16px 24px;
+  --row-padding: var(--space-md) var(--space-lg);
+
+  /* ── Card dimensions ── */
+  --card-w: clamp(100px, 12vw, 164px);
+  --card-h: clamp(140px, 16.8vw, 230px);
+  --card-overlap: clamp(-30px, -3.5vw, -48px);
+  --card-rank-size: clamp(18px, 2vw, 28px);
+  --card-suit-sm: clamp(14px, 1.5vw, 21px);
+  --card-suit-lg: clamp(40px, 4.5vw, 64px);
+  --card-padding: clamp(8px, 1vw, 14px) clamp(10px, 1.1vw, 16px);
+
+  /* ── Action buttons ── */
+  --btn-lg-w: clamp(150px, 16vw, 230px);
+  --btn-lg-h: clamp(72px, 7.6vw, 110px);
+  --btn-md-w: clamp(120px, 12.5vw, 180px);
+  --btn-md-h: clamp(60px, 6.2vw, 90px);
+  --btn-radius: clamp(14px, 1.5vw, 22px);
+  --btn-lg-font: clamp(1.2rem, 1.5vw, 1.7rem);
+  --btn-md-font: clamp(1rem, 1.2vw, 1.35rem);
+
+  /* ── Bet chips ── */
+  --chip-btn-size: clamp(76px, 8vw, 116px);
+  --chip-size: clamp(42px, 4.5vw, 64px);
+  --chip-stack-h: clamp(52px, 5.5vw, 80px);
+
+  /* ── Layout sections ── */
+  --controls-h: clamp(180px, 19vw, 260px);
+  --topbar-h: clamp(56px, 6vw, 88px);
+  --divider-h: clamp(36px, 3.8vw, 52px);
+
+  /* ── CTA / Deal buttons ── */
+  --cta-padding-y: clamp(14px, 1.6vw, 22px);
+  --cta-padding-x: clamp(48px, 8vw, 120px);
+  --cta-radius: clamp(12px, 1.3vw, 18px);
+
+  /* ── Running count ── */
+  --count-width: clamp(180px, 18vw, 256px);
+  --count-font: clamp(40px, 4.5vw, 64px);
+  --count-sign-font: clamp(24px, 2.5vw, 36px);
+
+  /* ── Strategy chart ── */
+  --chart-cell-h: clamp(28px, 3vw, 42px);
+  --chart-cell-font: clamp(11px, 1vw, 14px);
+  --chart-row-header-w: clamp(48px, 5vw, 72px);
+  --chart-table-h: clamp(300px, 50vh, 520px);
+  --chart-legend-size: clamp(24px, 2.5vw, 34px);
+
+  /* ── Modals ── */
+  --modal-padding-x: clamp(20px, 2.8vw, 40px);
+  --modal-padding-y: clamp(20px, 2.5vw, 36px);
+  --modal-title-font: clamp(20px, 1.8vw, 28px);
+  --modal-emoji-font: clamp(32px, 3.5vw, 48px);
+
+  /* ── Setup page ── */
+  --setup-logo: clamp(44px, 5vw, 72px);
+  --setup-title: clamp(28px, 3.2vw, 44px);
+
+  /* ── Stats panel ── */
+  --stats-padding: clamp(10px, 1.3vw, 18px) clamp(20px, 2.8vw, 40px);
+  --stats-gap: clamp(18px, 2.5vw, 36px);
+
+  /* ── Payout text ── */
+  --payout-font: clamp(28px, 3.2vw, 44px);
+
+  /* ── Badge (result & hand total) ── */
+  --badge-padding: clamp(8px, 0.9vw, 12px) clamp(18px, 2.2vw, 32px);
+  --badge-font: clamp(1.1rem, 1.3vw, 1.7rem);
+  --badge-slot-h: clamp(32px, 3.2vw, 44px);
+  --badge-offset-top: clamp(20px, 2.5vw, 36px);
+
+  /* ── Toggle switch ── */
+  --toggle-w: clamp(42px, 4.2vw, 58px);
+  --toggle-h: clamp(26px, 2.5vw, 34px);
+  --toggle-knob: clamp(18px, 1.8vw, 24px);
+  --toggle-inset: clamp(2px, 0.3vw, 4px);
+
+  /* ── Misc ── */
+  --shoe-bar-h: 24px;
+  --gap-cards: clamp(24px, 3.5vw, 56px);
 }
 
 * {
