@@ -386,7 +386,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     >
       {/* ══ TOP BAR ══ */}
       <div
-        className="shrink-0 flex items-center justify-between relative"
+        className="shrink-0 flex items-center justify-between relative overflow-hidden"
         style={{ background: 'var(--surface-dark)', borderBottom: '1px solid var(--border-subtle)', padding: '0 var(--space-lg)', height: 'var(--topbar-h)' }}
       >
         {/* Left: Settings + Charts */}
@@ -427,32 +427,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           <StatsPanel />
         </div>
 
-        {/* Right: Shoe + Balance */}
-        <div className="flex items-center gap-5 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="relative bg-black/50 rounded-full overflow-hidden" style={{ width: `clamp(${150 + rules.numDecks * 10}px, ${17 + rules.numDecks}vw, ${250 + rules.numDecks * 15}px)`, height: 'var(--shoe-bar-h)' }}>
-              <motion.div
-                className="h-full rounded-full"
-                animate={{ width: `${shoePercent}%` }}
-                transition={{ duration: 0.7, ease: 'easeOut' }}
-                style={{
-                  background: shoePercent > 25 ? 'rgba(250,204,21,0.75)' : 'rgba(239,68,68,0.85)',
-                }}
-              />
-              {Array.from({ length: rules.numDecks - 1 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="absolute top-0 h-full"
-                  style={{
-                    left: `${((i + 1) / rules.numDecks) * 100}%`,
-                    width: '1px',
-                    background: 'rgba(0,0,0,0.6)',
-                  }}
-                />
-              ))}
-            </div>
-            <span style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: shoePercent > 25 ? 'rgba(255,255,255,0.40)' : 'rgba(239,68,68,0.8)', minWidth: '42px' }}>{Math.round(shoePercent)}%</span>
-          </div>
+        {/* Right: Balance */}
+        <div className="flex items-center shrink-0">
           <div className="text-right">
             <span className="text-xs text-white/35 tracking-widest uppercase block leading-none mb-2">Balance</span>
             <span className="font-black text-yellow-400 leading-none whitespace-nowrap" style={{ fontSize: 'var(--text-3xl)' }}>${animatedBalance.toLocaleString()}</span>
@@ -467,6 +443,31 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             <RunningCount mode={rules.showCount} />
           </div>
         )}
+        {/* Shoe bar — top right of game area */}
+        <div className="absolute top-4 right-6 z-10 flex items-center gap-3">
+          <div className="relative bg-black/30 rounded-full overflow-hidden" style={{ width: `clamp(${100 + rules.numDecks * 8}px, ${12 + rules.numDecks}vw, ${200 + rules.numDecks * 12}px)`, height: '18px' }}>
+            <motion.div
+              className="h-full rounded-full"
+              animate={{ width: `${shoePercent}%` }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              style={{
+                background: shoePercent > 25 ? 'rgba(250,204,21,0.65)' : 'rgba(239,68,68,0.75)',
+              }}
+            />
+            {Array.from({ length: rules.numDecks - 1 }).map((_, i) => (
+              <div
+                key={i}
+                className="absolute top-0 h-full"
+                style={{
+                  left: `${((i + 1) / rules.numDecks) * 100}%`,
+                  width: '1px',
+                  background: 'rgba(0,0,0,0.5)',
+                }}
+              />
+            ))}
+          </div>
+          <span style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: shoePercent > 25 ? 'rgba(255,255,255,0.30)' : 'rgba(239,68,68,0.7)' }}>{Math.round(shoePercent)}%</span>
+        </div>
         <div className="flex flex-col items-center justify-center">
           <DealerHand
             hand={game.dealerHand}
@@ -524,8 +525,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       <div className="flex-[6] flex flex-col min-h-0">
         {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
         <div
-          className="flex-1 flex items-center justify-center min-h-0"
-          style={{ paddingBottom: 'var(--space-sm)' }}
+          className="flex-1 flex items-end justify-center min-h-0"
+          style={{ paddingBottom: 'calc(var(--badge-slot-h) + var(--badge-offset-top) + var(--space-sm))' }}
         >
           <div className="flex items-start justify-center" style={{ gap: 'var(--gap-cards)' }}>
             {game.playerHands.map((hand, i) => (

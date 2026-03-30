@@ -33,8 +33,8 @@ export default function SetupPage({ onStart }: SetupPageProps) {
       </div>
 
       {/* ── Settings area ── */}
-      <div className="flex-1 flex items-center justify-center px-8 overflow-y-auto">
-        <div className="w-full max-w-2xl py-8" style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      <div className="flex-1 flex items-start justify-center px-8 overflow-y-auto">
+        <div className="w-full max-w-2xl pb-8" style={{ display: 'flex', flexDirection: 'column', gap: '28px', paddingTop: 'var(--space-2xl)' }}>
 
           <Section label="Game Rules">
             <SelectRow
@@ -137,7 +137,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
     <div>
       <p
         className="uppercase tracking-[0.18em]"
-        style={{ fontSize: 'var(--text-xs)', fontWeight: 700, color: 'rgba(255,255,255,0.4)', padding: '0 4px', marginBottom: '10px' }}
+        style={{ fontSize: 'var(--text-base)', fontWeight: 700, color: 'rgba(255,255,255,0.4)', padding: '0 4px', marginBottom: '10px' }}
       >
         {label}
       </p>

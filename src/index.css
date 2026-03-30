@@ -58,36 +58,36 @@
   /* ── Row padding (unified Setup + Settings) ── */
   --row-padding: var(--space-md) var(--space-lg);
 
-  /* ── Card dimensions ── */
-  --card-w: clamp(100px, 12vw, 164px);
-  --card-h: clamp(140px, 16.8vw, 230px);
-  --card-overlap: clamp(-30px, -3.5vw, -48px);
-  --card-rank-size: clamp(18px, 2vw, 28px);
-  --card-suit-sm: clamp(14px, 1.5vw, 21px);
-  --card-suit-lg: clamp(40px, 4.5vw, 64px);
-  --card-padding: clamp(8px, 1vw, 14px) clamp(10px, 1.1vw, 16px);
+  /* ── Card dimensions (scale with both vw and vh for short screens) ── */
+  --card-w: clamp(100px, min(12vw, 14vh), 164px);
+  --card-h: clamp(140px, min(16.8vw, 19vh), 230px);
+  --card-overlap: clamp(-30px, min(-3.5vw, -4vh), -48px);
+  --card-rank-size: clamp(18px, min(2vw, 2.4vh), 28px);
+  --card-suit-sm: clamp(14px, min(1.5vw, 1.8vh), 21px);
+  --card-suit-lg: clamp(40px, min(4.5vw, 5.2vh), 64px);
+  --card-padding: clamp(8px, min(1vw, 1.2vh), 14px) clamp(10px, min(1.1vw, 1.3vh), 16px);
 
   /* ── Action buttons ── */
-  --btn-lg-w: clamp(150px, 16vw, 230px);
-  --btn-lg-h: clamp(72px, 7.6vw, 110px);
-  --btn-md-w: clamp(120px, 12.5vw, 180px);
-  --btn-md-h: clamp(60px, 6.2vw, 90px);
+  --btn-lg-w: clamp(150px, min(16vw, 16vh), 230px);
+  --btn-lg-h: clamp(72px, min(7.6vw, 8.5vh), 110px);
+  --btn-md-w: clamp(120px, min(12.5vw, 13vh), 180px);
+  --btn-md-h: clamp(60px, min(6.2vw, 7vh), 90px);
   --btn-radius: clamp(14px, 1.5vw, 22px);
   --btn-lg-font: clamp(1.2rem, 1.5vw, 1.7rem);
   --btn-md-font: clamp(1rem, 1.2vw, 1.35rem);
 
   /* ── Bet chips ── */
-  --chip-btn-size: clamp(76px, 8vw, 116px);
-  --chip-size: clamp(42px, 4.5vw, 64px);
-  --chip-stack-h: clamp(52px, 5.5vw, 80px);
+  --chip-btn-size: clamp(76px, min(8vw, 9vh), 116px);
+  --chip-size: clamp(42px, min(4.5vw, 5vh), 64px);
+  --chip-stack-h: clamp(44px, min(5.5vw, 6vh), 80px);
 
-  /* ── Layout sections ── */
-  --controls-h: clamp(180px, 19vw, 260px);
-  --topbar-h: clamp(56px, 6vw, 88px);
-  --divider-h: clamp(36px, 3.8vw, 52px);
+  /* ── Layout sections (vh-based for vertical responsiveness) ── */
+  --controls-h: clamp(120px, 16vh, 260px);
+  --topbar-h: clamp(48px, 7vh, 88px);
+  --divider-h: clamp(32px, 4vh, 52px);
 
   /* ── CTA / Deal buttons ── */
-  --cta-padding-y: clamp(14px, 1.6vw, 22px);
+  --cta-padding-y: clamp(12px, min(1.6vw, 1.8vh), 22px);
   --cta-padding-x: clamp(48px, 8vw, 120px);
   --cta-radius: clamp(12px, 1.3vw, 18px);
 
@@ -114,17 +114,17 @@
   --setup-title: clamp(28px, 3.2vw, 44px);
 
   /* ── Stats panel ── */
-  --stats-padding: clamp(10px, 1.3vw, 18px) clamp(20px, 2.8vw, 40px);
-  --stats-gap: clamp(18px, 2.5vw, 36px);
+  --stats-padding: clamp(6px, min(1vw, 1vh), 18px) clamp(12px, min(2vw, 3vh), 40px);
+  --stats-gap: clamp(12px, min(2vw, 2.5vh), 36px);
 
   /* ── Payout text ── */
   --payout-font: clamp(28px, 3.2vw, 44px);
 
   /* ── Badge (result & hand total) ── */
-  --badge-padding: clamp(8px, 0.9vw, 12px) clamp(18px, 2.2vw, 32px);
-  --badge-font: clamp(1.1rem, 1.3vw, 1.7rem);
-  --badge-slot-h: clamp(32px, 3.2vw, 44px);
-  --badge-offset-top: clamp(20px, 2.5vw, 36px);
+  --badge-padding: clamp(6px, min(0.9vw, 1vh), 12px) clamp(14px, min(2.2vw, 2.5vh), 32px);
+  --badge-font: clamp(1rem, min(1.3vw, 1.5vh), 1.7rem);
+  --badge-slot-h: clamp(28px, min(3.2vw, 3.5vh), 44px);
+  --badge-offset-top: clamp(8px, min(2vw, 2.5vh), 36px);
 
   /* ── Toggle switch ── */
   --toggle-w: clamp(42px, 4.2vw, 58px);
@@ -134,7 +134,7 @@
 
   /* ── Misc ── */
   --shoe-bar-h: 24px;
-  --gap-cards: clamp(24px, 3.5vw, 56px);
+  --gap-cards: clamp(24px, min(3.5vw, 4vh), 56px);
 }
 
 * {
