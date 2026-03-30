@@ -36,13 +36,13 @@ export interface FullStrategy {
 
 export const DEFAULT_RULES: RuleSet = {
   numDecks: 6,
-  dealerHitsSoft17: false,
+  dealerHitsSoft17: true,
   dasAllowed: true,
-  surrenderAllowed: true,
+  surrenderAllowed: false,
   hitSplitAces: false,
   practiceMode: 'all',
-  wrongMoveAction: 'execute',
+  wrongMoveAction: 'block',
   showHandTotals: true,
-  soundVolume: 50,
-  showCount: 'off',
+  soundVolume: 30,
+  showCount: 'hover',
 };

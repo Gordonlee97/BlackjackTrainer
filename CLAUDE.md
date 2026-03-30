@@ -53,6 +53,26 @@ Controls container is fixed height (260px) with `position: relative`. All phase 
 ### 4. Nothing should touch screen edges
 Top bar: `padding: 0 24px`. Balance text: `whitespace-nowrap`. Footer areas: `px-8 pb-8`.
 
+## Responsive & Layout Guidelines
+
+### 5. Design tokens are the single source of truth for all sizing
+Never hardcode px values in components. Define tokens once in `src/index.css` with `clamp(min, preferred, max)`, reference via `var(--token)` everywhere. One line to change = one place to tune.
+
+### 6. Scale with `min(vw, vh)` inside `clamp()` — not just `vw`
+`vw`-only scaling breaks on short-but-wide viewports (e.g., 1920×1080). Use `min(vw, vh)` as the preferred value so elements respond to whichever dimension is tighter. Layout sections (controls, topbar) use `vh` directly; content (cards, buttons) use `min(vw, vh)`; small spacing can use `vw` alone.
+
+### 7. Never vertically center content that can overflow its container
+`items-center` on a scrollable area hides content behind fixed headers/footers. Use `items-start` for anything that might exceed its container. Reserve `items-center` only when content is guaranteed to fit.
+
+### 8. Anchor repeating UI elements to the same position across states
+Buttons that appear in multiple game phases (Deal, Next Hand) must sit at the same vertical position. Use the same `justify-end` + `paddingBottom` pattern across all phases. Jumping buttons feel broken.
+
+### 9. Keep animations short and continuous
+Modal open/close: 150ms max, no spring. No keyframe stepping (move-stop-move). One continuous motion with `ease: 'linear'` for position, keyframes only for opacity. Less is more.
+
+### 10. Test at multiple viewport sizes during development, not after
+Bugs at 1080p, 768p, and 390px are completely different. Check at least 3 sizes: large desktop, small laptop/tablet, phone.
+
 ## Workflow Rules
 
 ### Update memory on every git push

@@ -38,9 +38,10 @@ export default function HandTotal({ cards, hideHole }: HandTotalProps) {
 
   return (
     <span
-      className={`inline-block text-xl font-black rounded-full tracking-wide whitespace-nowrap ${colorClasses}`}
+      className={`inline-block font-black rounded-full tracking-wide whitespace-nowrap ${colorClasses}`}
       style={{
-        padding: '12px 32px',
+        padding: 'var(--badge-padding)',
+        fontSize: 'var(--badge-font)',
         border: '1px solid var(--border-subtle)',
         boxShadow: glowShadow,
       }}

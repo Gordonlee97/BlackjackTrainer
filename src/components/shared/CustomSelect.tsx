@@ -9,7 +9,7 @@ interface CustomSelectProps {
   minWidth?: string;
 }
 
-export default function CustomSelect({ value, options, onChange, minWidth = '220px' }: CustomSelectProps) {
+export default function CustomSelect({ value, options, onChange, minWidth = 'clamp(160px, 20vw, 220px)' }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);

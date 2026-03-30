@@ -79,7 +79,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
                   ? 'brightness(0.85) saturate(0.9)'
                   : 'brightness(1) saturate(1)',
               transition: 'filter 0.25s ease',
-              gap: lockedIn ? '-58px' : undefined,
+              gap: lockedIn ? 'var(--card-overlap)' : undefined,
             }}
           >
             {hand.cards.map((card, i) => (
@@ -117,7 +117,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
                 : handIndex === 0
                   ? { right: 'calc(100% + 28px)', top: '40%' }
                   : { left: '50%', bottom: 'calc(100% + 16px)', transform: 'translateX(-50%)' }),
-              fontSize: '44px',
+              fontSize: 'var(--payout-font)',
               fontWeight: 900,
               color: payout > 0 ? '#facc15' : '#ff3333',
               textShadow: payout > 0
@@ -135,15 +135,16 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
       {showHandTotals && <HandTotal cards={hand.cards} />}
 
       {/* Fixed-height slot for result badge OR dots — never changes size */}
-      <div className="flex items-center justify-center" style={{ height: '44px', position: 'relative', top: '36px', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}>
+      <div className="flex items-center justify-center" style={{ height: 'var(--badge-slot-h)', position: 'relative', top: 'var(--badge-offset-top)', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}>
         {result ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 15, mass: 0.8 }}
-            className={`text-lg font-black rounded-full whitespace-nowrap ${result.classes} ${result.shimmer ? 'result-shimmer' : ''}`}
+            className={`font-black rounded-full whitespace-nowrap ${result.classes} ${result.shimmer ? 'result-shimmer' : ''}`}
             style={{
-              padding: '12px 32px',
+              padding: 'var(--badge-padding)',
+              fontSize: 'var(--badge-font)',
               boxShadow: result.glow,
               ...(result.shimmer ? {
                 background: 'linear-gradient(90deg, #facc15 0%, #fde68a 40%, #fbbf24 60%, #facc15 100%)',

@@ -56,15 +56,15 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
             <div
               className="shrink-0 flex items-center justify-between"
               style={{
-                padding: '32px 36px 24px 36px',
+                padding: 'var(--space-xl) var(--modal-padding-x) var(--space-lg) var(--modal-padding-x)',
                 borderBottom: '1px solid rgba(255,255,255,0.07)',
               }}
             >
-              <h2 className="text-white font-black tracking-wide" style={{ fontSize: '28px' }}>Settings</h2>
+              <h2 className="text-white font-black tracking-wide" style={{ fontSize: 'var(--modal-title-font)' }}>Settings</h2>
               <button
                 onClick={onClose}
                 className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
-                style={{ fontSize: '22px' }}
+                style={{ fontSize: 'var(--text-xl)' }}
               >
                 ✕
               </button>
@@ -73,7 +73,7 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
             {/* ── Scrollable content ── */}
             <div
               className="overflow-y-auto flex-1"
-              style={{ padding: '28px 36px 28px 36px' }}
+              style={{ padding: 'var(--space-xl) var(--modal-padding-x)' }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
@@ -162,7 +162,7 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                     className="flex items-center justify-between"
                     style={{ padding: 'var(--row-padding)' }}
                   >
-                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>Reset All Stats</span>
+                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>Reset All Stats</span>
                     {!confirmReset ? (
                       <button
                         type="button"
@@ -236,7 +236,7 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
             <div
               className="shrink-0 flex items-center justify-between"
               style={{
-                padding: '20px 36px 24px 36px',
+                padding: 'var(--space-md) var(--modal-padding-x) var(--space-lg) var(--modal-padding-x)',
                 borderTop: '1px solid rgba(255,255,255,0.07)',
               }}
             >
@@ -262,7 +262,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
     <div>
       <p
         className="uppercase tracking-[0.18em]"
-        style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: '14px' }}
+        style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'rgba(255,255,255,0.4)', marginBottom: 'var(--space-sm)' }}
       >
         {label}
       </p>
@@ -296,7 +296,7 @@ function SelectRow({ label, value, options, onChange, last }: {
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
       }}
     >
-      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
       <CustomSelect value={value} options={options} onChange={onChange} />
     </div>
   );
@@ -317,12 +317,12 @@ function ToggleRow({ label, checked, onChange, last }: {
       }}
       onClick={() => onChange(!checked)}
     >
-      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
       <div
         className="relative shrink-0 transition-all duration-200"
         style={{
-          width: 58, height: 34,
-          marginLeft: '16px',
+          width: 'var(--toggle-w)', height: 'var(--toggle-h)',
+          marginLeft: 'var(--space-md)',
           borderRadius: 9999,
           background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
           border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
@@ -332,11 +332,11 @@ function ToggleRow({ label, checked, onChange, last }: {
         <span
           className="absolute transition-transform duration-200"
           style={{
-            top: 3, left: 3,
-            width: 26, height: 26,
+            top: 'var(--toggle-inset)', left: 'var(--toggle-inset)',
+            width: 'var(--toggle-knob)', height: 'var(--toggle-knob)',
             borderRadius: 9999,
             background: checked ? '#f59e0b' : 'rgba(255,255,255,0.4)',
-            transform: checked ? 'translateX(26px)' : 'translateX(0)',
+            transform: checked ? 'translateX(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-inset) * 2))' : 'translateX(0)',
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />
@@ -360,8 +360,8 @@ function SliderRow({ label, value, onChange, last }: {
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
       }}
     >
-      <span className="shrink-0" style={{ color: 'rgba(255,255,255,0.75)', fontSize: '15px', fontWeight: 500 }}>{label}</span>
-      <div className="flex items-center gap-4" style={{ minWidth: '220px' }}>
+      <span className="shrink-0" style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
+      <div className="flex items-center gap-4" style={{ minWidth: 'clamp(160px, 20vw, 220px)' }}>
         <input
           type="range"
           min={0}

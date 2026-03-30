@@ -82,68 +82,68 @@ export default function StrategyModal({
             {/* Header */}
             <div
               className="text-center"
-              style={{ padding: '36px 40px 28px 40px' }}
+              style={{ padding: 'var(--modal-padding-y) var(--modal-padding-x) var(--space-xl) var(--modal-padding-x)' }}
             >
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>
+              <div style={{ fontSize: 'var(--modal-emoji-font)', marginBottom: 'var(--space-sm)' }}>
                 {blockMode ? '\u26a0\ufe0f' : '\u274c'}
               </div>
-              <h2 className="text-white font-black tracking-wide" style={{ fontSize: '24px' }}>
+              <h2 className="text-white font-black tracking-wide" style={{ fontSize: 'var(--modal-title-font)' }}>
                 {blockMode ? 'Not Quite Right' : 'Wrong Play'}
               </h2>
               <p
                 className="text-white/40 tracking-[0.18em] uppercase"
-                style={{ fontSize: '13px', fontWeight: 600, marginTop: '8px' }}
+                style={{ fontSize: 'var(--text-sm)', fontWeight: 600, marginTop: 'var(--space-sm)' }}
               >
                 {handTypeLabel(handType, playerTotal)} vs Dealer {dealerLabel}
               </p>
             </div>
 
             {/* Action comparison */}
-            <div style={{ padding: '0 40px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ padding: '0 var(--modal-padding-x)', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
               <div
                 className="flex justify-between items-center"
                 style={{
-                  padding: '18px 24px',
-                  borderRadius: '16px',
+                  padding: 'var(--space-md) var(--space-lg)',
+                  borderRadius: 'var(--radius-lg)',
                   background: 'rgba(220,38,38,0.10)',
                   border: '1px solid rgba(220,38,38,0.18)',
                 }}
               >
-                <span className="text-red-300/80 font-medium" style={{ fontSize: '16px' }}>You played</span>
-                <span className="text-red-400 font-black" style={{ fontSize: '16px' }}>{ACTION_LABELS[playerAction]}</span>
+                <span className="text-red-300/80 font-medium" style={{ fontSize: 'var(--text-base)' }}>You played</span>
+                <span className="text-red-400 font-black" style={{ fontSize: 'var(--text-base)' }}>{ACTION_LABELS[playerAction]}</span>
               </div>
               <div
                 className="flex justify-between items-center"
                 style={{
-                  padding: '18px 24px',
-                  borderRadius: '16px',
+                  padding: 'var(--space-md) var(--space-lg)',
+                  borderRadius: 'var(--radius-lg)',
                   background: 'rgba(16,185,129,0.10)',
                   border: '1px solid rgba(16,185,129,0.18)',
                 }}
               >
-                <span className="text-emerald-300/80 font-medium" style={{ fontSize: '16px' }}>Correct play</span>
-                <span className="text-emerald-400 font-black" style={{ fontSize: '16px' }}>{ACTION_LABELS[correctAction]}</span>
+                <span className="text-emerald-300/80 font-medium" style={{ fontSize: 'var(--text-base)' }}>Correct play</span>
+                <span className="text-emerald-400 font-black" style={{ fontSize: 'var(--text-base)' }}>{ACTION_LABELS[correctAction]}</span>
               </div>
             </div>
 
             {/* Explanation */}
-            <div style={{ padding: '24px 40px 0 40px' }}>
+            <div style={{ padding: 'var(--space-lg) var(--modal-padding-x) 0 var(--modal-padding-x)' }}>
               <div
                 style={{
-                  padding: '20px 24px',
-                  borderRadius: '16px',
+                  padding: 'var(--space-md) var(--space-lg)',
+                  borderRadius: 'var(--radius-lg)',
                   background: 'rgba(255,255,255,0.04)',
                   border: '1px solid rgba(255,255,255,0.07)',
                 }}
               >
-                <p className="text-white/70 leading-relaxed" style={{ fontSize: '15px' }}>
+                <p className="text-white/70 leading-relaxed" style={{ fontSize: 'var(--text-base)' }}>
                   {explanation}
                 </p>
               </div>
             </div>
 
             {/* Action buttons */}
-            <div style={{ padding: '28px 40px 36px 40px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ padding: 'var(--space-xl) var(--modal-padding-x) var(--modal-padding-y) var(--modal-padding-x)', display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
               {blockMode && onForceCorrect ? (
                 <>
                   <motion.button
@@ -152,9 +152,9 @@ export default function StrategyModal({
                     onClick={onForceCorrect}
                     className="w-full font-black uppercase tracking-widest text-white"
                     style={{
-                      padding: '20px 32px',
-                      fontSize: '17px',
-                      borderRadius: '16px',
+                      padding: 'var(--space-md) var(--space-xl)',
+                      fontSize: 'var(--text-lg)',
+                      borderRadius: 'var(--radius-lg)',
                       background: 'linear-gradient(135deg, #059669 0%, #10b981 50%, #34d399 100%)',
                       border: 'none',
                       boxShadow: '0 8px 32px rgba(16,185,129,0.35), 0 2px 8px rgba(0,0,0,0.3)',
@@ -169,9 +169,9 @@ export default function StrategyModal({
                       onClick={onPlayAnyways}
                       className="w-full font-semibold uppercase tracking-widest"
                       style={{
-                        padding: '14px 32px',
-                        fontSize: '13px',
-                        borderRadius: '16px',
+                        padding: 'var(--space-sm) var(--space-xl)',
+                        fontSize: 'var(--text-sm)',
+                        borderRadius: 'var(--radius-lg)',
                         background: 'rgba(255,255,255,0.06)',
                         border: '1px solid rgba(255,255,255,0.10)',
                         color: 'rgba(255,255,255,0.40)',
@@ -188,9 +188,9 @@ export default function StrategyModal({
                   onClick={onClose}
                   className="w-full font-black uppercase tracking-widest text-white"
                   style={{
-                    padding: '20px 32px',
-                    fontSize: '17px',
-                    borderRadius: '16px',
+                    padding: 'var(--space-md) var(--space-xl)',
+                    fontSize: 'var(--text-lg)',
+                    borderRadius: 'var(--radius-lg)',
                     background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%)',
                     border: 'none',
                     boxShadow: '0 8px 32px rgba(59,130,246,0.35), 0 2px 8px rgba(0,0,0,0.3)',
