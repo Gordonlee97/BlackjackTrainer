@@ -1,73 +1,44 @@
-# React + TypeScript + Vite
+# Blackjack Trainer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A free, browser-based blackjack training app that helps you master perfect basic strategy. Get real-time feedback on every decision, track your accuracy, and build muscle memory for optimal play.
 
-Currently, two official plugins are available:
+**[Play Now](https://gordonlee97.github.io/BlackjackTrainer/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- **Real-time strategy feedback** — Instantly see whether your hit, stand, double, split, or surrender decision matches basic strategy. Choose between blocking incorrect moves or showing feedback and playing your move anyway.
+- **Configurable rules** — Set deck count (1/2/4/6/8), dealer soft 17 (H17/S17), double after split, surrender, and hit split aces to match any casino's table rules.
+- **Practice modes** — Train on all hands, or focus on hard totals, soft totals, or splits.
+- **Hi-Lo running count** — Optional always-visible or hover-to-reveal running count display for card counting practice.
+- **Strategy charts** — Built-in reference charts for hard totals, soft totals, and pairs that adapt to your selected rules.
+- **Session statistics** — Track your accuracy, hands played, and win rate. Reset anytime.
+- **Fluid responsive design** — Works on phones (390px+), tablets, laptops, and large desktops with no breakpoints — pure fluid scaling.
+- **Procedural sound effects** — Satisfying audio feedback for deals, actions, and results. Adjustable volume.
+- **Smooth animations** — Card dealing from the shoe, split animations, payout text, and result reveals with polished motion design.
+- **Keyboard shortcuts** — H (Hit), S (Stand), D (Double), P (Split), R (Surrender) for fast play.
+- **No account required** — Runs entirely in your browser. Settings and stats persist in localStorage.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## How to Play
 
-## Expanding the ESLint configuration
+1. **Set your rules** — Configure the table rules on the setup page to match the casino you're training for (or use the defaults).
+2. **Place your bet** — Click a chip to set your wager, then hit Deal.
+3. **Make your decision** — Hit, Stand, Double, Split, or Surrender using the buttons or keyboard shortcuts.
+4. **Learn from feedback** — If you make a mistake, the trainer shows you the correct play and explains why.
+5. **Track your progress** — Check the stats panel to see your accuracy improve over time.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Development
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install        # Install dependencies
+npm run dev        # Dev server at http://localhost:5173
+npm run build      # Production build
+npm run lint       # Run ESLint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Tech Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+React, TypeScript, Vite, Tailwind CSS, Framer Motion, Zustand
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+
+MIT
