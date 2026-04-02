@@ -43,12 +43,20 @@ export async function takeSequentialScreenshots(
 
 export async function navigateToGame(page: Page): Promise<void> {
   await page.goto('/');
+  // Clear persisted state so we always start fresh
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
   await page.getByText('Start Training').click();
-  await page.getByText('$25').waitFor({ state: 'visible', timeout: 5000 });
+  // Wait for chip buttons to be visible (betting phase)
+  await page.locator('button', { hasText: '$25' }).first().waitFor({ state: 'visible', timeout: 5000 });
+  // Wait for Framer Motion spring animation to settle
+  await page.waitForTimeout(1000);
 }
 
 export async function placeBetAndDeal(page: Page, chipValue: '$5' | '$25' | '$100' | '$500' = '$25'): Promise<void> {
-  await page.getByText(chipValue, { exact: true }).click();
+  // Target chip buttons specifically — they're round buttons in BetControls
+  await page.locator('button', { hasText: chipValue }).first().waitFor({ state: 'visible', timeout: 5000 });
+  await page.locator('button', { hasText: chipValue }).first().click();
   await page.getByText('Deal', { exact: true }).click();
   await page.waitForTimeout(800);
 }
@@ -91,9 +99,13 @@ export async function dismissStrategyModal(page: Page): Promise<void> {
 }
 
 export async function playQuickHand(page: Page): Promise<void> {
-  await placeBetAndDeal(page);
+  await placeBetAndDeal(page, '$5');
+  await Promise.race([
+    page.getByText('Hit', { exact: true }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}),
+    page.getByText('Next Hand', { exact: true }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}),
+  ]);
   try {
-    await page.getByText('Hit', { exact: true }).waitFor({ state: 'visible', timeout: 3000 });
+    await page.getByText('Hit', { exact: true }).waitFor({ state: 'visible', timeout: 500 });
     await page.getByText('Stand', { exact: true }).click();
     await page.waitForTimeout(300);
     await dismissStrategyModal(page);
@@ -102,6 +114,7 @@ export async function playQuickHand(page: Page): Promise<void> {
   }
   await waitForPhase(page, 'complete');
   await page.getByText('Next Hand', { exact: true }).click();
+  await page.waitForTimeout(800);
   await waitForPhase(page, 'betting');
 }
 
@@ -111,7 +124,7 @@ export async function dealUntilCondition(
   maxAttempts = 50,
 ): Promise<boolean> {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    await placeBetAndDeal(page);
+    await placeBetAndDeal(page, '$5');
 
     await Promise.race([
       page.getByText('Hit', { exact: true }).waitFor({ state: 'visible', timeout: 5000 }).catch(() => {}),
@@ -132,6 +145,7 @@ export async function dealUntilCondition(
     }
     await waitForPhase(page, 'complete');
     await page.getByText('Next Hand', { exact: true }).click();
+    await page.waitForTimeout(800);
     await waitForPhase(page, 'betting');
   }
   return false;
