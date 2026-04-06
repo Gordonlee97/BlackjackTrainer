@@ -34,7 +34,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
 
       {/* ── Settings area ── */}
       <div className="flex-1 flex items-start justify-center px-8 overflow-y-auto">
-        <div className="w-full max-w-2xl pb-8" style={{ display: 'flex', flexDirection: 'column', gap: '28px', paddingTop: 'var(--space-2xl)' }}>
+        <div className="w-full max-w-2xl" style={{ display: 'flex', flexDirection: 'column', gap: '28px', paddingTop: 'var(--space-2xl)' }}>
 
           <Section label="Game Rules">
             <SelectRow
@@ -102,6 +102,9 @@ export default function SetupPage({ onStart }: SetupPageProps) {
             <SliderRow label="Sound Volume" value={rules.soundVolume} onChange={(v) => setRules({ soundVolume: v })} last />
           </Section>
 
+          {/* Scroll spacer — ensures settings don't butt against the CTA */}
+          <div aria-hidden className="shrink-0" style={{ height: '60px' }} />
+
         </div>
       </div>
 
@@ -109,7 +112,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
       <div className="shrink-0 flex flex-col items-center gap-4 px-8 pb-8 pt-4">
         <button
           onClick={onStart}
-          className="w-full max-w-2xl font-black uppercase tracking-widest transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse"
+          className="w-full max-w-2xl font-black uppercase tracking-widest transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse cta-shine relative overflow-hidden"
           style={{
             padding: 'var(--cta-padding-y)',
             fontSize: 'var(--text-xl)',

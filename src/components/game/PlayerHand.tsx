@@ -43,7 +43,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
 
   return (
     <div
-      className={`flex flex-col items-center gap-6 transition-all duration-200 ${
+      className={`flex flex-col items-center gap-3 transition-all duration-200 ${
         shouldDim ? 'opacity-50 scale-95' : ''
       }`}
     >
@@ -110,6 +110,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
               scale: { duration: 2.5, ease: 'linear', times: [0, 0.08, 0.3, 1], delay: handIndex * 0.3 },
               opacity: { duration: 2.5, ease: 'linear', times: [0, 0.08, 0.65, 1], delay: handIndex * 0.3 },
             }}
+            className="payout-text"
             style={{
               position: 'absolute',
               ...(totalHands <= 1 || handIndex === totalHands - 1
@@ -132,7 +133,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
         )}
       </div>
 
-      {showHandTotals && <HandTotal cards={hand.cards} />}
+      {showHandTotals && <div style={{ marginTop: 'var(--space-sm)', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}><HandTotal cards={hand.cards} /></div>}
 
       {/* Fixed-height slot for result badge OR dots — never changes size */}
       <div className="flex items-center justify-center" style={{ height: 'var(--badge-slot-h)', position: 'relative', top: 'var(--badge-offset-top)', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}>

@@ -403,7 +403,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             }}
           >
             <span className="leading-none" style={{ fontSize: 'var(--text-lg)' }}>⚙</span>
-            <span>Settings</span>
+            <span className="topbar-btn-label">Settings</span>
           </motion.button>
 
           <motion.button
@@ -418,12 +418,12 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             }}
           >
             <span className="leading-none" style={{ fontSize: 'var(--text-lg)' }}>♠</span>
-            <span>Charts</span>
+            <span className="topbar-btn-label">Charts</span>
           </motion.button>
 
         </div>
 
-        <div className="absolute left-1/2 top-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
+        <div className="topbar-stats absolute left-1/2 top-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
           <StatsPanel />
         </div>
 
@@ -437,7 +437,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ DEALER ZONE ══ */}
-      <div className="flex-[4] flex flex-col items-center justify-center min-h-0 relative">
+      <div className="flex-[3.75] flex flex-col items-center justify-center min-h-0 relative">
         {rules.showCount !== 'off' && (
           <div className="absolute top-4 left-6 z-10">
             <RunningCount mode={rules.showCount} />
@@ -522,7 +522,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ PLAYER ZONE ══ */}
-      <div className="flex-[6] flex flex-col min-h-0">
+      <div className="flex-[6.25] flex flex-col min-h-0">
         {/* Cards — fills available space, anchored to bottom so height changes grow upward */}
         <div
           className="flex-1 flex items-end justify-center min-h-0"
