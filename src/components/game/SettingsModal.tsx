@@ -126,6 +126,12 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                       { value: 'block',   label: 'Block until correct move' },
                     ]}
                     onChange={v => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
+                  />
+                  <ToggleRow
+                    label="Use Deviations"
+                    checked={rules.useDeviations}
+                    onChange={v => setRules({ useDeviations: v })}
+                    disabled={rules.showCount === 'off' || rules.numDecks < 4}
                     last
                   />
                 </Section>
@@ -302,20 +308,22 @@ function SelectRow({ label, value, options, onChange, last }: {
   );
 }
 
-function ToggleRow({ label, checked, onChange, last }: {
+function ToggleRow({ label, checked, onChange, last, disabled }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   last?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <div
-      className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
+      className={`flex items-center justify-between ${disabled ? '' : 'cursor-pointer hover:bg-white/[0.02]'} transition-colors`}
       style={{
         padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        opacity: disabled ? 0.35 : 1,
       }}
-      onClick={() => onChange(!checked)}
+      onClick={() => !disabled && onChange(!checked)}
     >
       <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
       <div
@@ -324,9 +332,9 @@ function ToggleRow({ label, checked, onChange, last }: {
           width: 'var(--toggle-w)', height: 'var(--toggle-h)',
           marginLeft: 'var(--space-md)',
           borderRadius: 9999,
-          background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
-          border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
-          boxShadow: checked ? '0 0 12px rgba(245,158,11,0.25)' : 'none',
+          background: checked && !disabled ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
+          border: checked && !disabled ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
+          boxShadow: checked && !disabled ? '0 0 12px rgba(245,158,11,0.25)' : 'none',
         }}
       >
         <span
@@ -335,8 +343,8 @@ function ToggleRow({ label, checked, onChange, last }: {
             top: 'var(--toggle-inset)', left: 'var(--toggle-inset)',
             width: 'var(--toggle-knob)', height: 'var(--toggle-knob)',
             borderRadius: 9999,
-            background: checked ? '#f59e0b' : 'rgba(255,255,255,0.4)',
-            transform: checked ? 'translateX(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-inset) * 2))' : 'translateX(0)',
+            background: checked && !disabled ? '#f59e0b' : 'rgba(255,255,255,0.4)',
+            transform: checked && !disabled ? 'translateX(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-inset) * 2))' : 'translateX(0)',
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />
