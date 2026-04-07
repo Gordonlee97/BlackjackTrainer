@@ -87,6 +87,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       balance: INITIAL_BALANCE,
       phase: 'betting',
       message: 'Place your bet',
+      dealerHand: createEmptyHand(0),
+      playerHands: [createEmptyHand(DEFAULT_BET)],
+      activeHandIndex: 0,
+      dealerHoleCardRevealed: false,
+      pendingNatural: null,
     });
     useCountStore.getState().resetCount();
   },
