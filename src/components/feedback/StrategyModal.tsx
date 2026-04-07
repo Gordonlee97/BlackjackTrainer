@@ -9,6 +9,8 @@ interface StrategyModalProps {
   handType: 'hard' | 'soft' | 'pairs';
   playerTotal: number;
   dealerUpcard: number;
+  isDeviation?: boolean;
+  deviationThreshold?: number;
   onClose: () => void;
   onForceCorrect?: () => void;
   onPlayAnyways?: () => void;
@@ -36,6 +38,8 @@ export default function StrategyModal({
   handType,
   playerTotal,
   dealerUpcard,
+  isDeviation,
+  deviationThreshold,
   onClose,
   onForceCorrect,
   onPlayAnyways,
@@ -122,7 +126,24 @@ export default function StrategyModal({
                 }}
               >
                 <span className="text-emerald-300/80 font-medium" style={{ fontSize: 'var(--text-base)' }}>Correct play</span>
-                <span className="text-emerald-400 font-black" style={{ fontSize: 'var(--text-base)' }}>{ACTION_LABELS[correctAction]}</span>
+                <div className="flex items-center gap-3">
+                  {isDeviation && deviationThreshold != null && (
+                    <span
+                      className="font-bold"
+                      style={{
+                        fontSize: 'var(--text-sm)',
+                        padding: '2px 10px',
+                        borderRadius: '8px',
+                        background: 'rgba(251,191,36,0.15)',
+                        border: '1px solid rgba(251,191,36,0.25)',
+                        color: 'rgba(251,191,36,0.9)',
+                      }}
+                    >
+                      TC {deviationThreshold >= 0 ? '+' : ''}{deviationThreshold}
+                    </span>
+                  )}
+                  <span className="text-emerald-400 font-black" style={{ fontSize: 'var(--text-base)' }}>{ACTION_LABELS[correctAction]}</span>
+                </div>
               </div>
             </div>
 
