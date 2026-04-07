@@ -4,9 +4,10 @@ import { useCountStore } from '../../store/countStore';
 
 interface RunningCountProps {
   mode: 'always' | 'hover';
+  trueCount?: number | null;
 }
 
-export default function RunningCount({ mode }: RunningCountProps) {
+export default function RunningCount({ mode, trueCount }: RunningCountProps) {
   const count = useCountStore((s) => s.runningCount);
   const [hovered, setHovered] = useState(false);
 
@@ -87,6 +88,27 @@ export default function RunningCount({ mode }: RunningCountProps) {
           )}
         </AnimatePresence>
       </div>
+      {trueCount != null && revealed && (
+        <div
+          className="flex items-center justify-center gap-2"
+          style={{ marginTop: 'var(--space-sm)' }}
+        >
+          <span
+            className="uppercase tracking-[0.12em] leading-none"
+            style={{ color: 'rgba(255,255,255,0.30)', fontSize: 'var(--text-sm)', fontWeight: 700 }}
+          >
+            TC
+          </span>
+          <span
+            className={`font-black leading-none ${
+              trueCount > 0 ? 'text-emerald-400' : trueCount < 0 ? 'text-rose-400' : 'text-white/70'
+            }`}
+            style={{ fontSize: 'clamp(18px, min(2.5vw, 2.5vh), 28px)' }}
+          >
+            {trueCount > 0 ? '+' : trueCount < 0 ? '\u2212' : ''}{Math.abs(trueCount)}
+          </span>
+        </div>
+      )}
       {mode === 'hover' && (
         <span
           className={`leading-none text-center ${hovered ? 'invisible' : ''}`}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore, playDealerSteps } from '../../store/gameStore';
 import { calculatePayout } from '../../engine/payout';
 import { useCountStore } from '../../store/countStore';
+import { computeTrueCount } from '../../engine/counting';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useStatsStore } from '../../store/statsStore';
 import type { StrategyAdvice } from '../../strategy/advisor';
@@ -60,6 +61,12 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   } | null>(null);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [pendingWrongAction, setPendingWrongAction] = useState<(() => void) | null>(null);
+
+  const runningCount = useCountStore(s => s.runningCount);
+
+  const currentTrueCount = rules.useDeviations && rules.showCount !== 'off'
+    ? computeTrueCount(runningCount, game.shoeSize, game.shoeSize - game.shoe.length)
+    : null;
 
   const splitAnimatingRef = useRef(false);
   const recordedDecisionRef = useRef<string | null>(null);
@@ -318,7 +325,15 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     const hand = game.getActiveHand();
     const upcard = game.getDealerUpcard();
     if (!hand || !upcard || !strategyRef.current) return null;
-    return getCorrectAction(hand.cards, upcard, rules, game.canDouble(), game.canSplit(), game.canSurrender(), strategyRef.current);
+
+    let tc: number | null = null;
+    if (rules.useDeviations && rules.showCount !== 'off') {
+      const rc = useCountStore.getState().runningCount;
+      const cardsDealt = game.shoeSize - game.shoe.length;
+      tc = computeTrueCount(rc, game.shoeSize, cardsDealt);
+    }
+
+    return getCorrectAction(hand.cards, upcard, rules, game.canDouble(), game.canSplit(), game.canSurrender(), strategyRef.current, tc);
   }, [game, rules]);
 
   const handlePlayerAction = useCallback((action: FinalAction, executeAction: () => void) => {
@@ -449,7 +464,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       <div className="flex-[3.75] flex flex-col items-center justify-center min-h-0 relative">
         {rules.showCount !== 'off' && (
           <div className="absolute top-4 left-6 z-10">
-            <RunningCount mode={rules.showCount} />
+            <RunningCount mode={rules.showCount as 'always' | 'hover'} trueCount={currentTrueCount} />
           </div>
         )}
         {/* Shoe bar — top right of game area */}
@@ -683,6 +698,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           handType={modalData.advice.handType}
           playerTotal={modalData.advice.playerTotal}
           dealerUpcard={modalData.advice.dealerUpcard}
+          isDeviation={modalData.advice.isDeviation}
+          deviationThreshold={modalData.advice.deviationThreshold}
           onClose={handleModalClose}
           onForceCorrect={rules.wrongMoveAction === 'block' ? handleForceCorrect : undefined}
           onPlayAnyways={rules.wrongMoveAction === 'block' ? handlePlayAnyways : undefined}
