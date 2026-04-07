@@ -28,7 +28,9 @@ export default function SetupPage({ onStart }: SetupPageProps) {
         <span style={{ fontSize: 'var(--setup-logo)', lineHeight: 1 }}>🃏</span>
         <div>
           <h1 style={{ fontSize: 'var(--setup-title)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', lineHeight: 1 }}>Blackjack Trainer</h1>
-          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: 'var(--text-base)' }}>Practice perfect basic strategy</p>
+          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: 'var(--text-base)' }}>
+            {rules.useDeviations ? 'Practice basic strategy + deviations' : 'Practice perfect basic strategy'}
+          </p>
         </div>
       </div>
 
@@ -83,6 +85,18 @@ export default function SetupPage({ onStart }: SetupPageProps) {
                 { value: 'block',   label: 'Block until correct move' },
               ]}
               onChange={(v) => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
+            />
+            <ToggleRow
+              label="Use Deviations"
+              checked={rules.useDeviations}
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { useDeviations: v };
+                if (v) {
+                  if (rules.showCount === 'off') updates.showCount = 'always';
+                  if (rules.numDecks < 4) updates.numDecks = 6;
+                }
+                setRules(updates);
+              }}
               last
             />
           </Section>
@@ -97,7 +111,11 @@ export default function SetupPage({ onStart }: SetupPageProps) {
                 { value: 'always', label: 'Always Visible' },
                 { value: 'hover',  label: 'Hover to Reveal' },
               ]}
-              onChange={(v) => setRules({ showCount: v as RuleSet['showCount'] })}
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
+                if (v === 'off') updates.useDeviations = false;
+                setRules(updates);
+              }}
             />
             <SliderRow label="Sound Volume" value={rules.soundVolume} onChange={(v) => setRules({ soundVolume: v })} last />
           </Section>

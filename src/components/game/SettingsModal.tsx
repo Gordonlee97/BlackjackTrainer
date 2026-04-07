@@ -130,8 +130,14 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   <ToggleRow
                     label="Use Deviations"
                     checked={rules.useDeviations}
-                    onChange={v => setRules({ useDeviations: v })}
-                    disabled={rules.showCount === 'off' || rules.numDecks < 4}
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { useDeviations: v };
+                      if (v) {
+                        if (rules.showCount === 'off') updates.showCount = 'always';
+                        if (rules.numDecks < 4) updates.numDecks = 6;
+                      }
+                      setRules(updates);
+                    }}
                     last
                   />
                 </Section>
@@ -147,7 +153,11 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                       { value: 'always', label: 'Always Visible' },
                       { value: 'hover',  label: 'Hover to Reveal' },
                     ]}
-                    onChange={v => setRules({ showCount: v as RuleSet['showCount'] })}
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
+                      if (v === 'off') updates.useDeviations = false;
+                      setRules(updates);
+                    }}
                     last
                   />
                 </Section>
