@@ -322,3 +322,27 @@ input[type="range"]::-moz-range-thumb {
     --count-width: clamp(120px, 30vw, 160px);
   }
 }
+
+/* ── Short viewport fixes (≤ 800px height) ── */
+@media (max-height: 800px) {
+  :root {
+    --card-h: clamp(100px, min(16.8vw, 19vh), 200px);
+    --controls-h: clamp(90px, 14vh, 200px);
+  }
+
+  /* Collapse action buttons from 2 rows to 1 row */
+  .action-buttons {
+    flex-direction: row !important;
+    gap: 8px !important;
+  }
+  .action-buttons > div {
+    display: contents;
+  }
+  .action-btn-lg {
+    width: var(--btn-md-w) !important;
+    height: var(--btn-md-h) !important;
+  }
+  .action-btn-lg span:first-child {
+    font-size: var(--btn-md-font) !important;
+  }
+}

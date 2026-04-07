@@ -29,6 +29,7 @@ interface GameStore extends GameState {
   dealToSplitHand: (handIndex: number) => void;
   surrender: () => void;
   newHand: () => void;
+  rebuy: (amount: number) => void;
 
   // Helpers
   canDouble: () => boolean;
@@ -381,6 +382,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       message: 'Place your bet',
       pendingNatural: null,
     });
+  },
+
+  rebuy: (amount: number) => {
+    set((state) => ({ balance: state.balance + amount }));
   },
 
   canDouble: () => {

@@ -7,6 +7,7 @@ interface BetControlsProps {
   balance: number;
   onBetChange: (amount: number) => void;
   onDeal: () => void;
+  onAddFunds: () => void;
 }
 
 const CHIPS = [
@@ -41,7 +42,7 @@ function betToChips(amount: number): StackChip[] {
   return chips;
 }
 
-export default function BetControls({ currentBet, balance, onBetChange, onDeal }: BetControlsProps) {
+export default function BetControls({ currentBet, balance, onBetChange, onDeal, onAddFunds }: BetControlsProps) {
   const canDeal = currentBet > 0 && currentBet <= balance;
   const showClear = currentBet > 0;
   const animatedBet = useAnimatedNumber(currentBet);
@@ -174,37 +175,67 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal }
         </motion.button>
       </div>
 
-      {/* Deal button — this is always the last element, so it anchors at the bottom */}
-      <motion.button
-        whileHover={canDeal ? { scale: 1.03, y: -2 } : {}}
-        whileTap={canDeal ? { scale: 0.97 } : {}}
-        onClick={() => { playDealButton(); onDeal(); }}
-        disabled={!canDeal}
-        className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
-        style={canDeal ? {
-          marginTop: 'var(--space-xl)',
-          padding: 'var(--cta-padding-y) var(--cta-padding-x)',
-          fontSize: 'var(--text-xl)',
-          borderRadius: 'var(--cta-radius)',
-          background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-          border: 'none',
-          color: '#1a1a1a',
-          cursor: 'pointer',
-          boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
-        } : {
-          marginTop: 'var(--space-xl)',
-          padding: 'var(--cta-padding-y) var(--cta-padding-x)',
-          fontSize: 'var(--text-xl)',
-          borderRadius: 'var(--cta-radius)',
-          background: 'rgba(255,255,255,0.04)',
-          border: 'none',
-          color: 'rgba(255,255,255,0.18)',
-          cursor: 'not-allowed',
-          boxShadow: 'none',
-        }}
-      >
-        Deal
-      </motion.button>
+      {/* Deal button centered, Add Funds positioned to its right */}
+      <div className="relative" style={{ marginTop: 'var(--space-xl)' }}>
+        <motion.button
+          whileHover={canDeal ? { scale: 1.03, y: -2 } : {}}
+          whileTap={canDeal ? { scale: 0.97 } : {}}
+          onClick={() => { playDealButton(); onDeal(); }}
+          disabled={!canDeal}
+          className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
+          style={canDeal ? {
+            padding: 'var(--cta-padding-y) var(--cta-padding-x)',
+            fontSize: 'var(--text-xl)',
+            borderRadius: 'var(--cta-radius)',
+            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
+            border: 'none',
+            color: '#1a1a1a',
+            cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+          } : {
+            padding: 'var(--cta-padding-y) var(--cta-padding-x)',
+            fontSize: 'var(--text-xl)',
+            borderRadius: 'var(--cta-radius)',
+            background: 'rgba(255,255,255,0.04)',
+            border: 'none',
+            color: 'rgba(255,255,255,0.18)',
+            cursor: 'not-allowed',
+            boxShadow: 'none',
+          }}
+        >
+          Deal
+        </motion.button>
+
+        <div
+          className="absolute"
+          style={{
+            left: 'calc(100% + var(--space-md))',
+            top: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={onAddFunds}
+            className="font-semibold tracking-wide"
+            style={{
+              padding: 'var(--space-md) var(--space-xl)',
+              fontSize: 'var(--text-base)',
+              borderRadius: 'var(--cta-radius)',
+              background: 'transparent',
+              border: '1.5px solid var(--border-light)',
+              color: 'rgba(255,255,255,0.45)',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Add Funds
+          </motion.button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -21,6 +21,7 @@ import StrategyModal from '../feedback/StrategyModal';
 import StrategyChartModal from '../feedback/StrategyChartModal';
 import SettingsModal from './SettingsModal';
 import RunningCount from './RunningCount';
+import RebuyModal from './RebuyModal';
 
 interface GameTableProps {
   onBackToMenu: () => void;
@@ -50,6 +51,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [chartOpen, setChartOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [rebuyOpen, setRebuyOpen] = useState(false);
   const [settleBounce, setSettleBounce] = useState(false);
   const [correctFlash, setCorrectFlash] = useState(false);
   const [modalData, setModalData] = useState<{
@@ -233,6 +235,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       setGoldVignette(false);
     }
   }, [game.phase]);
+
+  // Auto-prompt rebuy when broke
+  useEffect(() => {
+    if (game.phase === 'betting' && game.balance < 5) {
+      setRebuyOpen(true);
+    }
+  }, [game.phase, game.balance]);
 
   // Dramatic natural reveal — cards deal normally, then hole card flips, then settle
   useEffect(() => {
@@ -564,6 +573,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   balance={game.balance}
                   onBetChange={game.placeBet}
                   onDeal={game.deal}
+                  onAddFunds={() => setRebuyOpen(true)}
                 />
               </motion.div>
             )}
@@ -691,6 +701,14 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        onBackToMenu={onBackToMenu}
+      />
+
+      {/* ══ REBUY MODAL ══ */}
+      <RebuyModal
+        isOpen={rebuyOpen}
+        onRebuy={(amount) => { game.rebuy(amount); setRebuyOpen(false); }}
+        onClose={() => setRebuyOpen(false)}
         onBackToMenu={onBackToMenu}
       />
 
