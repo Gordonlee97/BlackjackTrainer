@@ -2,6 +2,7 @@ import type { Card } from '../engine/types';
 import { handValue, isPair } from '../engine/hand';
 import type { ChartAction, FinalAction, FullStrategy, RuleSet } from './types';
 import { buildStrategy } from './charts';
+import { getDeviations, findDeviation } from './deviations';
 
 export interface StrategyAdvice {
   correctAction: FinalAction;
@@ -9,6 +10,46 @@ export interface StrategyAdvice {
   handType: 'hard' | 'soft' | 'pairs';
   playerTotal: number;
   dealerUpcard: number;
+  isDeviation?: boolean;
+  deviationThreshold?: number;
+}
+
+function buildAdvice(
+  chartAction: ChartAction,
+  handType: 'hard' | 'soft' | 'pairs',
+  playerTotal: number,
+  dealerUp: number,
+  canDouble: boolean,
+  canSplit: boolean,
+  canSurrender: boolean,
+  rules: RuleSet,
+  trueCount?: number | null,
+): StrategyAdvice {
+  let finalChartAction = chartAction;
+  let isDeviation = false;
+  let deviationThreshold: number | undefined;
+
+  // Check for deviation override when true count is provided
+  if (trueCount != null) {
+    const deviations = getDeviations(rules);
+    const deviation = findDeviation(deviations, handType, playerTotal, dealerUp, trueCount);
+    if (deviation) {
+      finalChartAction = deviation.action;
+      isDeviation = true;
+      deviationThreshold = deviation.threshold;
+    }
+  }
+
+  const correctAction = resolveAction(finalChartAction, canDouble, canSplit, canSurrender, rules);
+  return {
+    correctAction,
+    chartAction: finalChartAction,
+    handType,
+    playerTotal,
+    dealerUpcard: dealerUp,
+    isDeviation,
+    deviationThreshold,
+  };
 }
 
 export function getCorrectAction(
@@ -18,7 +59,8 @@ export function getCorrectAction(
   canDouble: boolean,
   canSplit: boolean,
   canSurrender: boolean,
-  strategy?: FullStrategy
+  strategy?: FullStrategy,
+  trueCount?: number | null,
 ): StrategyAdvice {
   const strat = strategy ?? buildStrategy(rules);
   const dealerUp = dealerUpcard.rank === 'A' ? 11 : Math.min(10, parseInt(dealerUpcard.rank) || 10);
@@ -36,9 +78,7 @@ export function getCorrectAction(
       chartAction = pairAction;
       handType = 'pairs';
       playerTotal = pairValue;
-
-      const resolved = resolveAction(chartAction, canDouble, canSplit, canSurrender, rules);
-      return { correctAction: resolved, chartAction, handType, playerTotal, dealerUpcard: dealerUp };
+      return buildAdvice(chartAction, handType, playerTotal, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount);
     }
   }
 
@@ -49,9 +89,7 @@ export function getCorrectAction(
       chartAction = softAction;
       handType = 'soft';
       playerTotal = hv.total;
-
-      const resolved = resolveAction(chartAction, canDouble, canSplit, canSurrender, rules);
-      return { correctAction: resolved, chartAction, handType, playerTotal, dealerUpcard: dealerUp };
+      return buildAdvice(chartAction, handType, playerTotal, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount);
     }
   }
 
@@ -60,9 +98,7 @@ export function getCorrectAction(
   chartAction = strat.hard[lookupTotal]?.[dealerUp] ?? 'H';
   handType = 'hard';
   playerTotal = lookupTotal;
-
-  const resolved = resolveAction(chartAction, canDouble, canSplit, canSurrender, rules);
-  return { correctAction: resolved, chartAction, handType, playerTotal, dealerUpcard: dealerUp };
+  return buildAdvice(chartAction, handType, playerTotal, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount);
 }
 
 function resolveAction(
