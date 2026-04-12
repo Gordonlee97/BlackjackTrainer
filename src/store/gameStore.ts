@@ -329,10 +329,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     useCountStore.getState().updateCount([card]);
 
     const isAceSplit = hand.cards[0].rank === 'A';
+    const canResplit = isAceSplit && state.rules?.resplitAces && card.rank === 'A';
     const updatedHand: HandState = {
       ...hand,
       cards: [...hand.cards, card],
-      isComplete: isAceSplit && !state.rules?.hitSplitAces,
+      isComplete: isAceSplit && !state.rules?.hitSplitAces && !canResplit,
     };
 
     const playerHands = [...state.playerHands];

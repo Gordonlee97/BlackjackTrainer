@@ -16,11 +16,13 @@ export function hiLoValue(card: Card): number {
 
 /**
  * True count = running count / decks remaining.
- * Rounded to nearest integer (standard for Hi-Lo index plays).
+ * Truncated toward zero (BJA convention): positive counts round down,
+ * negative counts round up. This keeps the TC conservative relative to
+ * the raw division so index plays don't trigger early.
  */
 export function computeTrueCount(runningCount: number, shoeSize: number, cardsDealt: number): number {
   const cardsRemaining = shoeSize - cardsDealt;
   if (cardsRemaining <= 0) return 0;
   const decksRemaining = cardsRemaining / 52;
-  return Math.round(runningCount / decksRemaining);
+  return Math.trunc(runningCount / decksRemaining);
 }

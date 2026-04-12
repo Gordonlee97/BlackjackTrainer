@@ -17,13 +17,13 @@ const BASE_HARD: StrategyChart = {
   8:  row('H',  'H',  'H',  'H',  'H',  'H',  'H',  'H',  'H',  'H'),
   9:  row('H',  'D',  'D',  'D',  'D',  'H',  'H',  'H',  'H',  'H'),
   10: row('D',  'D',  'D',  'D',  'D',  'D',  'D',  'D',  'H',  'H'),
-  11: row('D',  'D',  'D',  'D',  'D',  'D',  'D',  'D',  'D',  'D'),
+  11: row('D',  'D',  'D',  'D',  'D',  'D',  'D',  'D',  'D',  'H'),
   12: row('H',  'H',  'S',  'S',  'S',  'H',  'H',  'H',  'H',  'H'),
   13: row('S',  'S',  'S',  'S',  'S',  'H',  'H',  'H',  'H',  'H'),
   14: row('S',  'S',  'S',  'S',  'S',  'H',  'H',  'H',  'H',  'H'),
   15: row('S',  'S',  'S',  'S',  'S',  'H',  'H',  'H',  'Rh', 'H'),
   16: row('S',  'S',  'S',  'S',  'S',  'H',  'H',  'Rh', 'Rh', 'Rh'),
-  17: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'Rs'),
+  17: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),
   18: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),
   19: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),
   20: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),
@@ -38,7 +38,7 @@ const BASE_SOFT: StrategyChart = {
   16: row('H',  'H',  'D',  'D',  'D',  'H',  'H',  'H',  'H',  'H'),   // A,5
   17: row('H',  'D',  'D',  'D',  'D',  'H',  'H',  'H',  'H',  'H'),   // A,6
   18: row('Ds', 'Ds', 'Ds', 'Ds', 'Ds', 'S',  'S',  'H',  'H',  'H'),   // A,7
-  19: row('S',  'S',  'S',  'S',  'Ds', 'S',  'S',  'S',  'S',  'S'),   // A,8
+  19: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),   // A,8
   20: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),   // A,9
 };
 
@@ -50,7 +50,7 @@ const BASE_PAIRS: StrategyChart = {
   5:  row('D',  'D',  'D',  'D',  'D',  'D',  'D',  'D',  'H',  'H'),   // 5,5 (never split)
   6:  row('Ph', 'P',  'P',  'P',  'P',  'H',  'H',  'H',  'H',  'H'),   // 6,6
   7:  row('P',  'P',  'P',  'P',  'P',  'P',  'H',  'H',  'H',  'H'),   // 7,7
-  8:  row('P',  'P',  'P',  'P',  'P',  'P',  'P',  'P',  'P',  'Rp'),  // 8,8
+  8:  row('P',  'P',  'P',  'P',  'P',  'P',  'P',  'P',  'P',  'P'),   // 8,8
   9:  row('P',  'P',  'P',  'P',  'P',  'S',  'P',  'P',  'S',  'S'),   // 9,9
   10: row('S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S',  'S'),   // 10,10
   11: row('P',  'P',  'P',  'P',  'P',  'P',  'P',  'P',  'P',  'P'),   // A,A
@@ -71,13 +71,12 @@ interface OverrideSet {
 // Dealer Hits Soft 17 overrides (vs S17 base)
 const H17_OVERRIDES: OverrideSet = {
   hard: {
-    11: { 11: 'D' },    // Still double (same as S17 for multi-deck)
-    15: { 11: 'Rh' },   // Surrender vs A (S17: just hit)
-    17: { 11: 'Rs' },   // Surrender vs A (S17: stand -- but Rs means stand if no surrender)
+    11: { 11: 'D' },    // Double 11 vs A (S17 base is Hit)
+    17: { 11: 'Rs' },   // Surrender vs A (S17: always stand)
   },
   soft: {
-    18: { 2: 'Ds' },    // Double vs 2 (was Ds already in many charts, confirming)
-    19: { 6: 'Ds' },    // Double vs 6
+    18: { 2: 'Ds' },    // Double vs 2 (confirming)
+    19: { 6: 'Ds' },    // Double vs 6 (S17: stand)
   },
   pairs: {},
 };

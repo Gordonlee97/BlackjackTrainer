@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FinalAction } from '../../strategy/types';
-import { getExplanation } from '../../strategy/explanations';
+import { getExplanation, getDeviationExplanation } from '../../strategy/explanations';
 
 interface StrategyModalProps {
   isOpen: boolean;
@@ -11,6 +11,8 @@ interface StrategyModalProps {
   dealerUpcard: number;
   isDeviation?: boolean;
   deviationThreshold?: number;
+  deviationDirection?: 'gte' | 'lte';
+  deviationUsesRunningCount?: boolean;
   onClose: () => void;
   onForceCorrect?: () => void;
   onPlayAnyways?: () => void;
@@ -40,18 +42,16 @@ export default function StrategyModal({
   dealerUpcard,
   isDeviation,
   deviationThreshold,
+  deviationDirection,
+  deviationUsesRunningCount,
   onClose,
   onForceCorrect,
   onPlayAnyways,
   blockMode,
 }: StrategyModalProps) {
-  const explanation = getExplanation({
-    correctAction,
-    playerAction,
-    handType,
-    playerTotal,
-    dealerUpcard,
-  });
+  const explanation = isDeviation && deviationThreshold != null && deviationDirection
+    ? getDeviationExplanation({ handType, playerTotal, dealerUpcard, threshold: deviationThreshold, direction: deviationDirection, usesRunningCount: deviationUsesRunningCount })
+    : getExplanation({ correctAction, playerAction, handType, playerTotal, dealerUpcard });
 
   const dealerLabel = dealerUpcard === 11 ? 'Ace' : String(dealerUpcard);
 
@@ -100,6 +100,24 @@ export default function StrategyModal({
               >
                 {handTypeLabel(handType, playerTotal)} vs Dealer {dealerLabel}
               </p>
+              {isDeviation && (
+                <span
+                  className="inline-block uppercase tracking-[0.15em]"
+                  style={{
+                    marginTop: 'var(--space-sm)',
+                    padding: '4px 14px',
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: 'rgba(251,191,36,0.95)',
+                    background: 'rgba(251,191,36,0.12)',
+                    border: '1px solid rgba(251,191,36,0.22)',
+                    borderRadius: '8px',
+                    letterSpacing: '0.12em',
+                  }}
+                >
+                  Index Play
+                </span>
+              )}
             </div>
 
             {/* Action comparison */}
@@ -139,7 +157,9 @@ export default function StrategyModal({
                         color: 'rgba(251,191,36,0.9)',
                       }}
                     >
-                      TC {deviationThreshold >= 0 ? '+' : ''}{deviationThreshold}
+                      {deviationUsesRunningCount
+                        ? `RC ${deviationDirection === 'gte' ? '0+' : '0\u2212'}`
+                        : `TC ${deviationThreshold >= 0 ? '+' : ''}${deviationThreshold}`}
                     </span>
                   )}
                   <span className="text-emerald-400 font-black" style={{ fontSize: 'var(--text-base)' }}>{ACTION_LABELS[correctAction]}</span>

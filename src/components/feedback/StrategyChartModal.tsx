@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useMemo } from 'react';
 import { buildStrategy } from '../../strategy/charts';
+import { getDeviations } from '../../strategy/deviations';
 import type { RuleSet, ChartAction } from '../../strategy/types';
 
 interface Props {
@@ -28,7 +29,7 @@ const HARD_ROWS = [
   { key: 11, label: '11' },
   { key: 10, label: '10' },
   { key: 9,  label: '9' },
-  { key: 8,  label: '8−' },
+  { key: 8,  label: '8\u2212' },
 ];
 
 const SOFT_ROWS = [
@@ -61,12 +62,12 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'pairs', label: 'Pairs' },
 ];
 
-const ACTION_CONFIG: Record<DisplayAction, { bg: string; name: string }> = {
-  H: { bg: 'rgba(71,85,105,0.95)',  name: 'Hit' },
-  S: { bg: 'rgba(4,120,87,0.95)',   name: 'Stand' },
-  D: { bg: 'rgba(180,83,9,0.95)',   name: 'Double' },
-  P: { bg: 'rgba(29,78,216,0.95)', name: 'Split' },
-  R: { bg: 'rgba(190,18,60,0.95)', name: 'Surrender' },
+const ACTION_CONFIG: Record<DisplayAction, { bg: string; devBg: string; name: string }> = {
+  H: { bg: 'rgba(71,85,105,0.95)',  devBg: 'rgba(90,105,125,0.95)',  name: 'Hit' },
+  S: { bg: 'rgba(4,120,87,0.95)',   devBg: 'rgba(15,140,100,0.95)',  name: 'Stand' },
+  D: { bg: 'rgba(180,83,9,0.95)',   devBg: 'rgba(195,100,25,0.95)',  name: 'Double' },
+  P: { bg: 'rgba(29,78,216,0.95)',  devBg: 'rgba(50,95,230,0.95)',   name: 'Split' },
+  R: { bg: 'rgba(190,18,60,0.95)',  devBg: 'rgba(210,40,75,0.95)',   name: 'Surrender' },
 };
 
 const LEGEND: [DisplayAction, string][] = [
@@ -92,9 +93,69 @@ function resolveAction(action: ChartAction, rules: RuleSet): DisplayAction {
   }
 }
 
+/* ── Deviation chart overlay ── */
+
+interface DeviationDisplay {
+  threshold: number;
+  direction: 'gte' | 'lte';
+  action: ChartAction;
+  usesRunningCount?: boolean;
+}
+
+type DeviationMap = Map<string, DeviationDisplay[]>;
+
+const SURRENDER_ACTIONS: ChartAction[] = ['Rh', 'Rs', 'Rp'];
+
+function buildDeviationMap(rules: RuleSet): DeviationMap {
+  const deviations = getDeviations(rules);
+  const map: DeviationMap = new Map();
+
+  for (const d of deviations) {
+    // Skip surrender-action deviations when surrender isn't available
+    if (SURRENDER_ACTIONS.includes(d.action) && !rules.surrenderAllowed) continue;
+    // Skip no-surrender-only deviations when surrender IS available
+    if (d.onlyIfNoSurrender && rules.surrenderAllowed) continue;
+
+    const key = `${d.handType}:${d.playerTotal}:${d.dealerUp}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push({
+      threshold: d.threshold,
+      direction: d.direction,
+      action: d.action,
+      usesRunningCount: d.usesRunningCount,
+    });
+  }
+
+  return map;
+}
+
+/**
+ * Format deviation index in BJA notation:
+ *   3+  = TC 3 or higher
+ *  -1-  = TC -1 or lower
+ *   0+  = any positive running count (RC > 0)
+ *   0−  = any negative running count (RC < 0)
+ */
+function formatIndex(threshold: number, direction: 'gte' | 'lte', usesRunningCount?: boolean): string {
+  if (usesRunningCount) {
+    return direction === 'gte' ? '0+' : '0\u2212';
+  }
+  const suffix = direction === 'gte' ? '+' : '\u2212';
+  return `${threshold}${suffix}`;
+}
+
+/** Check if a deviation produces a different resolved action than the base chart */
+function isEffectiveDeviation(dev: DeviationDisplay, baseAction: ChartAction, rules: RuleSet): boolean {
+  return resolveAction(dev.action, rules) !== resolveAction(baseAction, rules);
+}
+
 export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('hard');
+  const [showDeviations, setShowDeviations] = useState(false);
   const strategy = useMemo(() => buildStrategy(rules), [rules]);
+  const deviationMap = useMemo(() => buildDeviationMap(rules), [rules]);
+
+  const canShowDeviations = rules.numDecks >= 4;
 
   const rows = activeTab === 'hard' ? HARD_ROWS : activeTab === 'soft' ? SOFT_ROWS : PAIR_ROWS;
   const chart = strategy[activeTab];
@@ -104,7 +165,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
     rules.dealerHitsSoft17 ? 'H17' : 'S17',
     rules.dasAllowed ? 'DAS' : 'No DAS',
     rules.surrenderAllowed ? 'Surrender' : 'No Surrender',
-  ].join(' · ');
+  ].join(' \u00b7 ');
 
   return (
     <AnimatePresence>
@@ -153,7 +214,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
             >
               <div>
                 <h2 className="text-white font-black tracking-wide leading-tight" style={{ fontSize: 'var(--modal-title-font)' }}>
-                  Perfect Basic Strategy
+                  {showDeviations && canShowDeviations ? 'Deviation Chart' : 'Perfect Basic Strategy'}
                 </h2>
                 <p className="text-white/40 mt-2 font-medium tracking-wide" style={{ fontSize: 'var(--text-sm)' }}>{rulesDesc}</p>
               </div>
@@ -166,44 +227,83 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
               </button>
             </div>
 
-            {/* Tabs */}
+            {/* Tabs + Deviation Toggle */}
             <div
-              className="shrink-0 flex gap-3"
+              className="shrink-0 flex items-center justify-between"
               style={{
                 padding: 'var(--space-md) var(--modal-padding-x)',
                 borderBottom: '1px solid rgba(255,255,255,0.06)',
               }}
             >
-              {TABS.map(tab => (
-                <motion.button
-                  key={tab.id}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="rounded-full font-bold"
+              <div className="flex gap-3">
+                {TABS.map(tab => (
+                  <motion.button
+                    key={tab.id}
+                    whileHover={{ scale: 1.04 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setActiveTab(tab.id)}
+                    className="rounded-full font-bold"
+                    style={{
+                      padding: 'var(--space-sm) var(--space-lg)',
+                      fontSize: 'var(--text-base)',
+                      color: activeTab === tab.id ? '#111827' : 'rgba(255,255,255,0.45)',
+                      background: activeTab === tab.id
+                        ? 'linear-gradient(135deg, #b45309, #f59e0b)'
+                        : 'rgba(255,255,255,0.05)',
+                      border: '1px solid',
+                      borderColor: activeTab === tab.id
+                        ? 'rgba(255,200,60,0.3)'
+                        : 'rgba(255,255,255,0.07)',
+                      boxShadow: activeTab === tab.id
+                        ? '0 2px 14px rgba(245,158,11,0.35)'
+                        : 'none',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {tab.label}
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Deviations toggle */}
+              {canShowDeviations && (
+                <button
+                  onClick={() => setShowDeviations(v => !v)}
+                  className="flex items-center gap-2 rounded-full font-bold transition-all"
                   style={{
-                    padding: 'var(--space-sm) var(--space-lg)',
-                    fontSize: 'var(--text-base)',
-                    color: activeTab === tab.id ? '#111827' : 'rgba(255,255,255,0.45)',
-                    background: activeTab === tab.id
-                      ? 'linear-gradient(135deg, #b45309, #f59e0b)'
-                      : 'rgba(255,255,255,0.05)',
+                    padding: '6px 14px',
+                    fontSize: 'var(--text-sm)',
+                    color: showDeviations ? 'rgba(251,191,36,0.95)' : 'rgba(255,255,255,0.35)',
+                    background: showDeviations ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.04)',
                     border: '1px solid',
-                    borderColor: activeTab === tab.id
-                      ? 'rgba(255,200,60,0.3)'
-                      : 'rgba(255,255,255,0.07)',
-                    boxShadow: activeTab === tab.id
-                      ? '0 2px 14px rgba(245,158,11,0.35)'
-                      : 'none',
-                    transition: 'all 0.2s',
+                    borderColor: showDeviations ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.07)',
                   }}
                 >
-                  {tab.label}
-                </motion.button>
-              ))}
+                  {/* Toggle track */}
+                  <div
+                    className="relative rounded-full transition-colors"
+                    style={{
+                      width: '28px',
+                      height: '16px',
+                      background: showDeviations ? 'rgba(251,191,36,0.5)' : 'rgba(255,255,255,0.15)',
+                    }}
+                  >
+                    <div
+                      className="absolute top-[2px] rounded-full transition-all"
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        background: showDeviations ? '#fbbf24' : 'rgba(255,255,255,0.4)',
+                        left: showDeviations ? '14px' : '2px',
+                      }}
+                    />
+                  </div>
+                  Deviations
+                </button>
+              )}
             </div>
 
-            {/* Table — fixed height so panel doesn't resize when switching tabs */}
+            {/* Table */}
             <div className="overflow-auto" style={{ padding: 'var(--space-md) var(--space-xl) var(--space-md) var(--space-xl)', height: 'var(--chart-table-h)' }}>
               <AnimatePresence mode="wait">
                 <motion.div
@@ -215,7 +315,7 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                 >
                   <div className="text-center mb-3">
                     <span className="text-white/30 text-sm font-semibold tracking-widest uppercase">
-                      ← Dealer's Up Card →
+                      &larr; Dealer's Up Card &rarr;
                     </span>
                   </div>
                   <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
@@ -255,21 +355,17 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                               if (rawAction === undefined) {
                                 return <td key={d} />;
                               }
-                              const resolved = resolveAction(rawAction, rules);
-                              const cfg = ACTION_CONFIG[resolved];
                               return (
                                 <td key={d} className="p-[3px]">
-                                  <div
-                                    className="flex items-center justify-center font-black text-white rounded-md"
-                                    style={{
-                                      height: 'var(--chart-cell-h)',
-                                      background: cfg.bg,
-                                      fontSize: 'var(--chart-cell-font)',
-                                      letterSpacing: '0.04em',
-                                    }}
-                                  >
-                                    {resolved}
-                                  </div>
+                                  <ChartCell
+                                    rawAction={rawAction}
+                                    rules={rules}
+                                    handType={activeTab}
+                                    playerTotal={row.key}
+                                    dealerUp={d}
+                                    showDeviations={showDeviations && canShowDeviations}
+                                    deviationMap={deviationMap}
+                                  />
                                 </td>
                               );
                             })}
@@ -305,10 +401,110 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
                   <span className="text-white/50 text-sm font-semibold">{name}</span>
                 </div>
               ))}
+              {showDeviations && canShowDeviations && (
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex items-center justify-center font-black rounded-md"
+                    style={{
+                      width: 'var(--chart-legend-size)', height: 'var(--chart-legend-size)',
+                      background: 'rgba(71,85,105,0.95)',
+                      color: '#ffeb3b',
+                      fontSize: 'var(--chart-cell-font)',
+                    }}
+                  >
+                    #
+                  </div>
+                  <span className="text-white/50 text-sm font-semibold">Deviation Index</span>
+                </div>
+              )}
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ── Individual chart cell ── */
+
+interface ChartCellProps {
+  rawAction: ChartAction;
+  rules: RuleSet;
+  handType: TabId;
+  playerTotal: number;
+  dealerUp: number;
+  showDeviations: boolean;
+  deviationMap: DeviationMap;
+}
+
+function ChartCell({ rawAction, rules, handType, playerTotal, dealerUp, showDeviations, deviationMap }: ChartCellProps) {
+  const resolved = resolveAction(rawAction, rules);
+  const cfg = ACTION_CONFIG[resolved];
+
+  // Check for deviations on this cell
+  const deviationKey = `${handType}:${playerTotal}:${dealerUp}`;
+  const devs = showDeviations ? deviationMap.get(deviationKey) : undefined;
+  const effectiveDevs = devs?.filter(d => isEffectiveDeviation(d, rawAction, rules));
+  const hasDeviation = effectiveDevs && effectiveDevs.length > 0;
+
+  if (!hasDeviation) {
+    // Normal cell — base action
+    return (
+      <div
+        className="flex items-center justify-center font-black text-white rounded-md"
+        style={{
+          height: 'var(--chart-cell-h)',
+          background: cfg.bg,
+          fontSize: 'var(--chart-cell-font)',
+          letterSpacing: '0.04em',
+        }}
+      >
+        {resolved}
+      </div>
+    );
+  }
+
+  // Deviation cell — lighter shade + glow border
+  if (effectiveDevs.length === 1) {
+    const dev = effectiveDevs[0];
+    const devResolved = resolveAction(dev.action, rules);
+    const devCfg = ACTION_CONFIG[devResolved];
+    return (
+      <div
+        className="dev-cell flex items-center justify-center font-black rounded-md"
+        style={{
+          height: 'var(--chart-cell-h)',
+          background: devCfg.devBg,
+          fontSize: 'var(--chart-cell-font)',
+          color: '#ffeb3b',
+          letterSpacing: '0.02em',
+        }}
+      >
+        {formatIndex(dev.threshold, dev.direction, dev.usesRunningCount)}
+      </div>
+    );
+  }
+
+  // Two deviations — stack them, color by the higher-threshold deviation
+  const sorted = [...effectiveDevs].sort((a, b) => a.threshold - b.threshold);
+  const primaryDev = sorted[sorted.length - 1];
+  const devResolved = resolveAction(primaryDev.action, rules);
+  const devCfg = ACTION_CONFIG[devResolved];
+  return (
+    <div
+      className="dev-cell flex flex-col items-center justify-center font-black rounded-md"
+      style={{
+        height: 'var(--chart-cell-h)',
+        background: devCfg.devBg,
+        fontSize: 'calc(var(--chart-cell-font) * 0.78)',
+        color: '#ffeb3b',
+        lineHeight: '1.1',
+        gap: '1px',
+      }}
+    >
+      {sorted.map((dev, i) => (
+        <span key={i}>{formatIndex(dev.threshold, dev.direction, dev.usesRunningCount)}</span>
+      ))}
+    </div>
   );
 }

@@ -49,7 +49,11 @@ export default function SetupPage({ onStart }: SetupPageProps) {
                 { value: '6', label: '6 Decks' },
                 { value: '8', label: '8 Decks' },
               ]}
-              onChange={(v) => setRules({ numDecks: Number(v) as RuleSet['numDecks'] })}
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { numDecks: Number(v) as RuleSet['numDecks'] };
+                if (Number(v) < 4) updates.useDeviations = false;
+                setRules(updates);
+              }}
             />
             <SelectRow
               label="Dealer Soft 17"
@@ -62,7 +66,8 @@ export default function SetupPage({ onStart }: SetupPageProps) {
             />
             <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={(v) => setRules({ surrenderAllowed: v })} />
             <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={(v) => setRules({ dasAllowed: v })} />
-            <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={(v) => setRules({ hitSplitAces: v })} last />
+            <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={(v) => setRules({ hitSplitAces: v })} />
+            <ToggleRow label="Resplit Aces"             checked={rules.resplitAces}      onChange={(v) => setRules({ resplitAces: v })} last />
           </Section>
 
           <Section label="Training Options">

@@ -327,13 +327,14 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     if (!hand || !upcard || !strategyRef.current) return null;
 
     let tc: number | null = null;
+    let rc: number | undefined;
     if (rules.useDeviations && rules.showCount !== 'off') {
-      const rc = useCountStore.getState().runningCount;
+      rc = useCountStore.getState().runningCount;
       const cardsDealt = game.shoeSize - game.shoe.length;
       tc = computeTrueCount(rc, game.shoeSize, cardsDealt);
     }
 
-    return getCorrectAction(hand.cards, upcard, rules, game.canDouble(), game.canSplit(), game.canSurrender(), strategyRef.current, tc);
+    return getCorrectAction(hand.cards, upcard, rules, game.canDouble(), game.canSplit(), game.canSurrender(), strategyRef.current, tc, rc);
   }, [game, rules]);
 
   const handlePlayerAction = useCallback((action: FinalAction, executeAction: () => void) => {
@@ -700,6 +701,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           dealerUpcard={modalData.advice.dealerUpcard}
           isDeviation={modalData.advice.isDeviation}
           deviationThreshold={modalData.advice.deviationThreshold}
+          deviationDirection={modalData.advice.deviationDirection}
+          deviationUsesRunningCount={modalData.advice.deviationUsesRunningCount}
           onClose={handleModalClose}
           onForceCorrect={rules.wrongMoveAction === 'block' ? handleForceCorrect : undefined}
           onPlayAnyways={rules.wrongMoveAction === 'block' ? handlePlayAnyways : undefined}
