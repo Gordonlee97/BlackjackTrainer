@@ -3,6 +3,8 @@ import type { Deviation } from './deviations';
 import { getDeviations } from './deviations';
 import type { Card, Rank, Suit } from '../engine/types';
 import { ALL_RANKS, ALL_SUITS } from '../engine/types';
+import { createDeck, shuffle } from '../engine/shoe';
+import { hiLoValue } from '../engine/counting';
 
 const SURRENDER_ACTIONS = new Set<ChartAction>(['Rh', 'Rs', 'Rp']);
 
@@ -164,4 +166,76 @@ export function buildForcedDeal(dev: Deviation): ForcedDeal {
     dealerUp,
     dealerHole,
   };
+}
+
+function buildShoe(numDecks: number, targetDecksRem: number, deal: ForcedDeal): Card[] {
+  const totalLen = Math.round(targetDecksRem * 52) + 4;
+
+  const pool: Card[] = [];
+  for (let i = 0; i < numDecks; i++) {
+    pool.push(...createDeck());
+  }
+  const shuffled = shuffle(pool);
+  const bodyLen = Math.max(0, totalLen - 4);
+  const body = shuffled.slice(0, bodyLen);
+
+  // Engine deal order: p1, hole, p2, up
+  return [
+    { ...deal.player1, faceUp: true },
+    { ...deal.dealerHole, faceUp: false },
+    { ...deal.player2, faceUp: true },
+    { ...deal.dealerUp, faceUp: true },
+    ...body,
+  ];
+}
+
+export interface DrillResult {
+  deviation: Deviation;
+  forcedDeal: ForcedDeal;
+  shoe: Card[];
+  preSeedRC: number;
+  preSeedDecksRem: number;
+  targetRC: number;
+  targetDecksRem: number;
+}
+
+const MAX_CLAMP_ATTEMPTS = 20;
+
+/**
+ * Generates one full deviation drill: a deviation, a forced initial deal,
+ * a seeded shoe, and matching pre-seed count state.
+ *
+ * Retries up to MAX_CLAMP_ATTEMPTS times if the computed pre-deal true count
+ * falls outside the realistic range (|preSeedTC| > 8).
+ */
+export function generate(rules: RuleSet): DrillResult {
+  for (let attempt = 0; attempt < MAX_CLAMP_ATTEMPTS; attempt++) {
+    const deviation = pickDeviation(rules);
+    const target = generateTargetCount(deviation, rules.numDecks);
+    const forcedDeal = buildForcedDeal(deviation);
+
+    const faceUpDelta =
+      hiLoValue(forcedDeal.player1) +
+      hiLoValue(forcedDeal.player2) +
+      hiLoValue(forcedDeal.dealerUp);
+
+    const preSeedRC = target.targetRC - faceUpDelta;
+    const preSeedDecksRem = target.targetDecksRem + 4 / 52;
+
+    const preSeedTC = Math.trunc(preSeedRC / preSeedDecksRem);
+    if (Math.abs(preSeedTC) > 8) continue;
+
+    const shoe = buildShoe(rules.numDecks, target.targetDecksRem, forcedDeal);
+
+    return {
+      deviation,
+      forcedDeal,
+      shoe,
+      preSeedRC,
+      preSeedDecksRem,
+      targetRC: target.targetRC,
+      targetDecksRem: target.targetDecksRem,
+    };
+  }
+  throw new Error('deviationDrill.generate: sanity clamp exhausted');
 }

@@ -163,3 +163,47 @@ describe('buildForcedDeal', () => {
     expect(d.dealerHole.rank).toBeTruthy();
   });
 });
+
+import { generate } from '../deviationDrill';
+import { hiLoValue } from '../../engine/counting';
+
+describe('generate (top-level drill)', () => {
+  const rules = h17Rules({ numDecks: 6, surrenderAllowed: true });
+
+  it('produces a shoe whose top 4 cards equal the forced deal order [p1, hole, p2, up]', () => {
+    const r = generate(rules);
+    expect(r.shoe[0].rank).toEqual(r.forcedDeal.player1.rank);
+    expect(r.shoe[1].rank).toEqual(r.forcedDeal.dealerHole.rank);
+    expect(r.shoe[2].rank).toEqual(r.forcedDeal.player2.rank);
+    expect(r.shoe[3].rank).toEqual(r.forcedDeal.dealerUp.rank);
+  });
+
+  it('shoe length equals (targetDecksRem * 52) + 4', () => {
+    const r = generate(rules);
+    expect(r.shoe.length).toBe(Math.round(r.targetDecksRem * 52) + 4);
+  });
+
+  it('pre-seed math: preSeedRC + face-up Hi-Lo === targetRC', () => {
+    for (let i = 0; i < 100; i++) {
+      const r = generate(rules);
+      const faceUpDelta =
+        hiLoValue(r.forcedDeal.player1) +
+        hiLoValue(r.forcedDeal.player2) +
+        hiLoValue(r.forcedDeal.dealerUp);
+      expect(r.preSeedRC + faceUpDelta).toBe(r.targetRC);
+    }
+  });
+
+  it('pre-seed decksRem = target + 4/52', () => {
+    const r = generate(rules);
+    expect(r.preSeedDecksRem).toBeCloseTo(r.targetDecksRem + 4 / 52, 6);
+  });
+
+  it('never returns |preSeedTC| > 8 (sanity clamp)', () => {
+    for (let i = 0; i < 500; i++) {
+      const r = generate(rules);
+      const preSeedTC = Math.trunc(r.preSeedRC / r.preSeedDecksRem);
+      expect(Math.abs(preSeedTC)).toBeLessThanOrEqual(8);
+    }
+  });
+});
