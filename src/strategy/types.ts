@@ -25,6 +25,7 @@ export interface RuleSet {
   soundVolume: number; // 0–100
   showCount: 'off' | 'always' | 'hover';
   useDeviations: boolean;
+  deviationsPracticeMode: boolean;
 }
 
 // Chart: playerValue -> dealerUpcard (2-11, where 11=Ace) -> action
@@ -49,4 +50,5 @@ export const DEFAULT_RULES: RuleSet = {
   soundVolume: 30,
   showCount: 'hover',
   useDeviations: false,
+  deviationsPracticeMode: false,
 };
