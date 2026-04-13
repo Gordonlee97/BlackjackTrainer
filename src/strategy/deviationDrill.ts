@@ -1,6 +1,8 @@
 import type { RuleSet, ChartAction } from './types';
 import type { Deviation } from './deviations';
 import { getDeviations } from './deviations';
+import type { Card, Rank, Suit } from '../engine/types';
+import { ALL_RANKS, ALL_SUITS } from '../engine/types';
 
 const SURRENDER_ACTIONS = new Set<ChartAction>(['Rh', 'Rs', 'Rp']);
 
@@ -80,4 +82,86 @@ export function generateTargetCount(dev: Deviation, numDecks: number): TargetCou
   }
 
   return { targetRC, targetDecksRem: decksRem };
+}
+
+export interface ForcedDeal {
+  player1: Card;
+  player2: Card;
+  dealerUp: Card;
+  dealerHole: Card;
+}
+
+function mkCard(rank: Rank): Card {
+  const suit: Suit = ALL_SUITS[randInt(0, ALL_SUITS.length - 1)];
+  return { suit, rank, faceUp: true };
+}
+
+const TEN_RANKS: Rank[] = ['10', 'J', 'Q', 'K'];
+
+function pickRankForValue(val: number): Rank {
+  if (val === 10) return TEN_RANKS[randInt(0, 3)];
+  return String(val) as Rank;
+}
+
+function dealerUpcardRank(dealerUpVal: number): Rank {
+  if (dealerUpVal === 11) return 'A';
+  if (dealerUpVal === 10) return TEN_RANKS[randInt(0, 3)];
+  return String(dealerUpVal) as Rank;
+}
+
+function pickHardPair(total: number): [Rank, Rank] {
+  // Decompose `total` into two non-Ace ranks (2..10). Retry until both are valid.
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const a = randInt(2, Math.min(10, total - 2));
+    const b = total - a;
+    if (b >= 2 && b <= 10) {
+      return [pickRankForValue(a), pickRankForValue(b)];
+    }
+  }
+  const a = Math.floor(total / 2);
+  return [pickRankForValue(a), pickRankForValue(total - a)];
+}
+
+function pickSoftPair(total: number): [Rank, Rank] {
+  const other = total - 11;
+  if (other < 2 || other > 10) {
+    throw new Error(`Cannot build soft total ${total}`);
+  }
+  const aceFirst = Math.random() < 0.5;
+  return aceFirst ? ['A', pickRankForValue(other)] : [pickRankForValue(other), 'A'];
+}
+
+function pickPairRanks(total: number): [Rank, Rank] {
+  if (total === 11) return ['A', 'A'];
+  if (total === 10) {
+    const r = TEN_RANKS[randInt(0, 3)];
+    return [r, r];
+  }
+  const r = String(total) as Rank;
+  return [r, r];
+}
+
+export function buildForcedDeal(dev: Deviation): ForcedDeal {
+  let r1: Rank, r2: Rank;
+  switch (dev.handType) {
+    case 'pairs':
+      [r1, r2] = pickPairRanks(dev.playerTotal);
+      break;
+    case 'soft':
+      [r1, r2] = pickSoftPair(dev.playerTotal);
+      break;
+    case 'hard':
+      [r1, r2] = pickHardPair(dev.playerTotal);
+      break;
+  }
+
+  const dealerUp = mkCard(dealerUpcardRank(dev.dealerUp));
+  const dealerHole = mkCard(ALL_RANKS[randInt(0, ALL_RANKS.length - 1)]);
+
+  return {
+    player1: mkCard(r1),
+    player2: mkCard(r2),
+    dealerUp,
+    dealerHole,
+  };
 }

@@ -112,3 +112,54 @@ describe('generateTargetCount', () => {
     }
   });
 });
+
+import { buildForcedDeal } from '../deviationDrill';
+import { handValue, isPair } from '../../engine/hand';
+
+describe('buildForcedDeal', () => {
+  it('produces a pair for pair deviations', () => {
+    const dev = H17_DEVIATIONS.find(d => d.handType === 'pairs' && d.playerTotal === 10)!;
+    for (let i = 0; i < 100; i++) {
+      const d = buildForcedDeal(dev);
+      expect(isPair([d.player1, d.player2])).toBe(true);
+      expect(d.player1.rank === d.player2.rank).toBe(true);
+    }
+  });
+
+  it('produces a soft hand for soft deviations', () => {
+    const dev = H17_DEVIATIONS.find(d => d.handType === 'soft' && d.playerTotal === 19)!;
+    for (let i = 0; i < 100; i++) {
+      const d = buildForcedDeal(dev);
+      const hv = handValue([d.player1, d.player2]);
+      expect(hv.isSoft).toBe(true);
+      expect(hv.total).toBe(19);
+    }
+  });
+
+  it('produces a hard hand (no Ace) for hard deviations', () => {
+    const dev = H17_DEVIATIONS.find(d => d.handType === 'hard' && d.playerTotal === 16 && d.dealerUp === 10)!;
+    for (let i = 0; i < 100; i++) {
+      const d = buildForcedDeal(dev);
+      expect(d.player1.rank).not.toBe('A');
+      expect(d.player2.rank).not.toBe('A');
+      const hv = handValue([d.player1, d.player2]);
+      expect(hv.total).toBe(16);
+      expect(hv.isSoft).toBe(false);
+    }
+  });
+
+  it('dealer upcard matches deviation dealerUp value (Ace maps to rank A)', () => {
+    const dev = H17_DEVIATIONS.find(d => d.dealerUp === 11)!;
+    for (let i = 0; i < 50; i++) {
+      const d = buildForcedDeal(dev);
+      expect(d.dealerUp.rank).toBe('A');
+    }
+  });
+
+  it('populates a hole card of any rank', () => {
+    const dev = H17_DEVIATIONS[0];
+    const d = buildForcedDeal(dev);
+    expect(d.dealerHole).toBeDefined();
+    expect(d.dealerHole.rank).toBeTruthy();
+  });
+});
