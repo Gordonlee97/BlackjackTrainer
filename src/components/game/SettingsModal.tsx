@@ -82,13 +82,21 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   <SelectRow
                     label="Number of Decks"
                     value={String(rules.numDecks)}
-                    options={[
-                      { value: '1', label: '1 Deck' },
-                      { value: '2', label: '2 Decks' },
-                      { value: '4', label: '4 Decks' },
-                      { value: '6', label: '6 Decks' },
-                      { value: '8', label: '8 Decks' },
-                    ]}
+                    options={
+                      rules.deviationsPracticeMode
+                        ? [
+                            { value: '4', label: '4 Decks' },
+                            { value: '6', label: '6 Decks' },
+                            { value: '8', label: '8 Decks' },
+                          ]
+                        : [
+                            { value: '1', label: '1 Deck' },
+                            { value: '2', label: '2 Decks' },
+                            { value: '4', label: '4 Decks' },
+                            { value: '6', label: '6 Decks' },
+                            { value: '8', label: '8 Decks' },
+                          ]
+                    }
                     onChange={v => {
                       const updates: Partial<RuleSet> = { numDecks: Number(v) as RuleSet['numDecks'] };
                       if (Number(v) < 4) updates.useDeviations = false;
@@ -135,11 +143,27 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   <ToggleRow
                     label="Use Deviations"
                     checked={rules.useDeviations}
+                    disabled={rules.deviationsPracticeMode}
+                    disabledTitle="Required for deviations practice"
                     onChange={v => {
                       const updates: Partial<RuleSet> = { useDeviations: v };
                       if (v) {
                         if (rules.showCount === 'off') updates.showCount = 'always';
                         if (rules.numDecks < 4) updates.numDecks = 6;
+                      }
+                      setRules(updates);
+                    }}
+                  />
+                  <ToggleRow
+                    label="Deviations Practice"
+                    subtext="Pre-selected hands with fabricated counts. Drills deviation recognition and bet spread together."
+                    checked={rules.deviationsPracticeMode}
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { deviationsPracticeMode: v };
+                      if (v) {
+                        updates.useDeviations = true;
+                        if (rules.showCount === 'off') updates.showCount = 'always';
+                        if (rules.numDecks < 4) updates.numDecks = 4;
                       }
                       setRules(updates);
                     }}
@@ -153,11 +177,18 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   <SelectRow
                     label="Running Count (Hi-Lo)"
                     value={rules.showCount}
-                    options={[
-                      { value: 'off',    label: 'Off' },
-                      { value: 'always', label: 'Always Visible' },
-                      { value: 'hover',  label: 'Hover to Reveal' },
-                    ]}
+                    options={
+                      rules.deviationsPracticeMode
+                        ? [
+                            { value: 'always', label: 'Always Visible' },
+                            { value: 'hover',  label: 'Hover to Reveal' },
+                          ]
+                        : [
+                            { value: 'off',    label: 'Off' },
+                            { value: 'always', label: 'Always Visible' },
+                            { value: 'hover',  label: 'Hover to Reveal' },
+                          ]
+                    }
                     onChange={v => {
                       const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
                       if (v === 'off') updates.useDeviations = false;
@@ -323,12 +354,14 @@ function SelectRow({ label, value, options, onChange, last }: {
   );
 }
 
-function ToggleRow({ label, checked, onChange, last, disabled }: {
+function ToggleRow({ label, subtext, checked, onChange, last, disabled, disabledTitle }: {
   label: string;
+  subtext?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   last?: boolean;
   disabled?: boolean;
+  disabledTitle?: string;
 }) {
   return (
     <div
@@ -338,9 +371,15 @@ function ToggleRow({ label, checked, onChange, last, disabled }: {
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
         opacity: disabled ? 0.35 : 1,
       }}
+      title={disabled ? disabledTitle : undefined}
       onClick={() => !disabled && onChange(!checked)}
     >
-      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: subtext ? '4px' : 0 }}>
+        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
+        {subtext && (
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 400, maxWidth: '320px' }}>{subtext}</span>
+        )}
+      </div>
       <div
         className="relative shrink-0 transition-all duration-200"
         style={{
