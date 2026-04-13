@@ -65,3 +65,50 @@ describe('pickDeviation', () => {
     expect(seen.size).toBe(applicable.length);
   });
 });
+
+import { generateTargetCount } from '../deviationDrill';
+
+describe('generateTargetCount', () => {
+  it('produces TC that satisfies a gte threshold (TC-based)', () => {
+    const dev = H17_DEVIATIONS.find(d => d.handType === 'hard' && d.playerTotal === 10 && d.dealerUp === 10)!;
+    for (let i = 0; i < 200; i++) {
+      const r = generateTargetCount(dev, 6);
+      const tc = Math.trunc(r.targetRC / r.targetDecksRem);
+      expect(tc).toBeGreaterThanOrEqual(dev.threshold);
+    }
+  });
+
+  it('produces TC that satisfies an lte threshold (TC-based)', () => {
+    const dev = H17_DEVIATIONS.find(d => d.handType === 'hard' && d.playerTotal === 13 && d.dealerUp === 2)!;
+    for (let i = 0; i < 200; i++) {
+      const r = generateTargetCount(dev, 6);
+      const tc = Math.trunc(r.targetRC / r.targetDecksRem);
+      expect(tc).toBeLessThanOrEqual(dev.threshold);
+    }
+  });
+
+  it('produces positive RC for usesRunningCount gte (0+) deviations', () => {
+    const dev = H17_DEVIATIONS.find(d => d.usesRunningCount && d.direction === 'gte')!;
+    for (let i = 0; i < 200; i++) {
+      const r = generateTargetCount(dev, 6);
+      expect(r.targetRC).toBeGreaterThan(0);
+    }
+  });
+
+  it('produces negative RC for usesRunningCount lte (0-) deviations', () => {
+    const dev = H17_DEVIATIONS.find(d => d.usesRunningCount && d.direction === 'lte')!;
+    for (let i = 0; i < 200; i++) {
+      const r = generateTargetCount(dev, 6);
+      expect(r.targetRC).toBeLessThan(0);
+    }
+  });
+
+  it('targetDecksRem is in (0, numDecks)', () => {
+    const dev = H17_DEVIATIONS[0];
+    for (let i = 0; i < 200; i++) {
+      const r = generateTargetCount(dev, 6);
+      expect(r.targetDecksRem).toBeGreaterThan(0);
+      expect(r.targetDecksRem).toBeLessThan(6);
+    }
+  });
+});
