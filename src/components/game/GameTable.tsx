@@ -20,6 +20,8 @@ import BetControls from './BetControls';
 import StatsPanel from '../feedback/StatsPanel';
 import StrategyModal from '../feedback/StrategyModal';
 import StrategyChartModal from '../feedback/StrategyChartModal';
+import { BetSpreadFeedback } from '../feedback/BetSpreadFeedback';
+import { evaluateBet } from '../../strategy/betSpread';
 import SettingsModal from './SettingsModal';
 import RunningCount from './RunningCount';
 import RebuyModal from './RebuyModal';
@@ -659,6 +661,22 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 animate="show"
                 exit="exit"
               >
+                {rules?.deviationsPracticeMode && game.betSnapshotTC !== null && (() => {
+                  const cardsDealt = game.shoeSize - game.shoe.length;
+                  const decisionTC = computeTrueCount(runningCount, game.shoeSize, cardsDealt);
+                  const betAmount = game.playerHands[0]?.bet ?? 0;
+                  const minBet = 25;
+                  const evaluation = evaluateBet(betAmount, minBet, game.betSnapshotTC);
+                  return (
+                    <div style={{ marginBottom: 'var(--space-md)' }}>
+                      <BetSpreadFeedback
+                        betTimeTC={game.betSnapshotTC}
+                        decisionTC={decisionTC !== game.betSnapshotTC ? decisionTC : null}
+                        evaluation={evaluation}
+                      />
+                    </div>
+                  );
+                })()}
                 <motion.button
                   whileHover={{ scale: 1.04, y: -3 }}
                   whileTap={{ scale: 0.96 }}
