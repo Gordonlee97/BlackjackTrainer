@@ -18,11 +18,14 @@ export interface RuleSet {
   dasAllowed: boolean;
   surrenderAllowed: boolean;
   hitSplitAces: boolean;
+  resplitAces: boolean;
   practiceMode: 'all' | 'hard' | 'soft' | 'splits';
   wrongMoveAction: 'execute' | 'block';
   showHandTotals: boolean;
   soundVolume: number; // 0–100
   showCount: 'off' | 'always' | 'hover';
+  useDeviations: boolean;
+  deviationsPracticeMode: boolean;
 }
 
 // Chart: playerValue -> dealerUpcard (2-11, where 11=Ace) -> action
@@ -35,14 +38,17 @@ export interface FullStrategy {
 }
 
 export const DEFAULT_RULES: RuleSet = {
-  numDecks: 6,
+  numDecks: 8,
   dealerHitsSoft17: true,
   dasAllowed: true,
   surrenderAllowed: false,
   hitSplitAces: false,
+  resplitAces: true,
   practiceMode: 'all',
   wrongMoveAction: 'block',
   showHandTotals: true,
   soundVolume: 30,
   showCount: 'hover',
+  useDeviations: false,
+  deviationsPracticeMode: false,
 };

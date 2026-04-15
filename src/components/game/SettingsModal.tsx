@@ -82,14 +82,26 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   <SelectRow
                     label="Number of Decks"
                     value={String(rules.numDecks)}
-                    options={[
-                      { value: '1', label: '1 Deck' },
-                      { value: '2', label: '2 Decks' },
-                      { value: '4', label: '4 Decks' },
-                      { value: '6', label: '6 Decks' },
-                      { value: '8', label: '8 Decks' },
-                    ]}
-                    onChange={v => setRules({ numDecks: Number(v) as RuleSet['numDecks'] })}
+                    options={
+                      rules.deviationsPracticeMode
+                        ? [
+                            { value: '4', label: '4 Decks' },
+                            { value: '6', label: '6 Decks' },
+                            { value: '8', label: '8 Decks' },
+                          ]
+                        : [
+                            { value: '1', label: '1 Deck' },
+                            { value: '2', label: '2 Decks' },
+                            { value: '4', label: '4 Decks' },
+                            { value: '6', label: '6 Decks' },
+                            { value: '8', label: '8 Decks' },
+                          ]
+                    }
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { numDecks: Number(v) as RuleSet['numDecks'] };
+                      if (Number(v) < 4) updates.useDeviations = false;
+                      setRules(updates);
+                    }}
                   />
                   <SelectRow
                     label="Dealer Soft 17"
@@ -102,7 +114,8 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   />
                   <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={v => setRules({ surrenderAllowed: v })} />
                   <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={v => setRules({ dasAllowed: v })} />
-                  <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={v => setRules({ hitSplitAces: v })} last />
+                  <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={v => setRules({ hitSplitAces: v })} />
+                  <ToggleRow label="Resplit Aces"             checked={rules.resplitAces}      onChange={v => setRules({ resplitAces: v })} last />
                 </Section>
 
                 {/* Training */}
@@ -126,6 +139,34 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                       { value: 'block',   label: 'Block until correct move' },
                     ]}
                     onChange={v => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
+                  />
+                  <ToggleRow
+                    label="Use Deviations"
+                    checked={rules.useDeviations}
+                    disabled={rules.deviationsPracticeMode}
+                    disabledTitle="Required for deviations practice"
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { useDeviations: v };
+                      if (v) {
+                        if (rules.showCount === 'off') updates.showCount = 'always';
+                        if (rules.numDecks < 4) updates.numDecks = 6;
+                      }
+                      setRules(updates);
+                    }}
+                  />
+                  <ToggleRow
+                    label="Deviations Practice"
+                    subtext="Pre-selected hands with fabricated counts. Drills deviation recognition and bet spread together."
+                    checked={rules.deviationsPracticeMode}
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { deviationsPracticeMode: v };
+                      if (v) {
+                        updates.useDeviations = true;
+                        if (rules.showCount === 'off') updates.showCount = 'always';
+                        if (rules.numDecks < 4) updates.numDecks = 4;
+                      }
+                      setRules(updates);
+                    }}
                     last
                   />
                 </Section>
@@ -136,12 +177,23 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
                   <SelectRow
                     label="Running Count (Hi-Lo)"
                     value={rules.showCount}
-                    options={[
-                      { value: 'off',    label: 'Off' },
-                      { value: 'always', label: 'Always Visible' },
-                      { value: 'hover',  label: 'Hover to Reveal' },
-                    ]}
-                    onChange={v => setRules({ showCount: v as RuleSet['showCount'] })}
+                    options={
+                      rules.deviationsPracticeMode
+                        ? [
+                            { value: 'always', label: 'Always Visible' },
+                            { value: 'hover',  label: 'Hover to Reveal' },
+                          ]
+                        : [
+                            { value: 'off',    label: 'Off' },
+                            { value: 'always', label: 'Always Visible' },
+                            { value: 'hover',  label: 'Hover to Reveal' },
+                          ]
+                    }
+                    onChange={v => {
+                      const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
+                      if (v === 'off') updates.useDeviations = false;
+                      setRules(updates);
+                    }}
                     last
                   />
                 </Section>
@@ -302,31 +354,41 @@ function SelectRow({ label, value, options, onChange, last }: {
   );
 }
 
-function ToggleRow({ label, checked, onChange, last }: {
+function ToggleRow({ label, subtext, checked, onChange, last, disabled, disabledTitle }: {
   label: string;
+  subtext?: string;
   checked: boolean;
   onChange: (v: boolean) => void;
   last?: boolean;
+  disabled?: boolean;
+  disabledTitle?: string;
 }) {
   return (
     <div
-      className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
+      className={`flex items-center justify-between ${disabled ? '' : 'cursor-pointer hover:bg-white/[0.02]'} transition-colors`}
       style={{
         padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.06)',
+        opacity: disabled ? 0.35 : 1,
       }}
-      onClick={() => onChange(!checked)}
+      title={disabled ? disabledTitle : undefined}
+      onClick={() => !disabled && onChange(!checked)}
     >
-      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: subtext ? '4px' : 0 }}>
+        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>{label}</span>
+        {subtext && (
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 400, maxWidth: '320px' }}>{subtext}</span>
+        )}
+      </div>
       <div
         className="relative shrink-0 transition-all duration-200"
         style={{
           width: 'var(--toggle-w)', height: 'var(--toggle-h)',
           marginLeft: 'var(--space-md)',
           borderRadius: 9999,
-          background: checked ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
-          border: checked ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
-          boxShadow: checked ? '0 0 12px rgba(245,158,11,0.25)' : 'none',
+          background: checked && !disabled ? 'rgba(245,158,11,0.55)' : 'rgba(255,255,255,0.1)',
+          border: checked && !disabled ? '1.5px solid rgba(245,158,11,0.7)' : '1.5px solid rgba(255,255,255,0.12)',
+          boxShadow: checked && !disabled ? '0 0 12px rgba(245,158,11,0.25)' : 'none',
         }}
       >
         <span
@@ -335,8 +397,8 @@ function ToggleRow({ label, checked, onChange, last }: {
             top: 'var(--toggle-inset)', left: 'var(--toggle-inset)',
             width: 'var(--toggle-knob)', height: 'var(--toggle-knob)',
             borderRadius: 9999,
-            background: checked ? '#f59e0b' : 'rgba(255,255,255,0.4)',
-            transform: checked ? 'translateX(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-inset) * 2))' : 'translateX(0)',
+            background: checked && !disabled ? '#f59e0b' : 'rgba(255,255,255,0.4)',
+            transform: checked && !disabled ? 'translateX(calc(var(--toggle-w) - var(--toggle-knob) - var(--toggle-inset) * 2))' : 'translateX(0)',
             boxShadow: '0 1px 4px rgba(0,0,0,0.4)',
           }}
         />

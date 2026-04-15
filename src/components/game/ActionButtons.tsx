@@ -25,7 +25,7 @@ export default function ActionButtons({
   canDouble, canSplit, canSurrender, disabled,
 }: ActionButtonsProps) {
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="action-buttons flex flex-col items-center gap-4">
       <div className="flex gap-5">
         <ActionBtn label="Hit"   shortcut="H" style={BUTTON_STYLES.hit}   enabled size="lg" disabled={disabled} onClick={onHit} />
         <ActionBtn label="Stand" shortcut="S" style={BUTTON_STYLES.stand} enabled size="lg" disabled={disabled} onClick={onStand} />
@@ -63,7 +63,7 @@ function ActionBtn({ label, shortcut, style, enabled, size, disabled, onClick }:
       transition={{ type: 'spring', stiffness: 400, damping: 17 }}
       onClick={onClick}
       disabled={off}
-      className="flex flex-col items-center justify-center gap-1.5 font-black text-white select-none"
+      className={`flex flex-col items-center justify-center gap-1.5 font-black text-white select-none ${size === 'lg' ? 'action-btn-lg' : ''}`}
       style={{
         width: w,
         height: h,

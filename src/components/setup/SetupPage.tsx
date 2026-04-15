@@ -28,7 +28,9 @@ export default function SetupPage({ onStart }: SetupPageProps) {
         <span style={{ fontSize: 'var(--setup-logo)', lineHeight: 1 }}>🃏</span>
         <div>
           <h1 style={{ fontSize: 'var(--setup-title)', fontWeight: 900, color: 'white', letterSpacing: '-0.02em', lineHeight: 1 }}>Blackjack Trainer</h1>
-          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: 'var(--text-base)' }}>Practice perfect basic strategy</p>
+          <p className="text-white/40 mt-2 tracking-wide" style={{ fontSize: 'var(--text-base)' }}>
+            {rules.useDeviations ? 'Practice basic strategy + deviations' : 'Practice perfect basic strategy'}
+          </p>
         </div>
       </div>
 
@@ -40,14 +42,26 @@ export default function SetupPage({ onStart }: SetupPageProps) {
             <SelectRow
               label="Number of Decks"
               value={String(rules.numDecks)}
-              options={[
-                { value: '1', label: '1 Deck' },
-                { value: '2', label: '2 Decks' },
-                { value: '4', label: '4 Decks' },
-                { value: '6', label: '6 Decks' },
-                { value: '8', label: '8 Decks' },
-              ]}
-              onChange={(v) => setRules({ numDecks: Number(v) as RuleSet['numDecks'] })}
+              options={
+                rules.deviationsPracticeMode
+                  ? [
+                      { value: '4', label: '4 Decks' },
+                      { value: '6', label: '6 Decks' },
+                      { value: '8', label: '8 Decks' },
+                    ]
+                  : [
+                      { value: '1', label: '1 Deck' },
+                      { value: '2', label: '2 Decks' },
+                      { value: '4', label: '4 Decks' },
+                      { value: '6', label: '6 Decks' },
+                      { value: '8', label: '8 Decks' },
+                    ]
+              }
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { numDecks: Number(v) as RuleSet['numDecks'] };
+                if (Number(v) < 4) updates.useDeviations = false;
+                setRules(updates);
+              }}
             />
             <SelectRow
               label="Dealer Soft 17"
@@ -60,7 +74,8 @@ export default function SetupPage({ onStart }: SetupPageProps) {
             />
             <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={(v) => setRules({ surrenderAllowed: v })} />
             <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={(v) => setRules({ dasAllowed: v })} />
-            <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={(v) => setRules({ hitSplitAces: v })} last />
+            <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={(v) => setRules({ hitSplitAces: v })} />
+            <ToggleRow label="Resplit Aces"             checked={rules.resplitAces}      onChange={(v) => setRules({ resplitAces: v })} last />
           </Section>
 
           <Section label="Training Options">
@@ -83,6 +98,34 @@ export default function SetupPage({ onStart }: SetupPageProps) {
                 { value: 'block',   label: 'Block until correct move' },
               ]}
               onChange={(v) => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
+            />
+            <ToggleRow
+              label="Use Deviations"
+              checked={rules.useDeviations}
+              disabled={rules.deviationsPracticeMode}
+              disabledTitle="Required for deviations practice"
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { useDeviations: v };
+                if (v) {
+                  if (rules.showCount === 'off') updates.showCount = 'always';
+                  if (rules.numDecks < 4) updates.numDecks = 6;
+                }
+                setRules(updates);
+              }}
+            />
+            <ToggleRow
+              label="Deviations Practice"
+              subtext="Pre-selected hands with fabricated counts. Drills deviation recognition and bet spread together."
+              checked={rules.deviationsPracticeMode}
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { deviationsPracticeMode: v };
+                if (v) {
+                  updates.useDeviations = true;
+                  if (rules.showCount === 'off') updates.showCount = 'always';
+                  if (rules.numDecks < 4) updates.numDecks = 4;
+                }
+                setRules(updates);
+              }}
               last
             />
           </Section>
@@ -92,12 +135,23 @@ export default function SetupPage({ onStart }: SetupPageProps) {
             <SelectRow
               label="Running Count (Hi-Lo)"
               value={rules.showCount}
-              options={[
-                { value: 'off',    label: 'Off' },
-                { value: 'always', label: 'Always Visible' },
-                { value: 'hover',  label: 'Hover to Reveal' },
-              ]}
-              onChange={(v) => setRules({ showCount: v as RuleSet['showCount'] })}
+              options={
+                rules.deviationsPracticeMode
+                  ? [
+                      { value: 'always', label: 'Always Visible' },
+                      { value: 'hover',  label: 'Hover to Reveal' },
+                    ]
+                  : [
+                      { value: 'off',    label: 'Off' },
+                      { value: 'always', label: 'Always Visible' },
+                      { value: 'hover',  label: 'Hover to Reveal' },
+                    ]
+              }
+              onChange={(v) => {
+                const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
+                if (v === 'off') updates.useDeviations = false;
+                setRules(updates);
+              }}
             />
             <SliderRow label="Sound Volume" value={rules.soundVolume} onChange={(v) => setRules({ soundVolume: v })} last />
           </Section>
@@ -178,22 +232,33 @@ function SelectRow({ label, value, options, onChange, last }: {
   );
 }
 
-function ToggleRow({ label, checked, onChange, last }: {
+function ToggleRow({ label, subtext, checked, onChange, last, disabled, disabledTitle }: {
   label: string;
+  subtext?: string;
   checked: boolean;
   onChange: (value: boolean) => void;
   last?: boolean;
+  disabled?: boolean;
+  disabledTitle?: string;
 }) {
   return (
     <div
-      className="flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-colors"
+      className="flex items-center justify-between transition-colors"
       style={{
         padding: 'var(--row-padding)',
         borderBottom: last ? 'none' : '1px solid rgba(255,255,255,0.05)',
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? 'not-allowed' : 'pointer',
       }}
-      onClick={() => onChange(!checked)}
+      title={disabled ? disabledTitle : undefined}
+      onClick={() => { if (!disabled) onChange(!checked); }}
     >
-      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: subtext ? '4px' : 0 }}>
+        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '16px', fontWeight: 500 }}>{label}</span>
+        {subtext && (
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', fontWeight: 400, maxWidth: '320px' }}>{subtext}</span>
+        )}
+      </div>
       <div
         className="relative shrink-0 transition-all duration-200"
         style={{

@@ -5,6 +5,9 @@ import { handValue, isBlackjack, isBust, isPair } from '../engine/hand';
 import { settleHand, calculatePayout } from '../engine/payout';
 import type { RuleSet } from '../strategy/types';
 import { useCountStore } from './countStore';
+import { generate as generateDrill } from '../strategy/deviationDrill';
+import { computeTrueCount } from '../engine/counting';
+import type { Deviation } from '../strategy/deviations';
 
 const INITIAL_BALANCE = 1000;
 const DEFAULT_BET = 25;
@@ -29,6 +32,10 @@ interface GameStore extends GameState {
   dealToSplitHand: (handIndex: number) => void;
   surrender: () => void;
   newHand: () => void;
+  rebuy: (amount: number) => void;
+
+  currentDeviation: Deviation | null;
+  betSnapshotTC: number | null;
 
   // Helpers
   canDouble: () => boolean;
@@ -62,6 +69,23 @@ function shouldFilterHand(hand: HandState, practiceMode: string): boolean {
   }
 }
 
+function applyDrillSeed(rules: RuleSet): {
+  shoe: Card[];
+  shoeSize: number;
+  preSeedRC: number;
+  currentDeviation: Deviation;
+} | null {
+  if (!rules.deviationsPracticeMode) return null;
+  if (rules.numDecks < 4) return null;
+  const drill = generateDrill(rules);
+  return {
+    shoe: drill.shoe,
+    shoeSize: drill.shoe.length,
+    preSeedRC: drill.preSeedRC,
+    currentDeviation: drill.deviation,
+  };
+}
+
 export const useGameStore = create<GameStore>((set, get) => ({
   phase: 'betting',
   shoe: [],
@@ -75,19 +99,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
   message: '',
   rules: null,
   pendingNatural: null,
+  currentDeviation: null,
+  betSnapshotTC: null,
 
   initGame: (rules) => {
+    const drill = applyDrillSeed(rules);
     const numCards = rules.numDecks * 52;
-    const shoe = createShoe(rules.numDecks);
+    const shoe = drill?.shoe ?? createShoe(rules.numDecks);
+    const shoeSize = drill?.shoeSize ?? numCards;
     set({
       rules,
       shoe,
-      shoeSize: numCards,
+      shoeSize,
       balance: INITIAL_BALANCE,
       phase: 'betting',
       message: 'Place your bet',
+      dealerHand: createEmptyHand(0),
+      playerHands: [createEmptyHand(DEFAULT_BET)],
+      activeHandIndex: 0,
+      dealerHoleCardRevealed: false,
+      pendingNatural: null,
+      currentDeviation: drill?.currentDeviation ?? null,
+      betSnapshotTC: null,
     });
     useCountStore.getState().resetCount();
+    if (drill) {
+      useCountStore.setState({ runningCount: drill.preSeedRC });
+    }
   },
 
   placeBet: (amount) => {
@@ -105,54 +143,76 @@ export const useGameStore = create<GameStore>((set, get) => ({
     let shoe = [...state.shoe];
     const shoeSize = state.shoeSize;
 
+    const preDealCardsDealt = state.shoeSize - state.shoe.length;
+    const preDealTC = computeTrueCount(
+      useCountStore.getState().runningCount,
+      state.shoeSize,
+      preDealCardsDealt,
+    );
+    set({ betSnapshotTC: preDealTC });
+
     // Check if reshuffle needed
-    if (needsReshuffle(shoe, shoeSize)) {
+    if (!rules.deviationsPracticeMode && needsReshuffle(shoe, shoeSize)) {
       shoe = createShoe(rules.numDecks);
       useCountStore.getState().resetCount();
     }
 
-    // Deal with practice mode filtering - retry up to 50 times
     let playerCards: Card[] = [];
     let dealerCards: Card[] = [];
-    let attempts = 0;
 
-    do {
+    if (rules.deviationsPracticeMode) {
       let tempShoe = [...shoe];
-      let result;
-
-      result = drawCard(tempShoe);
-      const p1 = result.card;
-      tempShoe = result.shoe;
-
-      result = drawCard(tempShoe, false); // Dealer hole card face down
-      const d1 = { ...result.card, faceUp: false };
-      tempShoe = result.shoe;
-
-      result = drawCard(tempShoe);
-      const p2 = result.card;
-      tempShoe = result.shoe;
-
-      result = drawCard(tempShoe);
-      const d2 = result.card;
-      tempShoe = result.shoe;
-
+      let r = drawCard(tempShoe);
+      const p1 = r.card; tempShoe = r.shoe;
+      r = drawCard(tempShoe, false);
+      const d1 = { ...r.card, faceUp: false }; tempShoe = r.shoe;
+      r = drawCard(tempShoe);
+      const p2 = r.card; tempShoe = r.shoe;
+      r = drawCard(tempShoe);
+      const d2 = r.card; tempShoe = r.shoe;
       playerCards = [p1, p2];
       dealerCards = [d1, d2];
+      shoe = tempShoe;
+    } else {
+      let attempts = 0;
+      do {
+        let tempShoe = [...shoe];
+        let result;
 
-      const testHand: HandState = { cards: playerCards, bet: currentBet, isDoubled: false, isSplit: false, isComplete: false };
-      if (!shouldFilterHand(testHand, rules.practiceMode)) {
-        shoe = tempShoe;
-        break;
-      }
+        result = drawCard(tempShoe);
+        const p1 = result.card;
+        tempShoe = result.shoe;
 
-      // Reshuffle and try again
-      attempts++;
-      if (attempts >= 50) {
-        shoe = tempShoe;
-        break;
-      }
-      shoe = createShoe(rules.numDecks);
-    } while (true);
+        result = drawCard(tempShoe, false); // Dealer hole card face down
+        const d1 = { ...result.card, faceUp: false };
+        tempShoe = result.shoe;
+
+        result = drawCard(tempShoe);
+        const p2 = result.card;
+        tempShoe = result.shoe;
+
+        result = drawCard(tempShoe);
+        const d2 = result.card;
+        tempShoe = result.shoe;
+
+        playerCards = [p1, p2];
+        dealerCards = [d1, d2];
+
+        const testHand: HandState = { cards: playerCards, bet: currentBet, isDoubled: false, isSplit: false, isComplete: false };
+        if (!shouldFilterHand(testHand, rules.practiceMode)) {
+          shoe = tempShoe;
+          break;
+        }
+
+        // Reshuffle and try again
+        attempts++;
+        if (attempts >= 50) {
+          shoe = tempShoe;
+          break;
+        }
+        shoe = createShoe(rules.numDecks);
+      } while (true);
+    }
 
     const playerHand: HandState = {
       cards: playerCards,
@@ -323,10 +383,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     useCountStore.getState().updateCount([card]);
 
     const isAceSplit = hand.cards[0].rank === 'A';
+    const canResplit = isAceSplit && state.rules?.resplitAces && card.rank === 'A';
     const updatedHand: HandState = {
       ...hand,
       cards: [...hand.cards, card],
-      isComplete: isAceSplit && !state.rules?.hitSplitAces,
+      isComplete: isAceSplit && !state.rules?.hitSplitAces && !canResplit,
     };
 
     const playerHands = [...state.playerHands];
@@ -372,7 +433,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const state = get();
     if (state.phase !== 'complete') return;
 
-    set({
+    const rules = state.rules!;
+    const drill = applyDrillSeed(rules);
+
+    const patch: Partial<GameStore> = {
       phase: 'betting',
       dealerHand: createEmptyHand(0),
       playerHands: [createEmptyHand(state.currentBet)],
@@ -380,7 +444,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
       dealerHoleCardRevealed: false,
       message: 'Place your bet',
       pendingNatural: null,
-    });
+      currentDeviation: drill?.currentDeviation ?? null,
+      betSnapshotTC: null,
+    };
+
+    if (drill) {
+      patch.shoe = drill.shoe;
+      patch.shoeSize = drill.shoeSize;
+      useCountStore.setState({ runningCount: drill.preSeedRC });
+    }
+
+    set(patch);
+  },
+
+  rebuy: (amount: number) => {
+    set((state) => ({ balance: state.balance + amount }));
   },
 
   canDouble: () => {

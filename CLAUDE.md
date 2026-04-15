@@ -83,6 +83,29 @@ Every time changes are committed and pushed to git, update the memory system wit
 
 Do NOT save code patterns, file paths, or anything derivable from the codebase itself — only context, decisions, and preferences that would be lost between sessions.
 
+## Strategy Data Integrity
+
+This is a training tool. Incorrect strategy data makes the entire app harmful rather than helpful. These rules are non-negotiable:
+
+### 1. NEVER transcribe chart data freehand — verify cell-by-cell
+When encoding any strategy chart (basic strategy, deviations, surrender, splits), verify every single cell against the source of truth. A single column shift, row swap, or off-by-one error silently corrupts the trainer. After writing any chart data, re-read it and cross-check each cell's (hand, dealer upcard) coordinate against the source.
+
+### 2. BJA (Blackjack Apprentice) is the source of truth for deviation indices
+Use BJA charts for all deviation data. Do not substitute values from other sources (Wong, Schlesinger, etc.) unless the user explicitly requests it. Minor ±1 index differences between sources are real and intentional — always defer to BJA.
+
+Reference PDFs are stored at `src/strategy/BJA_H17.pdf` and `src/strategy/BJA_S17.pdf`. To read them, convert to PNG first using poppler (installed via winget):
+```bash
+POPPLER_BIN="C:/Users/gordo/AppData/Local/Microsoft/WinGet/Packages/oschwartz10612.Poppler_Microsoft.Winget.Source_8wekyb3d8bbwe/poppler-25.07.0/Library/bin"
+"$POPPLER_BIN/pdftoppm.exe" -png -r 200 "src/strategy/BJA_H17.pdf" "/tmp/bja_h17"
+# Then read /tmp/bja_h17-1.png with the Read tool (use full Windows path if needed)
+```
+
+### 3. H17 and S17 are different charts — never mix them
+Deviation indices change between H17 and S17 rules. Always confirm which rule set a chart applies to before encoding it. Some plays that are deviations under S17 are already basic strategy under H17 (e.g., 11 vs A is always Double in H17).
+
+### 4. Test chart data against known hands after implementation
+After encoding any strategy chart, verify at least 5-10 specific hand/dealer/count combinations against the source to confirm correctness.
+
 ## TypeScript Conventions
 
 - `verbatimModuleSyntax` enabled — use `import type { ... }` for type-only imports

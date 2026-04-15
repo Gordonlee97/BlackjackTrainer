@@ -1,11 +1,11 @@
-# Playtest Report -- 2026-04-03
+# Playtest Report -- 2026-04-13
 
 ## Summary
 - Viewports tested: 4 (2560x1440, 1920x1080, 1366x768, 390x844)
-- Scenarios run: 9 (36 total tests across viewports)
-- Tests passed: 36/36
-- Issues found: 5
-- Overall assessment: needs attention
+- Scenarios run: 11 (desktop-only for scenarios 10-11)
+- Tests passed: all (8/8 for deviations scenarios)
+- Issues found: 5 (pre-existing phone layout issues, no new issues from deviations mode)
+- Overall assessment: deviations practice mode working correctly; pre-existing phone cosmetic issues remain
 
 ## Previous Fix Verification
 
@@ -235,6 +235,29 @@ The settings modal now uses a proper backdrop blur effect across all viewports. 
 - `C:/Users/gordo/source/repos/BlackjackTrainer/playtest/screenshots/phone-390x844/09-extended-session/2-hand-10-result.png`
 - `C:/Users/gordo/source/repos/BlackjackTrainer/playtest/screenshots/phone-390x844/09-extended-session/2-hand-12-result.png`
 - `C:/Users/gordo/source/repos/BlackjackTrainer/playtest/screenshots/phone-390x844/09-extended-session/3-final-stats.png`
+
+## Deviations Practice Mode (Scenario 10-11, 2026-04-13)
+
+### Scenario 10: Deviations Practice Smoke
+- **Status**: Pass (desktop)
+- Drill mode generates a hand, BetSpreadFeedback pill appears with correct format ("Bet at TC X • rec Yu-Zu • you bet Nu ✓/↓/↑")
+- Running count card visible in drill mode
+
+### Scenario 11: Deviations Practice Edge Cases
+- **Status**: 8/8 Pass (desktop)
+- Setup page: enabling drill with 2 decks correctly coerces numDecks to ≥4
+- Toggling drill OFF mid-session removes the bet-feedback pill on the next hand
+- Bet spread verdicts: 1u bet with Hi-Lo 1-8 spread shows ✓ at TC≤2, ↓ (underbet) at TC≥3
+- Large bet symbol validation: >8u always shows ↑ (overbet)
+- Running count card present and varies across drill hands (drill re-seeds per hand)
+- Surrender-allowed + drill mode: no crashes across 3 hands
+- Split opportunities appear during drill mode across 10 hands
+
+### Deviations Mode: What Works
+- RC/TC updates live as cards are dealt; bet spread evaluation uses snapshot TC from deal time
+- BetSpreadFeedback pill only shows in drill mode; disappears immediately on toggle-off
+- Correct strategy still enforced — strategy modal still fires for wrong moves in drill mode
+- 6-deck and 8-deck both tested; 4-deck coercion from setup page works
 
 ## What Looks Good
 

@@ -14,7 +14,14 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       rules: DEFAULT_RULES,
       setRules: (partial) =>
-        set((state) => ({ rules: { ...state.rules, ...partial } })),
+        set((state) => {
+          const nextRules = { ...state.rules, ...partial };
+          // Guard: disable drill if dependencies become invalid
+          if (!nextRules.useDeviations || nextRules.numDecks < 4) {
+            nextRules.deviationsPracticeMode = false;
+          }
+          return { rules: nextRules };
+        }),
       resetRules: () => set({ rules: DEFAULT_RULES }),
     }),
     { name: 'blackjack-settings' }
