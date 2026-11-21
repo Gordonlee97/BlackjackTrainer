@@ -13,7 +13,7 @@ React 19, TypeScript 5.9, Vite 8, Tailwind CSS v4, Framer Motion, Zustand (game/
 ```bash
 npm run dev        # Dev server at http://localhost:5173
 npm run build      # tsc -b + Vite production build — MUST pass before any change is done
-npm run lint       # ESLint (3 known errors: react-hooks/set-state-in-effect in GameTable's phase-driven juice effects)
+npm run lint       # ESLint — must stay clean. Phase-driven state goes in a render-time "previous phase" check, not setState in an effect
 npm test           # Vitest unit tests (engine, strategy, store)
 ```
 
