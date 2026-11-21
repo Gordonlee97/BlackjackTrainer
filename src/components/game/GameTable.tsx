@@ -396,7 +396,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setSettingsOpen(true)}
-            className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
+            aria-label="Settings"
+            className="topbar-btn flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
               padding: 'var(--space-sm) var(--space-lg)',
               background: 'var(--surface-glass)',
@@ -411,7 +412,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setChartOpen(true)}
-            className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
+            aria-label="Strategy charts"
+            className="topbar-btn flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
               padding: 'var(--space-sm) var(--space-lg)',
               background: 'var(--surface-glass)',
@@ -428,6 +430,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           <StatsPanel />
         </div>
 
+        {/* Phone only (see index.css): the count moves here so it doesn't cover the dealer's hand */}
+        {rules.showCount !== 'off' && (
+          <div className="topbar-count absolute left-1/2 top-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
+            <RunningCount compact mode={rules.showCount as 'always' | 'hover'} trueCount={currentTrueCount} />
+          </div>
+        )}
+
         {/* Right: Balance */}
         <div className="flex items-center shrink-0">
           <div className="text-right">
@@ -438,9 +447,9 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ DEALER ZONE ══ */}
-      <div className="flex-[3.75] flex flex-col items-center justify-center min-h-0 relative">
+      <div className="dealer-zone flex-[3.75] flex flex-col items-center justify-center min-h-0 relative">
         {rules.showCount !== 'off' && (
-          <div className="absolute top-4 left-6 z-10">
+          <div className="table-count absolute top-4 left-6 z-10">
             <RunningCount mode={rules.showCount as 'always' | 'hover'} trueCount={currentTrueCount} />
           </div>
         )}

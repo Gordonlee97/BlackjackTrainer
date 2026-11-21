@@ -5,6 +5,8 @@ import { useCountStore } from '../../store/countStore';
 interface RunningCountProps {
   mode: 'always' | 'hover';
   trueCount?: number | null;
+  /** One-line pill for the phone top bar; tap toggles the hidden count. */
+  compact?: boolean;
 }
 
 function formatCount(value: number): { sign: string; abs: string } {
@@ -20,13 +22,48 @@ function countColor(value: number): string {
   return 'text-white/70';
 }
 
-export default function RunningCount({ mode, trueCount }: RunningCountProps) {
+export default function RunningCount({ mode, trueCount, compact }: RunningCountProps) {
   const count = useCountStore((s) => s.runningCount);
   const [hovered, setHovered] = useState(false);
 
   const revealed = mode === 'always' || hovered;
   const rc = formatCount(count);
   const hasTc = trueCount != null;
+
+  if (compact) {
+    const tc = hasTc ? formatCount(trueCount) : null;
+    return (
+      <button
+        type="button"
+        onClick={() => mode === 'hover' && setHovered(h => !h)}
+        aria-label={revealed ? 'Hide running count' : 'Show running count'}
+        className="flex items-center rounded-full whitespace-nowrap leading-none"
+        style={{
+          gap: 'var(--space-sm)',
+          minHeight: '44px',
+          padding: '0 var(--space-md)',
+          background: 'var(--surface-glass)',
+          border: '1px solid var(--border-light)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: 700,
+          cursor: mode === 'hover' ? 'pointer' : 'default',
+        }}
+      >
+        <span className="text-white/40 tracking-widest">RC</span>
+        <span className={`font-black ${revealed ? countColor(count) : 'text-white/30'}`} style={{ fontSize: 'var(--text-lg)' }}>
+          {revealed ? `${rc.sign}${rc.abs}` : '?'}
+        </span>
+        {tc && (
+          <>
+            <span className="text-white/40 tracking-widest">TC</span>
+            <span className={`font-black ${revealed ? countColor(trueCount!) : 'text-white/30'}`} style={{ fontSize: 'var(--text-lg)' }}>
+              {revealed ? `${tc.sign}${tc.abs}` : '?'}
+            </span>
+          </>
+        )}
+      </button>
+    );
+  }
 
   const bgColor = !revealed
     ? 'rgba(255,255,255,0.04)'
@@ -84,7 +121,8 @@ export default function RunningCount({ mode, trueCount }: RunningCountProps) {
               className="leading-none text-center"
               style={{ color: 'rgba(255,255,255,0.30)', fontSize: 'var(--text-sm)', fontWeight: 600, marginTop: 'var(--space-sm)', letterSpacing: '0.04em' }}
             >
-              Hover to reveal
+              <span className="hint-hover">Hover to reveal</span>
+              <span className="hint-tap">Tap to reveal</span>
             </span>
           )}
         </div>

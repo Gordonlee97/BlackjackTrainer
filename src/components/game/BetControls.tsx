@@ -163,6 +163,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
           onClick={() => { if (showClear) onBetChange(0); }}
           disabled={!showClear}
           title="Clear bet"
+          aria-label="Clear bet"
           className="w-12 h-12 rounded-full flex items-center justify-center text-base transition-all"
           style={{
             border: '1.5px solid var(--border-light)',
