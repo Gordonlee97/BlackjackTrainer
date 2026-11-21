@@ -18,7 +18,8 @@ export default function HandTotal({ cards, hideHole }: HandTotalProps) {
   let display: string;
   if (bust) {
     display = `Bust (${hv.total})`;
-  } else if (hv.isSoft && hv.total <= 21) {
+  } else if (hv.isSoft && hv.total < 21) {
+    // Show both values for a soft hand; a soft 21 is just 21.
     display = `${hv.total - 10} / ${hv.total}`;
   } else {
     display = String(hv.total);

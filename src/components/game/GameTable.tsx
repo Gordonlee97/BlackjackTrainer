@@ -30,14 +30,36 @@ interface GameTableProps {
   onBackToMenu: () => void;
 }
 
+const SPLIT_DEAL_INTERVAL = 600;
+
+function isAwaitingSplitCard(hand: HandState): boolean {
+  return hand.isSplit && hand.cards.length === 1;
+}
+
+function summarizePayoff(hands: HandState[]): 'win' | 'blackjack' | 'lose' | 'push' {
+  const results = hands.map(h => h.result);
+  if (results.includes('blackjack')) return 'blackjack';
+  if (results.includes('win')) return 'win';
+  if (results.includes('lose')) return 'lose';
+  return 'push';
+}
+
 function pickResultSound(hands: HandState[]) {
   const results = hands.map(h => h.result);
   if (results.includes('blackjack')) return playBlackjack;
   if (results.includes('win')  && !results.includes('lose')) return playWin;
   if (results.includes('lose') && !results.includes('win'))  return playLose;
-  if (results.every(r => r === 'push'))                      return playPush;
   return playPush;
 }
+
+// Store actions are stable references, so they can be looked up outside React.
+const ACTION_EXECUTORS: Record<FinalAction, () => void> = {
+  HIT:       () => useGameStore.getState().hit(),
+  STAND:     () => useGameStore.getState().stand(),
+  DOUBLE:    () => useGameStore.getState().double(),
+  SPLIT:     () => useGameStore.getState().split(),
+  SURRENDER: () => useGameStore.getState().surrender(),
+};
 
 const controlVariants = {
   enter: { opacity: 0, y: 16, scale: 0.95 },
@@ -48,7 +70,8 @@ const controlVariants = {
 export default function GameTable({ onBackToMenu }: GameTableProps) {
   const game = useGameStore();
   const { rules } = useSettingsStore();
-  const stats = useStatsStore();
+  const recordDecision = useStatsStore(s => s.recordDecision);
+  const recordHandPlayed = useStatsStore(s => s.recordHandPlayed);
   const strategyRef = useRef<FullStrategy | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -70,7 +93,6 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     ? computeTrueCount(runningCount, game.shoeSize, game.shoeSize - game.shoe.length)
     : null;
 
-  const splitAnimatingRef = useRef(false);
   const recordedDecisionRef = useRef<string | null>(null);
   const [actionResetKey, setActionResetKey] = useState(0);
   const animatedBalance = useAnimatedNumber(game.balance);
@@ -78,9 +100,10 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   // Juice states
   const [lockedIn, setLockedIn] = useState(false);
   const [dealerSuspense, setDealerSuspense] = useState(false);
-  const [resultPayoff, setResultPayoff] = useState<'win' | 'blackjack' | 'lose' | 'push' | null>(null);
   const [sweepingCards, setSweepingCards] = useState(false);
-  const [goldVignette, setGoldVignette] = useState(false);
+  const resultPayoff = game.phase === 'complete' ? summarizePayoff(game.playerHands) : null;
+  // The vignette's CSS animation ends at opacity 0, so it can stay mounted until the next hand.
+  const goldVignette = resultPayoff === 'blackjack';
 
   // Sync volume setting
   useEffect(() => { setMasterVolume(rules.soundVolume / 100); }, [rules.soundVolume]);
@@ -91,41 +114,23 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   // Sync settings changes to gameStore so deal() uses latest practiceMode, etc.
   useEffect(() => { useGameStore.setState({ rules }); }, [rules]);
 
-  // Animated split — detect 1-card split hands and deal to them sequentially
+  // Animated split — split() leaves 1-card hands; deal their second cards one at a time.
+  // Actions stay disabled while any split hand is still waiting for its card.
+  const splitDealPending = game.playerHands.some(isAwaitingSplitCard);
   const splitHandCount = game.playerHands.length;
   useEffect(() => {
-    if (game.phase !== 'player_turn') {
-      splitAnimatingRef.current = false;
-      return;
-    }
-
-    // Find split hands that only have 1 card (need their second card dealt)
-    const hands = useGameStore.getState().playerHands;
-    const pendingIndices = hands
-      .map((h, i) => (h.isSplit && h.cards.length === 1 ? i : -1))
+    if (game.phase !== 'player_turn') return;
+    const pendingIndices = useGameStore.getState().playerHands
+      .map((h, i) => (isAwaitingSplitCard(h) ? i : -1))
       .filter(i => i !== -1);
 
-    if (pendingIndices.length === 0) {
-      splitAnimatingRef.current = false;
-      return;
-    }
-
-    splitAnimatingRef.current = true;
-
-    // Schedule all deals + final unlock in one batch, no cleanup cancellation
+    // Fire-and-forget: cancelling mid-sequence would strand a 1-card hand.
     pendingIndices.forEach((handIndex, i) => {
       setTimeout(() => {
         useGameStore.getState().dealToSplitHand(handIndex);
         playCardSlide();
-      }, (i + 1) * 600);
+      }, (i + 1) * SPLIT_DEAL_INTERVAL);
     });
-
-    setTimeout(() => {
-      splitAnimatingRef.current = false;
-      // Force a re-render so buttons pick up the change
-      useGameStore.setState({});
-    }, (pendingIndices.length + 1) * 600);
-
   }, [splitHandCount, game.phase]);
 
   // Dealer play — with suspense: lock-in pause → reveal → escalating draws → settle
@@ -185,28 +190,10 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     }
   }, [game.phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Stats + sound + result payoff on complete
+  // Stats + sound on complete
   useEffect(() => {
     if (game.phase === 'complete') {
-      stats.recordHandPlayed();
-      const results = game.playerHands.map(h => h.result);
-      const hasBlackjack = results.includes('blackjack');
-      const hasWin = results.includes('win');
-      const hasLose = results.includes('lose') && !hasWin && !hasBlackjack;
-
-      // Determine payoff state
-      if (hasBlackjack) {
-        setResultPayoff('blackjack');
-        setGoldVignette(true);
-        setTimeout(() => setGoldVignette(false), 600);
-      } else if (hasWin) {
-        setResultPayoff('win');
-      } else if (hasLose) {
-        setResultPayoff('lose');
-      } else {
-        setResultPayoff('push');
-      }
-
+      recordHandPlayed();
       const t = setTimeout(() => pickResultSound(game.playerHands)(), 100);
       return () => clearTimeout(t);
     }
@@ -239,9 +226,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       playLockIn();
     } else if (game.phase === 'betting') {
       setLockedIn(false);
-      setResultPayoff(null);
       setDealerSuspense(false);
-      setGoldVignette(false);
     }
   }, [game.phase]);
 
@@ -295,7 +280,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       useGameStore.setState({
         playerHands: [settledPlayer],
         dealerHand: settledDealer,
-        balance: s.balance + s.currentBet + payout,
+        balance: s.balance + settledPlayer.bet + payout,
         phase: 'complete',
         pendingNatural: null,
         message: result === 'blackjack' ? 'Blackjack! You win!' :
@@ -307,48 +292,36 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     return () => timers.forEach(clearTimeout);
   }, [game.phase, game.pendingNatural]);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (game.phase !== 'player_turn' || modalOpen || splitAnimatingRef.current) return;
-      switch (e.key.toLowerCase()) {
-        case 'h': handlePlayerAction('HIT', game.hit); break;
-        case 's': handlePlayerAction('STAND', game.stand); break;
-        case 'd': if (game.canDouble())    handlePlayerAction('DOUBLE',    game.double);    break;
-        case 'p': if (game.canSplit())     handlePlayerAction('SPLIT',     game.split);     break;
-        case 'r': if (game.canSurrender()) handlePlayerAction('SURRENDER', game.surrender); break;
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [game.phase, modalOpen]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Reads live store state (not this render's snapshot) so keyboard shortcuts, which
+  // can fire between renders, always grade against the current hand and true count.
   const checkStrategy = useCallback((): StrategyAdvice | null => {
-    const hand = game.getActiveHand();
-    const upcard = game.getDealerUpcard();
+    const s = useGameStore.getState();
+    const hand = s.getActiveHand();
+    const upcard = s.getDealerUpcard();
     if (!hand || !upcard || !strategyRef.current) return null;
 
     let tc: number | null = null;
     let rc: number | undefined;
     if (rules.useDeviations && rules.showCount !== 'off') {
       rc = useCountStore.getState().runningCount;
-      const cardsDealt = game.shoeSize - game.shoe.length;
-      tc = computeTrueCount(rc, game.shoeSize, cardsDealt);
+      tc = computeTrueCount(rc, s.shoeSize, s.shoeSize - s.shoe.length);
     }
 
-    return getCorrectAction(hand.cards, upcard, rules, game.canDouble(), game.canSplit(), game.canSurrender(), strategyRef.current, tc, rc);
-  }, [game, rules]);
+    return getCorrectAction(hand.cards, upcard, rules, s.canDouble(), s.canSplit(), s.canSurrender(), strategyRef.current, tc, rc);
+  }, [rules]);
 
-  const handlePlayerAction = useCallback((action: FinalAction, executeAction: () => void) => {
+  const handlePlayerAction = useCallback((action: FinalAction) => {
+    const s = useGameStore.getState();
+    const execute = ACTION_EXECUTORS[action];
     const advice = checkStrategy();
-    if (!advice) { executeAction(); return; }
+    if (!advice) { execute(); return; }
 
     const isCorrect = advice.correctAction === action;
     // Only record stats once per decision point — skip duplicate wrong attempts via "Try Again"
-    const decisionKey = `${game.activeHandIndex}-${game.getActiveHand()?.cards.length}`;
+    const decisionKey = `${s.activeHandIndex}-${s.getActiveHand()?.cards.length}`;
     const alreadyRecorded = recordedDecisionRef.current === decisionKey;
     if (!alreadyRecorded) {
-      stats.recordDecision(isCorrect);
+      recordDecision(isCorrect);
       if (!isCorrect) recordedDecisionRef.current = decisionKey;
     }
 
@@ -357,31 +330,39 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       setTimeout(() => setCorrectFlash(false), 400);
       playButtonPress();
       if (action === 'HIT' || action === 'DOUBLE') setTimeout(() => playCardSlide(), 50);
-      executeAction();
+      execute();
     } else {
       setModalData({ playerAction: action, advice });
       if (rules.wrongMoveAction === 'block') {
         // Block mode: show modal, save wrong action for "Play Anyways" option.
         // User can try again or choose to play their original move.
-        setPendingWrongAction(() => executeAction);
-        setModalOpen(true);
+        setPendingWrongAction(() => execute);
       } else {
         // Feedback mode: show modal, execute correct action on dismiss.
-        setPendingAction(() => getActionExecutor(advice.correctAction));
-        setModalOpen(true);
+        setPendingAction(() => ACTION_EXECUTORS[advice.correctAction]);
       }
+      setModalOpen(true);
     }
-  }, [checkStrategy, rules.wrongMoveAction, stats]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [checkStrategy, rules.wrongMoveAction, recordDecision]);
 
-  const getActionExecutor = useCallback((action: FinalAction): () => void => {
-    switch (action) {
-      case 'HIT':       return game.hit;
-      case 'STAND':     return game.stand;
-      case 'DOUBLE':    return game.double;
-      case 'SPLIT':     return game.split;
-      case 'SURRENDER': return game.surrender;
-    }
-  }, [game]);
+  // Keyboard shortcuts
+  const anyModalOpen = modalOpen || chartOpen || settingsOpen || rebuyOpen;
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      const s = useGameStore.getState();
+      if (s.phase !== 'player_turn' || anyModalOpen || s.playerHands.some(isAwaitingSplitCard)) return;
+      switch (e.key.toLowerCase()) {
+        case 'h': handlePlayerAction('HIT'); break;
+        case 's': handlePlayerAction('STAND'); break;
+        case 'd': if (s.canDouble())    handlePlayerAction('DOUBLE');    break;
+        case 'p': if (s.canSplit())     handlePlayerAction('SPLIT');     break;
+        case 'r': if (s.canSurrender()) handlePlayerAction('SURRENDER'); break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [anyModalOpen, handlePlayerAction]);
 
   const handleModalClose = () => {
     if (pendingAction) pendingAction();
@@ -396,13 +377,6 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
   };
 
   const shoePercent = game.shoeSize > 0 ? (game.shoe.length / game.shoeSize) * 100 : 0;
-
-  // Derive a stable key for the controls AnimatePresence
-  const controlsKey =
-    game.phase === 'betting'     ? 'betting'  :
-    game.phase === 'player_turn' ? 'player'   :
-    game.phase === 'complete'    ? 'complete' :
-    game.phase === 'dealing'     ? 'dealing'  : 'dealer';
 
   return (
     <div
@@ -608,20 +582,20 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
               >
                 <ActionButtons
                   key={actionResetKey}
-                  onHit={() => handlePlayerAction('HIT', game.hit)}
-                  onStand={() => handlePlayerAction('STAND', game.stand)}
-                  onDouble={() => handlePlayerAction('DOUBLE', game.double)}
-                  onSplit={() => handlePlayerAction('SPLIT', game.split)}
-                  onSurrender={() => handlePlayerAction('SURRENDER', game.surrender)}
+                  onHit={() => handlePlayerAction('HIT')}
+                  onStand={() => handlePlayerAction('STAND')}
+                  onDouble={() => handlePlayerAction('DOUBLE')}
+                  onSplit={() => handlePlayerAction('SPLIT')}
+                  onSurrender={() => handlePlayerAction('SURRENDER')}
                   canDouble={game.canDouble()}
                   canSplit={game.canSplit()}
                   canSurrender={game.canSurrender()}
-                  disabled={modalOpen || splitAnimatingRef.current}
+                  disabled={modalOpen || splitDealPending}
                 />
               </motion.div>
             )}
 
-            {(game.phase === 'dealer_turn' || game.phase === 'settling') && (
+            {game.phase === 'dealer_turn' && (
               <motion.div
                 key="dealer"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end gap-3"
@@ -653,7 +627,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
 
             {game.phase === 'complete' && (
               <motion.div
-                key={`complete-${controlsKey}`}
+                key="complete"
                 className="absolute inset-x-0 top-0 bottom-0 flex flex-col items-center justify-end"
                 style={{ paddingBottom: 'var(--space-lg)' }}
                 variants={controlVariants}
@@ -681,6 +655,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   whileHover={{ scale: 1.04, y: -3 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => {
+                    if (sweepingCards) return; // ignore double-clicks during the sweep
                     playSweep();
                     setSweepingCards(true);
                     setTimeout(() => {
