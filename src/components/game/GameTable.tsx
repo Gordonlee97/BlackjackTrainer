@@ -11,7 +11,7 @@ import type { StrategyAdvice } from '../../strategy/advisor';
 import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
-import type { HandState } from '../../engine/types';
+import type { GamePhase, HandState } from '../../engine/types';
 import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playSweep, playDealButton, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
@@ -209,33 +209,38 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     }
   }, [game.phase]);
 
-  // Settle bounce — fires once when dealing completes and player_turn begins
+  // Phase-driven visual state is adjusted during render when the phase changes
+  // (React's "adjusting state when a prop changes" pattern) rather than in an
+  // effect, which would render once with stale values first.
+  const [prevPhase, setPrevPhase] = useState<GamePhase | null>(null); // null: treat mount as a change
+  if (prevPhase !== game.phase) {
+    setPrevPhase(game.phase);
+    if (game.phase === 'player_turn') setSettleBounce(true); // cards settle as the turn begins
+    if (game.phase === 'dealer_turn') setLockedIn(true);     // player's cards lock in
+    if (game.phase === 'betting') { setLockedIn(false); setDealerSuspense(false); }
+  }
+
+  // Auto-prompt rebuy when the player reaches the betting phase broke
+  const brokeAtBetting = game.phase === 'betting' && game.balance < 5;
+  const [prevBrokeAtBetting, setPrevBrokeAtBetting] = useState(false);
+  if (prevBrokeAtBetting !== brokeAtBetting) {
+    setPrevBrokeAtBetting(brokeAtBetting);
+    if (brokeAtBetting) setRebuyOpen(true);
+  }
+
+  // Settle bounce ends after 300ms; a new player turn also resets decision tracking
   useEffect(() => {
     if (game.phase === 'player_turn') {
-      setSettleBounce(true);
       recordedDecisionRef.current = null;
       const timer = setTimeout(() => setSettleBounce(false), 300);
       return () => clearTimeout(timer);
     }
   }, [game.phase]);
 
-  // Lock-in effect — when player turn ends and dealer begins
+  // Lock-in sound
   useEffect(() => {
-    if (game.phase === 'dealer_turn') {
-      setLockedIn(true);
-      playLockIn();
-    } else if (game.phase === 'betting') {
-      setLockedIn(false);
-      setDealerSuspense(false);
-    }
+    if (game.phase === 'dealer_turn') playLockIn();
   }, [game.phase]);
-
-  // Auto-prompt rebuy when broke
-  useEffect(() => {
-    if (game.phase === 'betting' && game.balance < 5) {
-      setRebuyOpen(true);
-    }
-  }, [game.phase, game.balance]);
 
   // Dramatic natural reveal — cards deal normally, then hole card flips, then settle
   useEffect(() => {
