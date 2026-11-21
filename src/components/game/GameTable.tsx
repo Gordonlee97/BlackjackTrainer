@@ -688,8 +688,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   const cardsDealt = game.shoeSize - game.shoe.length;
                   const decisionTC = computeTrueCount(runningCount, game.shoeSize, cardsDealt);
                   const betAmount = game.playerHands[0]?.bet ?? 0;
-                  const minBet = 25;
-                  const evaluation = evaluateBet(betAmount, minBet, game.betSnapshotTC);
+                  const evaluation = evaluateBet(betAmount, rules.betUnit, game.betSnapshotTC);
                   return (
                     <div style={{ marginBottom: 'var(--space-md)' }}>
                       <BetSpreadFeedback
