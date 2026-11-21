@@ -56,18 +56,11 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
 
   return (
     <div className="flex flex-col items-center">
-      {/* Bet + balance display */}
-      <div className="flex items-center gap-10">
-        <div className="text-center">
-          <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Balance</div>
-          <div className="text-2xl font-black text-white/80">${balance.toLocaleString()}</div>
-        </div>
-        <div className="w-px h-12 bg-white/10" />
-        <div className="text-center">
-          <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Your Bet</div>
-          <div className="text-3xl font-black text-yellow-400 min-w-[80px]">
-            {currentBet > 0 ? `$${animatedBet.toLocaleString()}` : '—'}
-          </div>
+      {/* Bet display — the balance lives in the top bar */}
+      <div className="text-center">
+        <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Your Bet</div>
+        <div className="text-3xl font-black text-yellow-400 min-w-[80px]">
+          {currentBet > 0 ? `$${animatedBet.toLocaleString()}` : '—'}
         </div>
       </div>
 

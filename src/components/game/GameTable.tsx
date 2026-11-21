@@ -454,8 +454,15 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           </div>
         )}
         {/* Shoe bar — top right of game area */}
-        <div className="absolute top-4 right-6 z-10 flex items-center gap-3">
-          <div className="relative bg-black/30 rounded-full overflow-hidden" style={{ width: `clamp(${100 + rules.numDecks * 8}px, ${12 + rules.numDecks}vw, ${200 + rules.numDecks * 12}px)`, height: '18px' }}>
+        <div className="absolute top-4 right-6 z-10 flex items-center gap-3" title="Cards left in the shoe">
+          <span className="text-white/35 uppercase tracking-widest leading-none" style={{ fontSize: 'var(--text-xs)', fontWeight: 700 }}>Shoe</span>
+          <div
+            className="relative bg-black/30 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label="Cards left in the shoe"
+            aria-valuenow={Math.round(shoePercent)}
+            aria-valuemin={0}
+            aria-valuemax={100} style={{ width: `clamp(${100 + rules.numDecks * 8}px, ${12 + rules.numDecks}vw, ${200 + rules.numDecks * 12}px)`, height: '18px' }}>
             <motion.div
               className="h-full rounded-full"
               animate={{ width: `${shoePercent}%` }}
