@@ -39,11 +39,7 @@ export function isPair(cards: Card[]): boolean {
   return v1 === v2;
 }
 
+/** Blackjack value of a single card, with Ace = 11 (the convention used by strategy charts). */
 export function cardValue(card: Card): number {
-  return RANK_VALUES[card.rank];
-}
-
-export function dealerUpcardValue(card: Card): number {
-  // For strategy lookup: Ace = 11
   return RANK_VALUES[card.rank];
 }

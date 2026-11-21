@@ -1,8 +1,10 @@
 import type { Card } from '../engine/types';
-import { handValue, isPair } from '../engine/hand';
+import { cardValue, handValue, isPair } from '../engine/hand';
 import type { ChartAction, FinalAction, FullStrategy, RuleSet } from './types';
 import { buildStrategy } from './charts';
 import { getDeviations, findDeviation } from './deviations';
+
+type HandType = StrategyAdvice['handType'];
 
 export interface StrategyAdvice {
   correctAction: FinalAction;
@@ -73,42 +75,29 @@ export function getCorrectAction(
   runningCount?: number,
 ): StrategyAdvice {
   const strat = strategy ?? buildStrategy(rules);
-  const dealerUp = dealerUpcard.rank === 'A' ? 11 : Math.min(10, parseInt(dealerUpcard.rank) || 10);
+  const dealerUp = cardValue(dealerUpcard);
   const hv = handValue(playerCards);
+  const advise = (action: ChartAction, handType: HandType, total: number) =>
+    buildAdvice(action, handType, total, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount, runningCount);
 
-  let chartAction: ChartAction;
-  let handType: 'hard' | 'soft' | 'pairs';
-  let playerTotal: number;
-
-  // Check pairs first (only on first two cards)
-  if (isPair(playerCards) && playerCards.length === 2) {
-    const pairValue = playerCards[0].rank === 'A' ? 11 : Math.min(10, parseInt(playerCards[0].rank) || 10);
+  // The pairs chart only applies when a split is actually possible. An unsplittable pair
+  // (hand limit reached, insufficient balance, no resplit of aces) plays as its total:
+  // e.g. 9,9 vs 6 stands on 18 instead of falling back to "hit".
+  if (canSplit && isPair(playerCards)) {
+    const pairValue = cardValue(playerCards[0]);
     const pairAction = strat.pairs[pairValue]?.[dealerUp];
-    if (pairAction) {
-      chartAction = pairAction;
-      handType = 'pairs';
-      playerTotal = pairValue;
-      return buildAdvice(chartAction, handType, playerTotal, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount, runningCount);
-    }
+    if (pairAction) return advise(pairAction, 'pairs', pairValue);
   }
 
-  // Check soft totals
-  if (hv.isSoft && hv.total >= 13 && hv.total <= 20) {
+  if (hv.isSoft) {
+    // Soft 12 (an unsplittable A,A) can never bust on one card — always hit.
+    if (hv.total <= 12) return advise('H', 'soft', hv.total);
     const softAction = strat.soft[hv.total]?.[dealerUp];
-    if (softAction) {
-      chartAction = softAction;
-      handType = 'soft';
-      playerTotal = hv.total;
-      return buildAdvice(chartAction, handType, playerTotal, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount, runningCount);
-    }
+    if (softAction) return advise(softAction, 'soft', hv.total);
   }
 
-  // Hard totals
-  const lookupTotal = Math.min(hv.total, 21);
-  chartAction = strat.hard[lookupTotal]?.[dealerUp] ?? 'H';
-  handType = 'hard';
-  playerTotal = lookupTotal;
-  return buildAdvice(chartAction, handType, playerTotal, dealerUp, canDouble, canSplit, canSurrender, rules, trueCount, runningCount);
+  const hardTotal = Math.min(hv.total, 21);
+  return advise(strat.hard[hardTotal]?.[dealerUp] ?? 'H', 'hard', hardTotal);
 }
 
 function resolveAction(
