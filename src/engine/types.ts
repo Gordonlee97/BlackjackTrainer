@@ -24,7 +24,6 @@ export type GamePhase =
   | 'dealing'
   | 'player_turn'
   | 'dealer_turn'
-  | 'settling'
   | 'complete';
 
 export interface GameState {
