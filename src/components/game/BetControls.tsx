@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { playChip, playDealButton } from '../../engine/sounds';
+import { playChip } from '../../engine/sounds';
 import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 
 interface BetControlsProps {
@@ -174,7 +174,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
         <motion.button
           whileHover={canDeal ? { scale: 1.03, y: -2 } : {}}
           whileTap={canDeal ? { scale: 0.97 } : {}}
-          onClick={() => { playDealButton(); onDeal(); }}
+          onClick={onDeal}
           disabled={!canDeal}
           className={`font-black uppercase tracking-widest ${canDeal ? 'btn-cta cta-pulse' : ''}`}
           style={canDeal ? {

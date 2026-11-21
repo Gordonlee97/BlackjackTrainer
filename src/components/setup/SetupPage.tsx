@@ -176,7 +176,7 @@ export default function SetupPage({ onStart }: SetupPageProps) {
           Start Training
         </button>
         <p className="text-white/25 text-sm tracking-widest">
-          H = Hit &nbsp;·&nbsp; S = Stand &nbsp;·&nbsp; D = Double &nbsp;·&nbsp; P = Split &nbsp;·&nbsp; R = Surrender
+          H = Hit &nbsp;·&nbsp; S = Stand &nbsp;·&nbsp; D = Double &nbsp;·&nbsp; P = Split &nbsp;·&nbsp; R = Surrender &nbsp;·&nbsp; Space = Deal / Next Hand
         </p>
       </div>
     </div>

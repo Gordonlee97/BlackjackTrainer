@@ -12,7 +12,7 @@ import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
 import type { HandState } from '../../engine/types';
-import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playSweep, setMasterVolume } from '../../engine/sounds';
+import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playSweep, playDealButton, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import ActionButtons from './ActionButtons';
@@ -345,13 +345,40 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     }
   }, [checkStrategy, rules.wrongMoveAction, recordDecision]);
 
+  const handleDeal = useCallback(() => {
+    const s = useGameStore.getState();
+    if (s.phase !== 'betting' || s.currentBet <= 0 || s.currentBet > s.balance) return;
+    playDealButton();
+    s.deal();
+  }, []);
+
+  const handleNextHand = useCallback(() => {
+    if (sweepingCards) return; // ignore repeats during the sweep
+    playSweep();
+    setSweepingCards(true);
+    setTimeout(() => {
+      useGameStore.getState().newHand();
+      setSweepingCards(false);
+      playNextHand();
+    }, 600);
+  }, [sweepingCards]);
+
   // Keyboard shortcuts
   const anyModalOpen = modalOpen || chartOpen || settingsOpen || rebuyOpen;
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || anyModalOpen) return;
       const s = useGameStore.getState();
-      if (s.phase !== 'player_turn' || anyModalOpen || s.playerHands.some(isAwaitingSplitCard)) return;
+
+      // Space deals and starts the next hand. preventDefault stops it from also
+      // clicking whichever button (e.g. a chip) still has focus.
+      if (e.key === ' ') {
+        if (s.phase === 'betting') { e.preventDefault(); handleDeal(); }
+        else if (s.phase === 'complete') { e.preventDefault(); handleNextHand(); }
+        return;
+      }
+
+      if (s.phase !== 'player_turn' || s.playerHands.some(isAwaitingSplitCard)) return;
       switch (e.key.toLowerCase()) {
         case 'h': if (s.canHit())       handlePlayerAction('HIT');       break;
         case 's': handlePlayerAction('STAND'); break;
@@ -362,7 +389,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [anyModalOpen, handlePlayerAction]);
+  }, [anyModalOpen, handlePlayerAction, handleDeal, handleNextHand]);
 
   const handleModalClose = () => {
     if (pendingAction) pendingAction();
@@ -580,7 +607,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   currentBet={game.currentBet}
                   balance={game.balance}
                   onBetChange={game.placeBet}
-                  onDeal={game.deal}
+                  onDeal={handleDeal}
                   onAddFunds={() => setRebuyOpen(true)}
                 />
               </motion.div>
@@ -671,16 +698,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 <motion.button
                   whileHover={{ scale: 1.04, y: -3 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => {
-                    if (sweepingCards) return; // ignore double-clicks during the sweep
-                    playSweep();
-                    setSweepingCards(true);
-                    setTimeout(() => {
-                      game.newHand();
-                      setSweepingCards(false);
-                      playNextHand();
-                    }, 600);
-                  }}
+                  onClick={handleNextHand}
                   className="btn-cta font-black uppercase tracking-widest cta-pulse"
                   style={{
                     padding: 'var(--cta-padding-y) var(--cta-padding-x)',
