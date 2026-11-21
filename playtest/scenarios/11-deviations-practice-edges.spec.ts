@@ -231,8 +231,8 @@ test('bet spread verdicts: 1u bet across several hands match Hi-Lo 1-8', async (
   }
 
   for (const t of pillTexts) {
-    expect(t).toMatch(/Bet at TC [+\-]?\d+.*rec.*you bet 1u.*[✓↓↑]/);
-    const m = t.match(/Bet at TC ([+\-]?\d+)/);
+    expect(t).toMatch(/Bet at TC [+-]?\d+.*rec.*you bet 1u.*[✓↓↑]/);
+    const m = t.match(/Bet at TC ([+-]?\d+)/);
     const tc = parseInt(m![1], 10);
     if (tc <= 2) expect(t, `1u at TC${tc} should be ok`).toMatch(/✓/);
     else         expect(t, `1u at TC${tc} should be underbet`).toMatch(/↓/);
@@ -265,13 +265,11 @@ test('bet spread pill shows correct symbol for large bet', async ({ page }, test
     const t = (await pill.textContent()) ?? '';
 
     // Verify pill has expected format
-    expect(t, `pill format unexpected: ${t}`).toMatch(/Bet at TC [+\-]?\d+.*rec.*you bet \d+u.*[✓↓↑]/);
+    expect(t, `pill format unexpected: ${t}`).toMatch(/Bet at TC [+-]?\d+.*rec.*you bet \d+u.*[✓↓↑]/);
 
     // Verify symbol is correct based on actual bet units and TC
-    const tcMatch = t.match(/Bet at TC ([+\-]?\d+)/);
     const betMatch = t.match(/you bet (\d+)u/);
-    if (tcMatch && betMatch) {
-      const tc = parseInt(tcMatch[1], 10);
+    if (betMatch) {
       const bet = parseInt(betMatch[1], 10);
       // Hi-Lo 1-8: max recommended is 8u. Any bet > 8u must be ↑.
       if (bet > 8) {

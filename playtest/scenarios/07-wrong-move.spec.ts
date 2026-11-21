@@ -1,5 +1,4 @@
 import { test } from '@playwright/test';
-import type { Page } from '@playwright/test';
 import { navigateToGame, placeBetAndDeal, waitForPhase, takeScreenshot, dismissStrategyModal } from '../helpers';
 
 const SCENARIO = '07-wrong-move';

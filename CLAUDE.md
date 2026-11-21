@@ -13,7 +13,8 @@ React 19, TypeScript 5.9, Vite 8, Tailwind CSS v4, Framer Motion, Zustand (game/
 ```bash
 npm run dev        # Dev server at http://localhost:5173
 npm run build      # tsc -b + Vite production build — MUST pass before any change is done
-npm run lint       # ESLint (3 pre-existing errors: 2 access-before-declare, 1 constant-condition)
+npm run lint       # ESLint (3 known errors: react-hooks/set-state-in-effect in GameTable's phase-driven juice effects)
+npm test           # Vitest unit tests (engine, strategy, store)
 ```
 
 ## Project Structure
@@ -22,18 +23,18 @@ npm run lint       # ESLint (3 pre-existing errors: 2 access-before-declare, 1 c
 - `src/strategy/` — Strategy engine (no React): charts (base + overrides), advisor, explanations, types
 - `src/store/` — Zustand: gameStore (state machine + `playDealerSteps`), countStore, settingsStore, statsStore
 - `src/components/game/` — GameTable (orchestrator), Card, DealerHand, PlayerHand, ActionButtons, BetControls, RunningCount, SettingsModal
-- `src/components/feedback/` — StrategyModal, StrategyChartModal, StatsPanel, ResultAnnouncement
+- `src/components/feedback/` — StrategyModal, StrategyChartModal, StatsPanel, BetSpreadFeedback
 - `src/components/setup/` — SetupPage
 - `src/hooks/` — Custom hooks: `useAnimatedNumber` (rAF number tween)
 - `src/index.css` — Design tokens (~30 CSS custom properties), keyframe animations
 
 ## Architecture
 
-**Game phases:** `betting` → `dealing` → `player_turn` → `dealer_turn` → `settling` → `complete`
+**Game phases:** `betting` → `dealing` → `player_turn` → `dealer_turn` → `complete` (naturals go `dealing` → `complete`)
 
 **Dealer play** uses `playDealerSteps()` which returns step array applied sequentially via setTimeout for card-by-card animation.
 
-**Split animation** uses fire-and-forget timeouts from a useEffect in GameTable, with `splitAnimatingRef` to disable buttons during animation.
+**Split animation** uses fire-and-forget timeouts from a useEffect in GameTable. Actions are disabled while any split hand still has 1 card (derived from store state).
 
 **Natural reveal** deals cards normally first (hole card face down), then a useEffect detects `pendingNatural` and orchestrates: pause → flip hole card → pause → settle.
 

@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { placeBetAndDeal, waitForPhase, takeScreenshot, dealUntilCondition, dismissStrategyModal } from '../helpers';
+import { waitForPhase, takeScreenshot, dealUntilCondition, dismissStrategyModal } from '../helpers';
 
 const SCENARIO = '04-surrender';
 
