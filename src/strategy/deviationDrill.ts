@@ -5,6 +5,7 @@ import type { Card, Rank, Suit } from '../engine/types';
 import { ALL_RANKS, ALL_SUITS } from '../engine/types';
 import { createDeck, shuffle } from '../engine/shoe';
 import { hiLoValue } from '../engine/counting';
+import { isBlackjack } from '../engine/hand';
 
 const SURRENDER_ACTIONS = new Set<ChartAction>(['Rh', 'Rs', 'Rp']);
 
@@ -158,7 +159,10 @@ export function buildForcedDeal(dev: Deviation): ForcedDeal {
   }
 
   const dealerUp = mkCard(dealerUpcardRank(dev.dealerUp));
-  const dealerHole = mkCard(ALL_RANKS[randInt(0, ALL_RANKS.length - 1)]);
+  // Exclude hole cards that would give the dealer a natural: the hand would settle
+  // before the player could make the deviation decision the drill exists to test.
+  const holeRanks = ALL_RANKS.filter(r => !isBlackjack([mkCard(r), dealerUp]));
+  const dealerHole = mkCard(holeRanks[randInt(0, holeRanks.length - 1)]);
 
   return {
     player1: mkCard(r1),

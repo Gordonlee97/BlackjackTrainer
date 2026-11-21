@@ -207,3 +207,19 @@ describe('generate (top-level drill)', () => {
     }
   });
 });
+
+describe('buildForcedDeal — dealer natural', () => {
+  it('never deals the dealer a natural, so every drill reaches a player decision', async () => {
+    const { buildForcedDeal } = await import('../deviationDrill');
+    const { isBlackjack } = await import('../../engine/hand');
+    const { getDeviations } = await import('../deviations');
+    const { DEFAULT_RULES } = await import('../types');
+    const devs = getDeviations({ ...DEFAULT_RULES, numDecks: 6 }).filter(d => d.dealerUp >= 10);
+    for (const dev of devs) {
+      for (let i = 0; i < 200; i++) {
+        const deal = buildForcedDeal(dev);
+        expect(isBlackjack([deal.dealerHole, deal.dealerUp])).toBe(false);
+      }
+    }
+  });
+});
