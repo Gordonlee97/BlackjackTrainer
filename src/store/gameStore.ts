@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { Card, GameState, HandState } from '../engine/types';
 import { createShoe, drawCard, needsReshuffle } from '../engine/shoe';
 import { handValue, isBlackjack, isBust, isPair } from '../engine/hand';
-import { settleHand, calculatePayout } from '../engine/payout';
+import { settleHand, calculatePayout, handStake } from '../engine/payout';
 import type { RuleSet } from '../strategy/types';
 import { useCountStore } from './countStore';
 import { generate as generateDrill } from '../strategy/deviationDrill';
@@ -556,8 +556,7 @@ export function playDealerSteps(store: GameStore): DealerStep[] {
   // (lose → 0, surrender → half stake, push → stake, win → 2× stake, ...).
   let totalReturned = 0;
   for (const hand of playerHands) {
-    const stake = hand.isDoubled ? hand.bet * 2 : hand.bet;
-    totalReturned += stake + calculatePayout(hand);
+    totalReturned += handStake(hand) + calculatePayout(hand);
   }
 
   const dealerTotal = handValue(currentCards).total;

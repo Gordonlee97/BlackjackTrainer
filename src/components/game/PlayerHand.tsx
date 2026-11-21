@@ -1,7 +1,7 @@
 import { motion, LayoutGroup } from 'framer-motion';
 import Card from './Card';
 import HandTotal from './HandTotal';
-import { calculatePayout } from '../../engine/payout';
+import { calculatePayout, handStake } from '../../engine/payout';
 import type { HandState } from '../../engine/types';
 
 interface PlayerHandProps {
@@ -34,6 +34,7 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
   const showDots = isActive && !hand.isComplete;
   const isSettled = !!hand.result;
 
+  const stake = handStake(hand);
   const payout = hand.result ? calculatePayout(hand) : 0;
   const showPayout = hand.result && payout !== 0;
 
@@ -133,7 +134,24 @@ export default function PlayerHand({ hand, isActive, handIndex, totalHands, show
         )}
       </div>
 
-      {showHandTotals && <div style={{ marginTop: 'var(--space-sm)', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}><HandTotal cards={hand.cards} /></div>}
+      {/* Total + stake on one row — the stake doubles on Double and differs per split hand */}
+      <div
+        className="relative flex items-center"
+        style={{ marginTop: 'var(--space-sm)', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}
+      >
+        {showHandTotals && <HandTotal cards={hand.cards} />}
+        {/* Anchored beside the total so the total stays centered under the cards */}
+        <span
+          className={`font-black text-yellow-400/90 leading-none whitespace-nowrap ${showHandTotals ? 'absolute top-1/2' : ''}`}
+          style={{
+            ...(showHandTotals ? { left: 'calc(100% + var(--space-sm))', transform: 'translateY(-50%)' } : {}),
+            fontSize: 'var(--text-base)',
+          }}
+          aria-label={`Bet $${stake.toLocaleString()}`}
+        >
+          ${stake.toLocaleString()}
+        </span>
+      </div>
 
       {/* Fixed-height slot for result badge OR dots — never changes size */}
       <div className="flex items-center justify-center" style={{ height: 'var(--badge-slot-h)', position: 'relative', top: 'var(--badge-offset-top)', opacity: hideOverlays ? 0 : 1, transition: 'opacity 0.15s' }}>

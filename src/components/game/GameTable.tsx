@@ -12,7 +12,7 @@ import { getCorrectAction } from '../../strategy/advisor';
 import { buildStrategy } from '../../strategy/charts';
 import type { FinalAction, FullStrategy } from '../../strategy/types';
 import type { HandState } from '../../engine/types';
-import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playSweep, setMasterVolume } from '../../engine/sounds';
+import { playWin, playBlackjack, playLose, playPush, playCardSlide, playButtonPress, playNextHand, playLockIn, playSweep, playDealButton, setMasterVolume } from '../../engine/sounds';
 import DealerHand from './DealerHand';
 import PlayerHand from './PlayerHand';
 import ActionButtons from './ActionButtons';
@@ -345,13 +345,40 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     }
   }, [checkStrategy, rules.wrongMoveAction, recordDecision]);
 
+  const handleDeal = useCallback(() => {
+    const s = useGameStore.getState();
+    if (s.phase !== 'betting' || s.currentBet <= 0 || s.currentBet > s.balance) return;
+    playDealButton();
+    s.deal();
+  }, []);
+
+  const handleNextHand = useCallback(() => {
+    if (sweepingCards) return; // ignore repeats during the sweep
+    playSweep();
+    setSweepingCards(true);
+    setTimeout(() => {
+      useGameStore.getState().newHand();
+      setSweepingCards(false);
+      playNextHand();
+    }, 600);
+  }, [sweepingCards]);
+
   // Keyboard shortcuts
   const anyModalOpen = modalOpen || chartOpen || settingsOpen || rebuyOpen;
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || anyModalOpen) return;
       const s = useGameStore.getState();
-      if (s.phase !== 'player_turn' || anyModalOpen || s.playerHands.some(isAwaitingSplitCard)) return;
+
+      // Space deals and starts the next hand. preventDefault stops it from also
+      // clicking whichever button (e.g. a chip) still has focus.
+      if (e.key === ' ') {
+        if (s.phase === 'betting') { e.preventDefault(); handleDeal(); }
+        else if (s.phase === 'complete') { e.preventDefault(); handleNextHand(); }
+        return;
+      }
+
+      if (s.phase !== 'player_turn' || s.playerHands.some(isAwaitingSplitCard)) return;
       switch (e.key.toLowerCase()) {
         case 'h': if (s.canHit())       handlePlayerAction('HIT');       break;
         case 's': handlePlayerAction('STAND'); break;
@@ -362,7 +389,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [anyModalOpen, handlePlayerAction]);
+  }, [anyModalOpen, handlePlayerAction, handleDeal, handleNextHand]);
 
   const handleModalClose = () => {
     if (pendingAction) pendingAction();
@@ -396,7 +423,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setSettingsOpen(true)}
-            className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
+            aria-label="Settings"
+            className="topbar-btn flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
               padding: 'var(--space-sm) var(--space-lg)',
               background: 'var(--surface-glass)',
@@ -411,7 +439,8 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             onClick={() => setChartOpen(true)}
-            className="flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
+            aria-label="Strategy charts"
+            className="topbar-btn flex items-center gap-3 text-white/60 hover:text-white/90 transition-colors text-base font-semibold tracking-wide rounded-full"
             style={{
               padding: 'var(--space-sm) var(--space-lg)',
               background: 'var(--surface-glass)',
@@ -428,6 +457,13 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
           <StatsPanel />
         </div>
 
+        {/* Phone only (see index.css): the count moves here so it doesn't cover the dealer's hand */}
+        {rules.showCount !== 'off' && (
+          <div className="topbar-count absolute left-1/2 top-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
+            <RunningCount compact mode={rules.showCount as 'always' | 'hover'} trueCount={currentTrueCount} />
+          </div>
+        )}
+
         {/* Right: Balance */}
         <div className="flex items-center shrink-0">
           <div className="text-right">
@@ -438,15 +474,22 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       </div>
 
       {/* ══ DEALER ZONE ══ */}
-      <div className="flex-[3.75] flex flex-col items-center justify-center min-h-0 relative">
+      <div className="dealer-zone flex-[3.75] flex flex-col items-center justify-center min-h-0 relative">
         {rules.showCount !== 'off' && (
-          <div className="absolute top-4 left-6 z-10">
+          <div className="table-count absolute top-4 left-6 z-10">
             <RunningCount mode={rules.showCount as 'always' | 'hover'} trueCount={currentTrueCount} />
           </div>
         )}
         {/* Shoe bar — top right of game area */}
-        <div className="absolute top-4 right-6 z-10 flex items-center gap-3">
-          <div className="relative bg-black/30 rounded-full overflow-hidden" style={{ width: `clamp(${100 + rules.numDecks * 8}px, ${12 + rules.numDecks}vw, ${200 + rules.numDecks * 12}px)`, height: '18px' }}>
+        <div className="absolute top-4 right-6 z-10 flex items-center gap-3" title="Cards left in the shoe">
+          <span className="text-white/35 uppercase tracking-widest leading-none" style={{ fontSize: 'var(--text-xs)', fontWeight: 700 }}>Shoe</span>
+          <div
+            className="relative bg-black/30 rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label="Cards left in the shoe"
+            aria-valuenow={Math.round(shoePercent)}
+            aria-valuemin={0}
+            aria-valuemax={100} style={{ width: `clamp(${100 + rules.numDecks * 8}px, ${12 + rules.numDecks}vw, ${200 + rules.numDecks * 12}px)`, height: '18px' }}>
             <motion.div
               className="h-full rounded-full"
               animate={{ width: `${shoePercent}%` }}
@@ -564,7 +607,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   currentBet={game.currentBet}
                   balance={game.balance}
                   onBetChange={game.placeBet}
-                  onDeal={game.deal}
+                  onDeal={handleDeal}
                   onAddFunds={() => setRebuyOpen(true)}
                 />
               </motion.div>
@@ -655,25 +698,12 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                 <motion.button
                   whileHover={{ scale: 1.04, y: -3 }}
                   whileTap={{ scale: 0.96 }}
-                  onClick={() => {
-                    if (sweepingCards) return; // ignore double-clicks during the sweep
-                    playSweep();
-                    setSweepingCards(true);
-                    setTimeout(() => {
-                      game.newHand();
-                      setSweepingCards(false);
-                      playNextHand();
-                    }, 600);
-                  }}
-                  className="font-black uppercase tracking-widest cta-pulse"
+                  onClick={handleNextHand}
+                  className="btn-cta font-black uppercase tracking-widest cta-pulse"
                   style={{
                     padding: 'var(--cta-padding-y) var(--cta-padding-x)',
                     fontSize: 'var(--text-xl)',
                     borderRadius: 'var(--cta-radius)',
-                    background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-                    border: 'none',
-                    color: '#1a1a1a',
-                    boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
                   }}
                 >
                   Next Hand

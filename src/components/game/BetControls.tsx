@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { playChip, playDealButton } from '../../engine/sounds';
+import { playChip } from '../../engine/sounds';
 import { useAnimatedNumber } from '../../hooks/useAnimatedNumber';
 
 interface BetControlsProps {
@@ -56,18 +56,11 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
 
   return (
     <div className="flex flex-col items-center">
-      {/* Bet + balance display */}
-      <div className="flex items-center gap-10">
-        <div className="text-center">
-          <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Balance</div>
-          <div className="text-2xl font-black text-white/80">${balance.toLocaleString()}</div>
-        </div>
-        <div className="w-px h-12 bg-white/10" />
-        <div className="text-center">
-          <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Your Bet</div>
-          <div className="text-3xl font-black text-yellow-400 min-w-[80px]">
-            {currentBet > 0 ? `$${animatedBet.toLocaleString()}` : '—'}
-          </div>
+      {/* Bet display — the balance lives in the top bar */}
+      <div className="text-center">
+        <div className="text-xs text-white/35 uppercase tracking-[0.2em] mb-1">Your Bet</div>
+        <div className="text-3xl font-black text-yellow-400 min-w-[80px]">
+          {currentBet > 0 ? `$${animatedBet.toLocaleString()}` : '—'}
         </div>
       </div>
 
@@ -163,6 +156,7 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
           onClick={() => { if (showClear) onBetChange(0); }}
           disabled={!showClear}
           title="Clear bet"
+          aria-label="Clear bet"
           className="w-12 h-12 rounded-full flex items-center justify-center text-base transition-all"
           style={{
             border: '1.5px solid var(--border-light)',
@@ -180,18 +174,13 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
         <motion.button
           whileHover={canDeal ? { scale: 1.03, y: -2 } : {}}
           whileTap={canDeal ? { scale: 0.97 } : {}}
-          onClick={() => { playDealButton(); onDeal(); }}
+          onClick={onDeal}
           disabled={!canDeal}
-          className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
+          className={`font-black uppercase tracking-widest ${canDeal ? 'btn-cta cta-pulse' : ''}`}
           style={canDeal ? {
             padding: 'var(--cta-padding-y) var(--cta-padding-x)',
             fontSize: 'var(--text-xl)',
             borderRadius: 'var(--cta-radius)',
-            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-            border: 'none',
-            color: '#1a1a1a',
-            cursor: 'pointer',
-            boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
           } : {
             padding: 'var(--cta-padding-y) var(--cta-padding-x)',
             fontSize: 'var(--text-xl)',

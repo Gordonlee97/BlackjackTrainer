@@ -166,21 +166,17 @@ export default function SetupPage({ onStart }: SetupPageProps) {
       <div className="shrink-0 flex flex-col items-center gap-4 px-8 pb-8 pt-4">
         <button
           onClick={onStart}
-          className="w-full max-w-2xl font-black uppercase tracking-widest transition-opacity hover:opacity-90 active:scale-[0.98] cta-pulse cta-shine relative overflow-hidden"
+          className="w-full max-w-2xl font-black uppercase tracking-widest transition-opacity hover:opacity-90 active:scale-[0.98] btn-cta cta-pulse cta-shine relative overflow-hidden"
           style={{
             padding: 'var(--cta-padding-y)',
             fontSize: 'var(--text-xl)',
             borderRadius: 'var(--cta-radius)',
-            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-            border: 'none',
-            color: '#1a1a1a',
-            boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
           }}
         >
           Start Training
         </button>
         <p className="text-white/25 text-sm tracking-widest">
-          H = Hit &nbsp;·&nbsp; S = Stand &nbsp;·&nbsp; D = Double &nbsp;·&nbsp; P = Split &nbsp;·&nbsp; R = Surrender
+          H = Hit &nbsp;·&nbsp; S = Stand &nbsp;·&nbsp; D = Double &nbsp;·&nbsp; P = Split &nbsp;·&nbsp; R = Surrender &nbsp;·&nbsp; Space = Deal / Next Hand
         </p>
       </div>
     </div>

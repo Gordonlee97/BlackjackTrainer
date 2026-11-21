@@ -34,8 +34,13 @@ export function settleHand(
   return 'push';
 }
 
+/** Total amount at risk on a hand: the bet, or twice it after a double. */
+export function handStake(hand: HandState): number {
+  return hand.isDoubled ? hand.bet * 2 : hand.bet;
+}
+
 export function calculatePayout(hand: HandState): number {
-  const bet = hand.isDoubled ? hand.bet * 2 : hand.bet;
+  const bet = handStake(hand);
 
   switch (hand.result) {
     case 'blackjack':
