@@ -40,6 +40,7 @@ interface GameStore extends GameState {
   betSnapshotTC: number | null;
 
   // Helpers
+  canHit: () => boolean;
   canDouble: () => boolean;
   canSplit: () => boolean;
   canSurrender: () => boolean;
@@ -227,7 +228,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   hit: () => {
     const state = get();
-    if (state.phase !== 'player_turn') return;
+    if (state.phase !== 'player_turn' || !state.canHit()) return;
 
     const hand = { ...state.playerHands[state.activeHandIndex] };
     const { card, shoe } = drawCard(state.shoe);
@@ -339,8 +340,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { card, shoe } = drawCard(state.shoe);
     useCountStore.getState().updateCount([card]);
 
+    // Split aces get one card each unless hitSplitAces is on. The only further
+    // action is a resplit, so the hand finishes unless that resplit is possible.
     const isAceSplit = hand.cards[0].rank === 'A';
-    const canResplit = isAceSplit && state.rules?.resplitAces && card.rank === 'A';
+    const canResplit =
+      isAceSplit &&
+      card.rank === 'A' &&
+      !!state.rules?.resplitAces &&
+      state.playerHands.length < MAX_HANDS &&
+      state.balance >= hand.bet;
     const updatedHand: HandState = {
       ...hand,
       cards: [...hand.cards, card],
@@ -418,10 +426,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set((state) => ({ balance: state.balance + amount }));
   },
 
+  canHit: () => {
+    const state = get();
+    const hand = state.playerHands[state.activeHandIndex];
+    if (!hand) return false;
+    return !isLockedSplitAce(hand, state.rules);
+  },
+
   canDouble: () => {
     const state = get();
     const hand = state.playerHands[state.activeHandIndex];
     if (!hand || hand.cards.length !== 2 || state.balance < hand.bet) return false;
+    if (isLockedSplitAce(hand, state.rules)) return false;
     return !hand.isSplit || !!state.rules?.dasAllowed;
   },
 
@@ -453,6 +469,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     return state.dealerHand.cards[1] ?? null;
   },
 }));
+
+/** A split-ace hand that may not draw (hitSplitAces off): it can only stand or resplit. */
+function isLockedSplitAce(hand: HandState, rules: RuleSet | null): boolean {
+  return hand.isSplit && hand.cards[0]?.rank === 'A' && !rules?.hitSplitAces;
+}
 
 function advanceToNextHand(
   playerHands: HandState[]

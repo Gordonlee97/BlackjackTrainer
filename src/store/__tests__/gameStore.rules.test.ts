@@ -77,4 +77,49 @@ describe('gameStore — rule enforcement', () => {
     // A fresh shoe has been dealt from; only the 3 face-up cards can be counted (|RC| <= 3).
     expect(Math.abs(useCountStore.getState().runningCount)).toBeLessThanOrEqual(3);
   });
+
+  describe('split aces with hitSplitAces off', () => {
+    const acesRules = { hitSplitAces: false, resplitAces: true, dasAllowed: true };
+
+    it('cannot hit or double a resplittable A,A split hand', () => {
+      setup(acesRules, {
+        phase: 'player_turn',
+        playerHands: [hand([c('A'), c('A')], { isSplit: true }), hand([c('A'), c('5')], { isSplit: true, isComplete: true })],
+        shoe: Array.from({ length: 20 }, () => c('9')),
+      });
+      const s = useGameStore.getState();
+      expect(s.canHit()).toBe(false);
+      expect(s.canDouble()).toBe(false);
+      expect(s.canSplit()).toBe(true);
+
+      s.hit();
+      expect(useGameStore.getState().playerHands[0].cards).toHaveLength(2);
+    });
+
+    it('can still hit split aces when hitSplitAces is on', () => {
+      setup({ ...acesRules, hitSplitAces: true }, {
+        phase: 'player_turn',
+        playerHands: [hand([c('A'), c('A')], { isSplit: true }), hand([c('A'), c('5')], { isSplit: true })],
+      });
+      expect(useGameStore.getState().canHit()).toBe(true);
+    });
+
+    it('auto-completes an A,A split hand that cannot be resplit (hand limit reached)', () => {
+      setup(acesRules, {
+        phase: 'player_turn',
+        balance: 5000,
+        playerHands: [
+          hand([c('A')], { isSplit: true }),
+          hand([c('A'), c('5')], { isSplit: true, isComplete: true }),
+          hand([c('A'), c('9')], { isSplit: true, isComplete: true }),
+          hand([c('A'), c('7')], { isSplit: true, isComplete: true }),
+        ],
+        shoe: [c('A'), ...Array.from({ length: 20 }, () => c('9'))],
+      });
+      useGameStore.getState().dealToSplitHand(0);
+      const s = useGameStore.getState();
+      expect(s.playerHands[0].isComplete).toBe(true);
+      expect(s.phase).toBe('dealer_turn');
+    });
+  });
 });

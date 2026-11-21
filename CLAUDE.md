@@ -91,15 +91,18 @@ This is a training tool. Incorrect strategy data makes the entire app harmful ra
 ### 1. NEVER transcribe chart data freehand — verify cell-by-cell
 When encoding any strategy chart (basic strategy, deviations, surrender, splits), verify every single cell against the source of truth. A single column shift, row swap, or off-by-one error silently corrupts the trainer. After writing any chart data, re-read it and cross-check each cell's (hand, dealer upcard) coordinate against the source.
 
-### 2. BJA (Blackjack Apprentice) is the source of truth for deviation indices
-Use BJA charts for all deviation data. Do not substitute values from other sources (Wong, Schlesinger, etc.) unless the user explicitly requests it. Minor ±1 index differences between sources are real and intentional — always defer to BJA.
+### 2. `blackjack_strategy.md` is the source of truth; BJA is a cross-reference
+`src/strategy/blackjack_strategy.md` is the authoritative source for basic strategy and deviation indices. It was reviewed against several sources and is considered more accurate than any single chart. Do not change chart or deviation data to match another source unless the user explicitly asks.
 
-Reference PDFs are stored at `src/strategy/BJA_H17.pdf` and `src/strategy/BJA_S17.pdf`. To read them, convert to PNG first using poppler (installed via winget):
-```bash
-POPPLER_BIN="C:/Users/gordo/AppData/Local/Microsoft/WinGet/Packages/oschwartz10612.Poppler_Microsoft.Winget.Source_8wekyb3d8bbwe/poppler-25.07.0/Library/bin"
-"$POPPLER_BIN/pdftoppm.exe" -png -r 200 "src/strategy/BJA_H17.pdf" "/tmp/bja_h17"
-# Then read /tmp/bja_h17-1.png with the Read tool (use full Windows path if needed)
-```
+The BJA (Blackjack Apprentice) charts are kept as a cross-reference. Most cells match, but a few differ on purpose and must stay as encoded:
+- 15 vs 10: hit at TC ≤ −1 (BJA shows "0-", i.e. any negative running count)
+- 14 vs 10: surrender at TC ≥ +3 (not on BJA)
+- H17 17 vs A: stand at TC ≥ +2 (BJA shows plain surrender)
+- S17 16 vs A: stand at TC ≥ +3 when surrender isn't available (not on BJA S17)
+
+If a cross-check against BJA turns up any other difference, report it to the user. Don't fix it.
+
+The BJA PDFs are at `src/strategy/BJA_H17.pdf` and `src/strategy/BJA_S17.pdf`. The Read tool opens them directly; no conversion is needed.
 
 ### 3. H17 and S17 are different charts — never mix them
 Deviation indices change between H17 and S17 rules. Always confirm which rule set a chart applies to before encoding it. Some plays that are deviations under S17 are already basic strategy under H17 (e.g., 11 vs A is always Double in H17).

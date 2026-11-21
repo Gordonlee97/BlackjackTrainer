@@ -353,7 +353,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
       const s = useGameStore.getState();
       if (s.phase !== 'player_turn' || anyModalOpen || s.playerHands.some(isAwaitingSplitCard)) return;
       switch (e.key.toLowerCase()) {
-        case 'h': handlePlayerAction('HIT'); break;
+        case 'h': if (s.canHit())       handlePlayerAction('HIT');       break;
         case 's': handlePlayerAction('STAND'); break;
         case 'd': if (s.canDouble())    handlePlayerAction('DOUBLE');    break;
         case 'p': if (s.canSplit())     handlePlayerAction('SPLIT');     break;
@@ -587,6 +587,7 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                   onDouble={() => handlePlayerAction('DOUBLE')}
                   onSplit={() => handlePlayerAction('SPLIT')}
                   onSurrender={() => handlePlayerAction('SURRENDER')}
+                  canHit={game.canHit()}
                   canDouble={game.canDouble()}
                   canSplit={game.canSplit()}
                   canSurrender={game.canSurrender()}

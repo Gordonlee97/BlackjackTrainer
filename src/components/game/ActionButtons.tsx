@@ -6,6 +6,7 @@ interface ActionButtonsProps {
   onDouble: () => void;
   onSplit: () => void;
   onSurrender: () => void;
+  canHit: boolean;
   canDouble: boolean;
   canSplit: boolean;
   canSurrender: boolean;
@@ -22,12 +23,12 @@ const BUTTON_STYLES = {
 
 export default function ActionButtons({
   onHit, onStand, onDouble, onSplit, onSurrender,
-  canDouble, canSplit, canSurrender, disabled,
+  canHit, canDouble, canSplit, canSurrender, disabled,
 }: ActionButtonsProps) {
   return (
     <div className="action-buttons flex flex-col items-center gap-4">
       <div className="flex gap-5">
-        <ActionBtn label="Hit"   shortcut="H" style={BUTTON_STYLES.hit}   enabled size="lg" disabled={disabled} onClick={onHit} />
+        <ActionBtn label="Hit"   shortcut="H" style={BUTTON_STYLES.hit}   enabled={canHit} size="lg" disabled={disabled} onClick={onHit} />
         <ActionBtn label="Stand" shortcut="S" style={BUTTON_STYLES.stand} enabled size="lg" disabled={disabled} onClick={onStand} />
       </div>
       <div className="flex gap-4">
