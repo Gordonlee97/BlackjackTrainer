@@ -25,6 +25,7 @@ npm test           # Vitest unit tests (engine, strategy, store)
 - `src/components/game/` — GameTable (orchestrator), Card, DealerHand, PlayerHand, ActionButtons, BetControls, RunningCount, SettingsModal
 - `src/components/feedback/` — StrategyModal, StrategyChartModal, StatsPanel, BetSpreadFeedback
 - `src/components/setup/` — SetupPage
+- `src/components/shared/` — `Modal` (shell: backdrop, panel, 150ms motion, Escape, `role=dialog`) + `ModalCloseButton`, CustomSelect
 - `src/hooks/` — Custom hooks: `useAnimatedNumber` (rAF number tween)
 - `src/index.css` — Design tokens (~30 CSS custom properties), keyframe animations
 
@@ -71,8 +72,12 @@ Buttons that appear in multiple game phases (Deal, Next Hand) must sit at the sa
 ### 9. Keep animations short and continuous
 Modal open/close: 150ms max, no spring. No keyframe stepping (move-stop-move). One continuous motion with `ease: 'linear'` for position, keyframes only for opacity. Less is more.
 
+New modals go through `shared/Modal` and amber primary buttons use the `.btn-cta` class, so motion and styling stay in one place.
+
 ### 10. Test at multiple viewport sizes during development, not after
-Bugs at 1080p, 768p, and 390px are completely different. Check at least 3 sizes: large desktop, small laptop/tablet, phone.
+Bugs at 1080p, 768p, and 390px are completely different. Check at least 3 sizes: large desktop, small laptop/tablet, phone. Check a short phone too (e.g. 390×664, a phone browser with its toolbars): height-based rules hit phones as well.
+
+The phone `@media (max-width: 500px)` block in `index.css` must stay last so it overrides the `max-height` blocks. On phones the running count lives in the top bar (`.topbar-count`) instead of on the table.
 
 ## Workflow Rules
 
