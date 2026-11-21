@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Card, GamePhase, GameState, HandState } from '../engine/types';
+import type { Card, GameState, HandState } from '../engine/types';
 import { createShoe, drawCard, needsReshuffle } from '../engine/shoe';
 import { handValue, isBlackjack, isBust, isPair } from '../engine/hand';
 import { settleHand, calculatePayout } from '../engine/payout';
@@ -11,6 +11,8 @@ import type { Deviation } from '../strategy/deviations';
 
 const INITIAL_BALANCE = 1000;
 const DEFAULT_BET = 25;
+const MAX_HANDS = 4;
+const MAX_PRACTICE_REDEALS = 50;
 
 export interface NaturalInfo {
   dealerHasNatural: boolean;
@@ -49,10 +51,8 @@ function createEmptyHand(bet: number): HandState {
   return { cards: [], bet, isDoubled: false, isSplit: false, isComplete: false };
 }
 
-function shouldFilterHand(hand: HandState, practiceMode: string): boolean {
+function shouldFilterHand(cards: Card[], practiceMode: RuleSet['practiceMode']): boolean {
   if (practiceMode === 'all') return false;
-  const cards = hand.cards;
-  if (cards.length !== 2) return false;
 
   const hv = handValue(cards);
   const hasPair = isPair(cards);
@@ -67,6 +67,19 @@ function shouldFilterHand(hand: HandState, practiceMode: string): boolean {
     default:
       return false;
   }
+}
+
+/** Deals in casino order: player, dealer hole (face down), player, dealer upcard. */
+function dealInitialCards(shoe: Card[]): { playerCards: Card[]; dealerCards: Card[]; shoe: Card[] } {
+  const p1 = drawCard(shoe);
+  const hole = drawCard(p1.shoe, false);
+  const p2 = drawCard(hole.shoe);
+  const up = drawCard(p2.shoe);
+  return {
+    playerCards: [p1.card, p2.card],
+    dealerCards: [hole.card, up.card],
+    shoe: up.shoe,
+  };
 }
 
 function applyDrillSeed(rules: RuleSet): {
@@ -140,7 +153,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { currentBet, balance, rules } = state;
     if (!rules || currentBet > balance) return;
 
-    let shoe = [...state.shoe];
+    let shoe = state.shoe;
     const shoeSize = state.shoeSize;
 
     const preDealCardsDealt = state.shoeSize - state.shoe.length;
@@ -157,62 +170,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
       useCountStore.getState().resetCount();
     }
 
-    let playerCards: Card[] = [];
-    let dealerCards: Card[] = [];
+    let { playerCards, dealerCards, shoe: dealtShoe } = dealInitialCards(shoe);
 
-    if (rules.deviationsPracticeMode) {
-      let tempShoe = [...shoe];
-      let r = drawCard(tempShoe);
-      const p1 = r.card; tempShoe = r.shoe;
-      r = drawCard(tempShoe, false);
-      const d1 = { ...r.card, faceUp: false }; tempShoe = r.shoe;
-      r = drawCard(tempShoe);
-      const p2 = r.card; tempShoe = r.shoe;
-      r = drawCard(tempShoe);
-      const d2 = r.card; tempShoe = r.shoe;
-      playerCards = [p1, p2];
-      dealerCards = [d1, d2];
-      shoe = tempShoe;
-    } else {
-      let attempts = 0;
-      do {
-        let tempShoe = [...shoe];
-        let result;
-
-        result = drawCard(tempShoe);
-        const p1 = result.card;
-        tempShoe = result.shoe;
-
-        result = drawCard(tempShoe, false); // Dealer hole card face down
-        const d1 = { ...result.card, faceUp: false };
-        tempShoe = result.shoe;
-
-        result = drawCard(tempShoe);
-        const p2 = result.card;
-        tempShoe = result.shoe;
-
-        result = drawCard(tempShoe);
-        const d2 = result.card;
-        tempShoe = result.shoe;
-
-        playerCards = [p1, p2];
-        dealerCards = [d1, d2];
-
-        const testHand: HandState = { cards: playerCards, bet: currentBet, isDoubled: false, isSplit: false, isComplete: false };
-        if (!shouldFilterHand(testHand, rules.practiceMode)) {
-          shoe = tempShoe;
-          break;
-        }
-
-        // Reshuffle and try again
-        attempts++;
-        if (attempts >= 50) {
-          shoe = tempShoe;
-          break;
-        }
+    // Practice modes (hard/soft/splits) redeal from a fresh shoe until the hand matches.
+    // Drill mode uses a seeded shoe and must never be filtered or reshuffled.
+    if (!rules.deviationsPracticeMode) {
+      for (let attempt = 0; attempt < MAX_PRACTICE_REDEALS && shouldFilterHand(playerCards, rules.practiceMode); attempt++) {
         shoe = createShoe(rules.numDecks);
-      } while (true);
+        useCountStore.getState().resetCount();
+        ({ playerCards, dealerCards, shoe: dealtShoe } = dealInitialCards(shoe));
+      }
     }
+    shoe = dealtShoe;
 
     const playerHand: HandState = {
       cards: playerCards,
@@ -236,23 +205,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const dealerHasNatural = isBlackjack(dealerCards);
     const playerHasNatural = isBlackjack(playerCards);
 
-    if (dealerHasNatural || playerHasNatural) {
-      // Deal cards normally first (hole card face down), store natural info for dramatic reveal
-      set({
-        shoe,
-        dealerHand,
-        playerHands: [playerHand],
-        activeHandIndex: 0,
-        balance: newBalance,
-        phase: 'dealing',
-        dealerHoleCardRevealed: false,
-        message: '',
-        pendingNatural: { dealerHasNatural, playerHasNatural },
-      });
-      // Count the 3 face-up cards initially (hole card counted on reveal)
-      useCountStore.getState().updateCount([playerCards[0], playerCards[1], dealerCards[1]]);
-      return;
-    }
+    const pendingNatural = dealerHasNatural || playerHasNatural
+      ? { dealerHasNatural, playerHasNatural }
+      : null;
 
     set({
       shoe,
@@ -260,11 +215,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       playerHands: [playerHand],
       activeHandIndex: 0,
       balance: newBalance,
-      phase: 'player_turn',
+      // With a natural, cards deal normally (hole face down); GameTable then runs the reveal.
+      phase: pendingNatural ? 'dealing' : 'player_turn',
       dealerHoleCardRevealed: false,
       message: '',
-      pendingNatural: null,
+      pendingNatural,
     });
+    // Count the 3 face-up cards; the hole card is counted when revealed.
     useCountStore.getState().updateCount([playerCards[0], playerCards[1], dealerCards[1]]);
   },
 
@@ -369,7 +326,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       playerHands,
       balance,
-      // Phase stays 'player_turn', splitPending signals GameTable to animate deals
+      // Phase stays 'player_turn'; GameTable sees the 1-card split hands and animates their deals
     });
   },
 
@@ -464,20 +421,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
   canDouble: () => {
     const state = get();
     const hand = state.playerHands[state.activeHandIndex];
-    if (!hand) return false;
-    return hand.cards.length === 2 && state.balance >= hand.bet;
+    if (!hand || hand.cards.length !== 2 || state.balance < hand.bet) return false;
+    return !hand.isSplit || !!state.rules?.dasAllowed;
   },
 
   canSplit: () => {
     const state = get();
     const hand = state.playerHands[state.activeHandIndex];
-    if (!hand) return false;
-    return (
-      isPair(hand.cards) &&
-      hand.cards.length === 2 &&
-      state.playerHands.length < 4 &&
-      state.balance >= hand.bet
-    );
+    if (!hand || !isPair(hand.cards)) return false;
+    if (state.playerHands.length >= MAX_HANDS || state.balance < hand.bet) return false;
+    const isAces = hand.cards[0].rank === 'A';
+    return !(hand.isSplit && isAces && !state.rules?.resplitAces);
   },
 
   canSurrender: () => {
@@ -511,7 +465,7 @@ function advanceToNextHand(
   }
 
   // All hands complete - dealer's turn
-  return { phase: 'dealer_turn' as GamePhase };
+  return { phase: 'dealer_turn' };
 }
 
 // A single step in the dealer play sequence
@@ -577,13 +531,12 @@ export function playDealerSteps(store: GameStore): DealerStep[] {
     return { ...hand, result };
   });
 
-  let totalPayout = 0;
+  // Stakes were deducted when placed, so return stake + net payout for every hand
+  // (lose → 0, surrender → half stake, push → stake, win → 2× stake, ...).
+  let totalReturned = 0;
   for (const hand of playerHands) {
-    const payout = calculatePayout(hand);
-    const bet = hand.isDoubled ? hand.bet * 2 : hand.bet;
-    if (payout >= 0) {
-      totalPayout += bet + payout;
-    }
+    const stake = hand.isDoubled ? hand.bet * 2 : hand.bet;
+    totalReturned += stake + calculatePayout(hand);
   }
 
   const dealerTotal = handValue(currentCards).total;
@@ -594,7 +547,7 @@ export function playDealerSteps(store: GameStore): DealerStep[] {
       shoe,
       dealerHand: finalDealerHand,
       playerHands,
-      balance: store.balance + totalPayout,
+      balance: store.balance + totalReturned,
       phase: 'complete',
       dealerHoleCardRevealed: true,
       message: dealerBusted
