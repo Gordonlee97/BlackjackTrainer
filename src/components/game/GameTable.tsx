@@ -665,15 +665,11 @@ export default function GameTable({ onBackToMenu }: GameTableProps) {
                       playNextHand();
                     }, 600);
                   }}
-                  className="font-black uppercase tracking-widest cta-pulse"
+                  className="btn-cta font-black uppercase tracking-widest cta-pulse"
                   style={{
                     padding: 'var(--cta-padding-y) var(--cta-padding-x)',
                     fontSize: 'var(--text-xl)',
                     borderRadius: 'var(--cta-radius)',
-                    background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-                    border: 'none',
-                    color: '#1a1a1a',
-                    boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
                   }}
                 >
                   Next Hand

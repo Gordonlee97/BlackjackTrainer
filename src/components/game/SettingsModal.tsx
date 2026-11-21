@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import Modal, { ModalCloseButton } from '../shared/Modal';
 import { useSettingsStore } from '../../store/settingsStore';
 import { useStatsStore } from '../../store/statsStore';
 import CustomSelect from '../shared/CustomSelect';
@@ -17,293 +17,250 @@ export default function SettingsModal({ isOpen, onClose, onBackToMenu }: Props) 
   const [confirmReset, setConfirmReset] = useState(false);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key="settings-overlay"
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 backdrop-blur-sm"
-            style={{ background: 'var(--surface-overlay)' }}
-            onClick={onClose}
-          />
+    <Modal isOpen={isOpen} label="Settings" onClose={onClose} width="min(92vw, 720px)" maxHeight="85vh" className="flex flex-col">
+      {/* ── Header ── */}
+      <div
+        className="shrink-0 flex items-center justify-between"
+        style={{
+          padding: 'var(--space-xl) var(--modal-padding-x) var(--space-lg) var(--modal-padding-x)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <h2 className="text-white font-black tracking-wide" style={{ fontSize: 'var(--modal-title-font)' }}>Settings</h2>
+        <ModalCloseButton onClick={onClose} />
+      </div>
 
-          {/* Panel */}
-          <motion.div
-            key="settings-panel"
-            className="relative flex flex-col"
-            style={{
-              width: 'min(92vw, 720px)',
-              maxHeight: '85vh',
-              background: 'var(--modal-bg)',
-              border: '1px solid var(--border-light)',
-              borderRadius: 'var(--radius-xl)',
-              boxShadow: 'var(--shadow-modal)',
-            }}
-            initial={{ y: 32, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* ── Header ── */}
-            <div
-              className="shrink-0 flex items-center justify-between"
-              style={{
-                padding: 'var(--space-xl) var(--modal-padding-x) var(--space-lg) var(--modal-padding-x)',
-                borderBottom: '1px solid rgba(255,255,255,0.07)',
+      {/* ── Scrollable content ── */}
+      <div
+        className="overflow-y-auto flex-1"
+        style={{ padding: 'var(--space-xl) var(--modal-padding-x)' }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
+          {/* Game Rules */}
+          <Section label="Game Rules">
+            <SelectRow
+              label="Number of Decks"
+              value={String(rules.numDecks)}
+              options={
+                rules.deviationsPracticeMode
+                  ? [
+                      { value: '4', label: '4 Decks' },
+                      { value: '6', label: '6 Decks' },
+                      { value: '8', label: '8 Decks' },
+                    ]
+                  : [
+                      { value: '1', label: '1 Deck' },
+                      { value: '2', label: '2 Decks' },
+                      { value: '4', label: '4 Decks' },
+                      { value: '6', label: '6 Decks' },
+                      { value: '8', label: '8 Decks' },
+                    ]
+              }
+              onChange={v => {
+                const updates: Partial<RuleSet> = { numDecks: Number(v) as RuleSet['numDecks'] };
+                if (Number(v) < 4) updates.useDeviations = false;
+                setRules(updates);
               }}
-            >
-              <h2 className="text-white font-black tracking-wide" style={{ fontSize: 'var(--modal-title-font)' }}>Settings</h2>
-              <button
-                onClick={onClose}
-                className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors"
-                style={{ fontSize: 'var(--text-xl)' }}
-              >
-                ✕
-              </button>
-            </div>
+            />
+            <SelectRow
+              label="Dealer Soft 17"
+              value={rules.dealerHitsSoft17 ? 'hit' : 'stand'}
+              options={[
+                { value: 'stand', label: 'Stand on Soft 17 (S17)' },
+                { value: 'hit',   label: 'Hit on Soft 17 (H17)' },
+              ]}
+              onChange={v => setRules({ dealerHitsSoft17: v === 'hit' })}
+            />
+            <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={v => setRules({ surrenderAllowed: v })} />
+            <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={v => setRules({ dasAllowed: v })} />
+            <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={v => setRules({ hitSplitAces: v })} />
+            <ToggleRow label="Resplit Aces"             checked={rules.resplitAces}      onChange={v => setRules({ resplitAces: v })} last />
+          </Section>
 
-            {/* ── Scrollable content ── */}
+          {/* Training */}
+          <Section label="Training">
+            <SelectRow
+              label="Practice Mode"
+              value={rules.practiceMode}
+              options={[
+                { value: 'all',    label: 'All Hands' },
+                { value: 'hard',   label: 'Hard Totals Only' },
+                { value: 'soft',   label: 'Soft Totals Only' },
+                { value: 'splits', label: 'Splits Only' },
+              ]}
+              onChange={v => setRules({ practiceMode: v as RuleSet['practiceMode'] })}
+            />
+            <SelectRow
+              label="Wrong Move"
+              value={rules.wrongMoveAction}
+              options={[
+                { value: 'execute', label: 'Show feedback, play move' },
+                { value: 'block',   label: 'Block until correct move' },
+              ]}
+              onChange={v => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
+            />
+            <ToggleRow
+              label="Use Deviations"
+              checked={rules.useDeviations}
+              disabled={rules.deviationsPracticeMode}
+              disabledTitle="Required for deviations practice"
+              onChange={v => {
+                const updates: Partial<RuleSet> = { useDeviations: v };
+                if (v) {
+                  if (rules.showCount === 'off') updates.showCount = 'always';
+                  if (rules.numDecks < 4) updates.numDecks = 6;
+                }
+                setRules(updates);
+              }}
+            />
+            <ToggleRow
+              label="Deviations Practice"
+              subtext="Pre-selected hands with fabricated counts. Drills deviation recognition and bet spread together."
+              checked={rules.deviationsPracticeMode}
+              onChange={v => {
+                const updates: Partial<RuleSet> = { deviationsPracticeMode: v };
+                if (v) {
+                  updates.useDeviations = true;
+                  if (rules.showCount === 'off') updates.showCount = 'always';
+                  if (rules.numDecks < 4) updates.numDecks = 4;
+                }
+                setRules(updates);
+              }}
+              last
+            />
+          </Section>
+
+          {/* Display */}
+          <Section label="Display">
+            <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={v => setRules({ showHandTotals: v })} />
+            <SelectRow
+              label="Running Count (Hi-Lo)"
+              value={rules.showCount}
+              options={
+                rules.deviationsPracticeMode
+                  ? [
+                      { value: 'always', label: 'Always Visible' },
+                      { value: 'hover',  label: 'Hover to Reveal' },
+                    ]
+                  : [
+                      { value: 'off',    label: 'Off' },
+                      { value: 'always', label: 'Always Visible' },
+                      { value: 'hover',  label: 'Hover to Reveal' },
+                    ]
+              }
+              onChange={v => {
+                const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
+                if (v === 'off') updates.useDeviations = false;
+                setRules(updates);
+              }}
+              last
+            />
+          </Section>
+
+          {/* Audio */}
+          <Section label="Audio">
+            <SliderRow
+              label="Sound Volume"
+              value={rules.soundVolume}
+              onChange={v => setRules({ soundVolume: v })}
+              last
+            />
+          </Section>
+
+          {/* Data */}
+          <Section label="Data">
             <div
-              className="overflow-y-auto flex-1"
-              style={{ padding: 'var(--space-xl) var(--modal-padding-x)' }}
+              className="flex items-center justify-between"
+              style={{ padding: 'var(--row-padding)' }}
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-
-                {/* Game Rules */}
-                <Section label="Game Rules">
-                  <SelectRow
-                    label="Number of Decks"
-                    value={String(rules.numDecks)}
-                    options={
-                      rules.deviationsPracticeMode
-                        ? [
-                            { value: '4', label: '4 Decks' },
-                            { value: '6', label: '6 Decks' },
-                            { value: '8', label: '8 Decks' },
-                          ]
-                        : [
-                            { value: '1', label: '1 Deck' },
-                            { value: '2', label: '2 Decks' },
-                            { value: '4', label: '4 Decks' },
-                            { value: '6', label: '6 Decks' },
-                            { value: '8', label: '8 Decks' },
-                          ]
-                    }
-                    onChange={v => {
-                      const updates: Partial<RuleSet> = { numDecks: Number(v) as RuleSet['numDecks'] };
-                      if (Number(v) < 4) updates.useDeviations = false;
-                      setRules(updates);
+              <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>Reset All Stats</span>
+              {!confirmReset ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmReset(true)}
+                  className="cursor-pointer"
+                  style={{
+                    padding: '10px 24px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: 'rgba(239,68,68,0.85)',
+                    background: 'rgba(239,68,68,0.10)',
+                    border: '1px solid rgba(239,68,68,0.20)',
+                    borderRadius: '12px',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.10)')}
+                >
+                  Reset
+                </button>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 500 }}>Are you sure?</span>
+                  <button
+                    type="button"
+                    onClick={() => { resetStats(); setConfirmReset(false); }}
+                    className="cursor-pointer"
+                    style={{
+                      padding: '10px 20px',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: 'white',
+                      background: 'rgba(239,68,68,0.65)',
+                      border: '1px solid rgba(239,68,68,0.5)',
+                      borderRadius: '12px',
+                      transition: 'background 0.15s',
                     }}
-                  />
-                  <SelectRow
-                    label="Dealer Soft 17"
-                    value={rules.dealerHitsSoft17 ? 'hit' : 'stand'}
-                    options={[
-                      { value: 'stand', label: 'Stand on Soft 17 (S17)' },
-                      { value: 'hit',   label: 'Hit on Soft 17 (H17)' },
-                    ]}
-                    onChange={v => setRules({ dealerHitsSoft17: v === 'hit' })}
-                  />
-                  <ToggleRow label="Surrender Allowed"        checked={rules.surrenderAllowed} onChange={v => setRules({ surrenderAllowed: v })} />
-                  <ToggleRow label="Double After Split (DAS)" checked={rules.dasAllowed}       onChange={v => setRules({ dasAllowed: v })} />
-                  <ToggleRow label="Hit Split Aces"           checked={rules.hitSplitAces}     onChange={v => setRules({ hitSplitAces: v })} />
-                  <ToggleRow label="Resplit Aces"             checked={rules.resplitAces}      onChange={v => setRules({ resplitAces: v })} last />
-                </Section>
-
-                {/* Training */}
-                <Section label="Training">
-                  <SelectRow
-                    label="Practice Mode"
-                    value={rules.practiceMode}
-                    options={[
-                      { value: 'all',    label: 'All Hands' },
-                      { value: 'hard',   label: 'Hard Totals Only' },
-                      { value: 'soft',   label: 'Soft Totals Only' },
-                      { value: 'splits', label: 'Splits Only' },
-                    ]}
-                    onChange={v => setRules({ practiceMode: v as RuleSet['practiceMode'] })}
-                  />
-                  <SelectRow
-                    label="Wrong Move"
-                    value={rules.wrongMoveAction}
-                    options={[
-                      { value: 'execute', label: 'Show feedback, play move' },
-                      { value: 'block',   label: 'Block until correct move' },
-                    ]}
-                    onChange={v => setRules({ wrongMoveAction: v as RuleSet['wrongMoveAction'] })}
-                  />
-                  <ToggleRow
-                    label="Use Deviations"
-                    checked={rules.useDeviations}
-                    disabled={rules.deviationsPracticeMode}
-                    disabledTitle="Required for deviations practice"
-                    onChange={v => {
-                      const updates: Partial<RuleSet> = { useDeviations: v };
-                      if (v) {
-                        if (rules.showCount === 'off') updates.showCount = 'always';
-                        if (rules.numDecks < 4) updates.numDecks = 6;
-                      }
-                      setRules(updates);
-                    }}
-                  />
-                  <ToggleRow
-                    label="Deviations Practice"
-                    subtext="Pre-selected hands with fabricated counts. Drills deviation recognition and bet spread together."
-                    checked={rules.deviationsPracticeMode}
-                    onChange={v => {
-                      const updates: Partial<RuleSet> = { deviationsPracticeMode: v };
-                      if (v) {
-                        updates.useDeviations = true;
-                        if (rules.showCount === 'off') updates.showCount = 'always';
-                        if (rules.numDecks < 4) updates.numDecks = 4;
-                      }
-                      setRules(updates);
-                    }}
-                    last
-                  />
-                </Section>
-
-                {/* Display */}
-                <Section label="Display">
-                  <ToggleRow label="Show Hand Totals" checked={rules.showHandTotals} onChange={v => setRules({ showHandTotals: v })} />
-                  <SelectRow
-                    label="Running Count (Hi-Lo)"
-                    value={rules.showCount}
-                    options={
-                      rules.deviationsPracticeMode
-                        ? [
-                            { value: 'always', label: 'Always Visible' },
-                            { value: 'hover',  label: 'Hover to Reveal' },
-                          ]
-                        : [
-                            { value: 'off',    label: 'Off' },
-                            { value: 'always', label: 'Always Visible' },
-                            { value: 'hover',  label: 'Hover to Reveal' },
-                          ]
-                    }
-                    onChange={v => {
-                      const updates: Partial<RuleSet> = { showCount: v as RuleSet['showCount'] };
-                      if (v === 'off') updates.useDeviations = false;
-                      setRules(updates);
-                    }}
-                    last
-                  />
-                </Section>
-
-                {/* Audio */}
-                <Section label="Audio">
-                  <SliderRow
-                    label="Sound Volume"
-                    value={rules.soundVolume}
-                    onChange={v => setRules({ soundVolume: v })}
-                    last
-                  />
-                </Section>
-
-                {/* Data */}
-                <Section label="Data">
-                  <div
-                    className="flex items-center justify-between"
-                    style={{ padding: 'var(--row-padding)' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.8)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.65)')}
                   >
-                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 'var(--text-base)', fontWeight: 500 }}>Reset All Stats</span>
-                    {!confirmReset ? (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmReset(true)}
-                        className="cursor-pointer"
-                        style={{
-                          padding: '10px 24px',
-                          fontSize: '14px',
-                          fontWeight: 600,
-                          color: 'rgba(239,68,68,0.85)',
-                          background: 'rgba(239,68,68,0.10)',
-                          border: '1px solid rgba(239,68,68,0.20)',
-                          borderRadius: '12px',
-                          transition: 'background 0.15s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.10)')}
-                      >
-                        Reset
-                      </button>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', fontWeight: 500 }}>Are you sure?</span>
-                        <button
-                          type="button"
-                          onClick={() => { resetStats(); setConfirmReset(false); }}
-                          className="cursor-pointer"
-                          style={{
-                            padding: '10px 20px',
-                            fontSize: '14px',
-                            fontWeight: 700,
-                            color: 'white',
-                            background: 'rgba(239,68,68,0.65)',
-                            border: '1px solid rgba(239,68,68,0.5)',
-                            borderRadius: '12px',
-                            transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.8)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.65)')}
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmReset(false)}
-                          className="cursor-pointer"
-                          style={{
-                            padding: '10px 16px',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            color: 'rgba(255,255,255,0.5)',
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.10)',
-                            borderRadius: '12px',
-                            transition: 'background 0.15s',
-                          }}
-                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
-                          onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </Section>
-
-              </div>
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmReset(false)}
+                    className="cursor-pointer"
+                    style={{
+                      padding: '10px 16px',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: 'rgba(255,255,255,0.5)',
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      borderRadius: '12px',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.10)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
             </div>
+          </Section>
 
-            {/* ── Footer ── */}
-            <div
-              className="shrink-0 flex items-center justify-between"
-              style={{
-                padding: 'var(--space-md) var(--modal-padding-x) var(--space-lg) var(--modal-padding-x)',
-                borderTop: '1px solid rgba(255,255,255,0.07)',
-              }}
-            >
-              <p className="text-white/30 text-sm">Changes apply on the next hand</p>
-              <button
-                onClick={onBackToMenu}
-                className="text-white/35 hover:text-white/65 transition-colors text-sm font-semibold underline underline-offset-2"
-              >
-                Back to Menu
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </div>
+
+      {/* ── Footer ── */}
+      <div
+        className="shrink-0 flex items-center justify-between"
+        style={{
+          padding: 'var(--space-md) var(--modal-padding-x) var(--space-lg) var(--modal-padding-x)',
+          borderTop: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <p className="text-white/30 text-sm">Changes apply on the next hand</p>
+        <button
+          onClick={onBackToMenu}
+          className="text-white/35 hover:text-white/65 transition-colors text-sm font-semibold underline underline-offset-2"
+        >
+          Back to Menu
+        </button>
+      </div>
+    </Modal>
   );
 }
 

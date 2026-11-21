@@ -182,16 +182,11 @@ export default function BetControls({ currentBet, balance, onBetChange, onDeal, 
           whileTap={canDeal ? { scale: 0.97 } : {}}
           onClick={() => { playDealButton(); onDeal(); }}
           disabled={!canDeal}
-          className={`font-black uppercase tracking-widest ${canDeal ? 'cta-pulse' : ''}`}
+          className={`font-black uppercase tracking-widest ${canDeal ? 'btn-cta cta-pulse' : ''}`}
           style={canDeal ? {
             padding: 'var(--cta-padding-y) var(--cta-padding-x)',
             fontSize: 'var(--text-xl)',
             borderRadius: 'var(--cta-radius)',
-            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)',
-            border: 'none',
-            color: '#1a1a1a',
-            cursor: 'pointer',
-            boxShadow: '0 8px 32px rgba(245,158,11,0.4), 0 2px 8px rgba(0,0,0,0.3)',
           } : {
             padding: 'var(--cta-padding-y) var(--cta-padding-x)',
             fontSize: 'var(--text-xl)',

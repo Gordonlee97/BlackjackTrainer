@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import Modal, { ModalCloseButton } from '../shared/Modal';
 import { useState, useMemo } from 'react';
 import { buildStrategy } from '../../strategy/charts';
 import { getDeviations } from '../../strategy/deviations';
@@ -168,260 +169,224 @@ export default function StrategyChartModal({ isOpen, onClose, rules }: Props) {
   ].join(' \u00b7 ');
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          key="chart-overlay"
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-        >
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0"
-            style={{ background: 'var(--surface-overlay)', backdropFilter: 'blur(10px)' }}
-            onClick={onClose}
-          />
+    <Modal
+      isOpen={isOpen}
+      label="Strategy chart"
+      onClose={onClose}
+      width="min(92vw, 920px)"
+      maxHeight="88vh"
+      className="flex flex-col overflow-hidden"
+      style={{ margin: 'var(--space-lg)' }}
+    >
+      {/* Header */}
+      <div
+        className="shrink-0 flex items-start justify-between"
+        style={{
+          padding: 'var(--space-xl) var(--modal-padding-x) var(--space-md) var(--modal-padding-x)',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        <div>
+          <h2 className="text-white font-black tracking-wide leading-tight" style={{ fontSize: 'var(--modal-title-font)' }}>
+            {showDeviations && canShowDeviations ? 'Deviation Chart' : 'Perfect Basic Strategy'}
+          </h2>
+          <p className="text-white/40 mt-2 font-medium tracking-wide" style={{ fontSize: 'var(--text-sm)' }}>{rulesDesc}</p>
+        </div>
+        <ModalCloseButton onClick={onClose} />
+      </div>
 
-          {/* Panel */}
-          <motion.div
-            key="chart-panel"
-            className="relative flex flex-col overflow-hidden"
+      {/* Tabs + Deviation Toggle */}
+      <div
+        className="shrink-0 flex items-center justify-between"
+        style={{
+          padding: 'var(--space-md) var(--modal-padding-x)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <div className="flex gap-3">
+          {TABS.map(tab => (
+            <motion.button
+              key={tab.id}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setActiveTab(tab.id)}
+              className="rounded-full font-bold"
+              style={{
+                padding: 'var(--space-sm) var(--space-lg)',
+                fontSize: 'var(--text-base)',
+                color: activeTab === tab.id ? '#111827' : 'rgba(255,255,255,0.45)',
+                background: activeTab === tab.id
+                  ? 'linear-gradient(135deg, #b45309, #f59e0b)'
+                  : 'rgba(255,255,255,0.05)',
+                border: '1px solid',
+                borderColor: activeTab === tab.id
+                  ? 'rgba(255,200,60,0.3)'
+                  : 'rgba(255,255,255,0.07)',
+                boxShadow: activeTab === tab.id
+                  ? '0 2px 14px rgba(245,158,11,0.35)'
+                  : 'none',
+                transition: 'all 0.2s',
+              }}
+            >
+              {tab.label}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Deviations toggle */}
+        {canShowDeviations && (
+          <button
+            onClick={() => setShowDeviations(v => !v)}
+            className="flex items-center gap-2 rounded-full font-bold transition-all"
             style={{
-              width: 'min(92vw, 920px)',
-              maxHeight: '88vh',
-              background: 'var(--modal-bg)',
-              border: '1px solid var(--border-light)',
-              borderRadius: 'var(--radius-xl)',
-              boxShadow: 'var(--shadow-modal)',
-              margin: 'var(--space-lg)',
+              padding: '6px 14px',
+              fontSize: 'var(--text-sm)',
+              color: showDeviations ? 'rgba(251,191,36,0.95)' : 'rgba(255,255,255,0.35)',
+              background: showDeviations ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.04)',
+              border: '1px solid',
+              borderColor: showDeviations ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.07)',
             }}
-            initial={{ scale: 0.97, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.97, opacity: 0 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
+            {/* Toggle track */}
             <div
-              className="shrink-0 flex items-start justify-between"
+              className="relative rounded-full transition-colors"
               style={{
-                padding: 'var(--space-xl) var(--modal-padding-x) var(--space-md) var(--modal-padding-x)',
-                borderBottom: '1px solid rgba(255,255,255,0.07)',
+                width: '28px',
+                height: '16px',
+                background: showDeviations ? 'rgba(251,191,36,0.5)' : 'rgba(255,255,255,0.15)',
               }}
             >
-              <div>
-                <h2 className="text-white font-black tracking-wide leading-tight" style={{ fontSize: 'var(--modal-title-font)' }}>
-                  {showDeviations && canShowDeviations ? 'Deviation Chart' : 'Perfect Basic Strategy'}
-                </h2>
-                <p className="text-white/40 mt-2 font-medium tracking-wide" style={{ fontSize: 'var(--text-sm)' }}>{rulesDesc}</p>
-              </div>
-              <button
-                onClick={onClose}
-                className="w-11 h-11 flex items-center justify-center rounded-full text-white/30 hover:text-white/70 hover:bg-white/5 transition-colors shrink-0"
-                style={{ fontSize: 'var(--text-xl)' }}
-              >
-                ✕
-              </button>
+              <div
+                className="absolute top-[2px] rounded-full transition-all"
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  background: showDeviations ? '#fbbf24' : 'rgba(255,255,255,0.4)',
+                  left: showDeviations ? '14px' : '2px',
+                }}
+              />
             </div>
+            Deviations
+          </button>
+        )}
+      </div>
 
-            {/* Tabs + Deviation Toggle */}
-            <div
-              className="shrink-0 flex items-center justify-between"
-              style={{
-                padding: 'var(--space-md) var(--modal-padding-x)',
-                borderBottom: '1px solid rgba(255,255,255,0.06)',
-              }}
-            >
-              <div className="flex gap-3">
-                {TABS.map(tab => (
-                  <motion.button
-                    key={tab.id}
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => setActiveTab(tab.id)}
-                    className="rounded-full font-bold"
-                    style={{
-                      padding: 'var(--space-sm) var(--space-lg)',
-                      fontSize: 'var(--text-base)',
-                      color: activeTab === tab.id ? '#111827' : 'rgba(255,255,255,0.45)',
-                      background: activeTab === tab.id
-                        ? 'linear-gradient(135deg, #b45309, #f59e0b)'
-                        : 'rgba(255,255,255,0.05)',
-                      border: '1px solid',
-                      borderColor: activeTab === tab.id
-                        ? 'rgba(255,200,60,0.3)'
-                        : 'rgba(255,255,255,0.07)',
-                      boxShadow: activeTab === tab.id
-                        ? '0 2px 14px rgba(245,158,11,0.35)'
-                        : 'none',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    {tab.label}
-                  </motion.button>
-                ))}
-              </div>
-
-              {/* Deviations toggle */}
-              {canShowDeviations && (
-                <button
-                  onClick={() => setShowDeviations(v => !v)}
-                  className="flex items-center gap-2 rounded-full font-bold transition-all"
-                  style={{
-                    padding: '6px 14px',
-                    fontSize: 'var(--text-sm)',
-                    color: showDeviations ? 'rgba(251,191,36,0.95)' : 'rgba(255,255,255,0.35)',
-                    background: showDeviations ? 'rgba(251,191,36,0.12)' : 'rgba(255,255,255,0.04)',
-                    border: '1px solid',
-                    borderColor: showDeviations ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.07)',
-                  }}
-                >
-                  {/* Toggle track */}
-                  <div
-                    className="relative rounded-full transition-colors"
-                    style={{
-                      width: '28px',
-                      height: '16px',
-                      background: showDeviations ? 'rgba(251,191,36,0.5)' : 'rgba(255,255,255,0.15)',
-                    }}
-                  >
-                    <div
-                      className="absolute top-[2px] rounded-full transition-all"
-                      style={{
-                        width: '12px',
-                        height: '12px',
-                        background: showDeviations ? '#fbbf24' : 'rgba(255,255,255,0.4)',
-                        left: showDeviations ? '14px' : '2px',
-                      }}
-                    />
-                  </div>
-                  Deviations
-                </button>
-              )}
+      {/* Table */}
+      <div className="overflow-auto" style={{ padding: 'var(--space-md) var(--space-xl) var(--space-md) var(--space-xl)', height: 'var(--chart-table-h)' }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+          >
+            <div className="text-center mb-3">
+              <span className="text-white/30 text-sm font-semibold tracking-widest uppercase">
+                &larr; Dealer's Up Card &rarr;
+              </span>
             </div>
-
-            {/* Table */}
-            <div className="overflow-auto" style={{ padding: 'var(--space-md) var(--space-xl) var(--space-md) var(--space-xl)', height: 'var(--chart-table-h)' }}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
-                >
-                  <div className="text-center mb-3">
-                    <span className="text-white/30 text-sm font-semibold tracking-widest uppercase">
-                      &larr; Dealer's Up Card &rarr;
-                    </span>
-                  </div>
-                  <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
-                    <colgroup>
-                      <col style={{ width: 'var(--chart-row-header-w)' }} />
-                      {DEALER_COLS.map(d => <col key={d} />)}
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th />
-                        {DEALER_COLS.map(d => (
-                          <th key={d} className="text-white/60 text-sm font-bold pb-2 text-center">
-                            {DEALER_LABELS[d]}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map(row => {
-                        const rowData = chart[row.key] ?? {};
+            <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: 'var(--chart-row-header-w)' }} />
+                {DEALER_COLS.map(d => <col key={d} />)}
+              </colgroup>
+              <thead>
+                <tr>
+                  <th />
+                  {DEALER_COLS.map(d => (
+                    <th key={d} className="text-white/60 text-sm font-bold pb-2 text-center">
+                      {DEALER_LABELS[d]}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(row => {
+                  const rowData = chart[row.key] ?? {};
+                  return (
+                    <tr key={row.key}>
+                      <td
+                        className="text-white/85 font-black text-center"
+                        style={{
+                          fontSize: 'var(--chart-cell-font)',
+                          padding: '3px 6px',
+                          background: 'rgba(255,255,255,0.07)',
+                          borderRadius: '7px',
+                          letterSpacing: '0.02em',
+                        }}
+                      >
+                        {row.label}
+                      </td>
+                      {DEALER_COLS.map(d => {
+                        const rawAction = rowData[d];
+                        if (rawAction === undefined) {
+                          return <td key={d} />;
+                        }
                         return (
-                          <tr key={row.key}>
-                            <td
-                              className="text-white/85 font-black text-center"
-                              style={{
-                                fontSize: 'var(--chart-cell-font)',
-                                padding: '3px 6px',
-                                background: 'rgba(255,255,255,0.07)',
-                                borderRadius: '7px',
-                                letterSpacing: '0.02em',
-                              }}
-                            >
-                              {row.label}
-                            </td>
-                            {DEALER_COLS.map(d => {
-                              const rawAction = rowData[d];
-                              if (rawAction === undefined) {
-                                return <td key={d} />;
-                              }
-                              return (
-                                <td key={d} className="p-[3px]">
-                                  <ChartCell
-                                    rawAction={rawAction}
-                                    rules={rules}
-                                    handType={activeTab}
-                                    playerTotal={row.key}
-                                    dealerUp={d}
-                                    showDeviations={showDeviations && canShowDeviations}
-                                    deviationMap={deviationMap}
-                                  />
-                                </td>
-                              );
-                            })}
-                          </tr>
+                          <td key={d} className="p-[3px]">
+                            <ChartCell
+                              rawAction={rawAction}
+                              rules={rules}
+                              handType={activeTab}
+                              playerTotal={row.key}
+                              dealerUp={d}
+                              showDeviations={showDeviations && canShowDeviations}
+                              deviationMap={deviationMap}
+                            />
+                          </td>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
-            {/* Legend */}
+      {/* Legend */}
+      <div
+        className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-3"
+        style={{
+          padding: 'var(--space-md) var(--modal-padding-x)',
+          borderTop: '1px solid rgba(255,255,255,0.07)',
+        }}
+      >
+        {LEGEND.map(([key, name]) => (
+          <div key={key} className="flex items-center gap-2.5">
             <div
-              className="shrink-0 flex flex-wrap items-center gap-x-6 gap-y-3"
+              className="flex items-center justify-center font-black text-white rounded-md"
               style={{
-                padding: 'var(--space-md) var(--modal-padding-x)',
-                borderTop: '1px solid rgba(255,255,255,0.07)',
+                width: 'var(--chart-legend-size)', height: 'var(--chart-legend-size)',
+                background: ACTION_CONFIG[key].bg,
+                fontSize: 'var(--chart-cell-font)',
               }}
             >
-              {LEGEND.map(([key, name]) => (
-                <div key={key} className="flex items-center gap-2.5">
-                  <div
-                    className="flex items-center justify-center font-black text-white rounded-md"
-                    style={{
-                      width: 'var(--chart-legend-size)', height: 'var(--chart-legend-size)',
-                      background: ACTION_CONFIG[key].bg,
-                      fontSize: 'var(--chart-cell-font)',
-                    }}
-                  >
-                    {key}
-                  </div>
-                  <span className="text-white/50 text-sm font-semibold">{name}</span>
-                </div>
-              ))}
-              {showDeviations && canShowDeviations && (
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="flex items-center justify-center font-black rounded-md"
-                    style={{
-                      width: 'var(--chart-legend-size)', height: 'var(--chart-legend-size)',
-                      background: 'rgba(71,85,105,0.95)',
-                      color: '#ffeb3b',
-                      fontSize: 'var(--chart-cell-font)',
-                    }}
-                  >
-                    #
-                  </div>
-                  <span className="text-white/50 text-sm font-semibold">Deviation Index</span>
-                </div>
-              )}
+              {key}
             </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            <span className="text-white/50 text-sm font-semibold">{name}</span>
+          </div>
+        ))}
+        {showDeviations && canShowDeviations && (
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex items-center justify-center font-black rounded-md"
+              style={{
+                width: 'var(--chart-legend-size)', height: 'var(--chart-legend-size)',
+                background: 'rgba(71,85,105,0.95)',
+                color: '#ffeb3b',
+                fontSize: 'var(--chart-cell-font)',
+              }}
+            >
+              #
+            </div>
+            <span className="text-white/50 text-sm font-semibold">Deviation Index</span>
+          </div>
+        )}
+      </div>
+    </Modal>
   );
 }
 
