@@ -26,6 +26,8 @@ export interface RuleSet {
   showCount: 'off' | 'always' | 'hover';
   useDeviations: boolean;
   deviationsPracticeMode: boolean;
+  /** One betting unit in dollars, used to grade bet sizing in deviations practice. */
+  betUnit: 5 | 10 | 25 | 50 | 100;
 }
 
 // Chart: playerValue -> dealerUpcard (2-11, where 11=Ace) -> action
@@ -51,4 +53,5 @@ export const DEFAULT_RULES: RuleSet = {
   showCount: 'hover',
   useDeviations: false,
   deviationsPracticeMode: false,
+  betUnit: 25,
 };

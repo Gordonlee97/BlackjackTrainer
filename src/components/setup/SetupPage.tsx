@@ -126,8 +126,17 @@ export default function SetupPage({ onStart }: SetupPageProps) {
                 }
                 setRules(updates);
               }}
-              last
+              last={!rules.deviationsPracticeMode}
             />
+            {rules.deviationsPracticeMode && (
+              <SelectRow
+                label="Bet Unit"
+                value={String(rules.betUnit)}
+                options={[5, 10, 25, 50, 100].map(v => ({ value: String(v), label: `$${v}` }))}
+                onChange={v => setRules({ betUnit: Number(v) as RuleSet['betUnit'] })}
+                last
+              />
+            )}
           </Section>
 
           <Section label="Display & Audio">

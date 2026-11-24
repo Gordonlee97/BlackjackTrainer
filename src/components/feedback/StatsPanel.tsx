@@ -10,8 +10,6 @@ export default function StatsPanel() {
   const animatedAccuracy = useAnimatedNumber(accuracy, 400);
   const animatedStreak = useAnimatedNumber(currentStreak);
   const animatedBest = useAnimatedNumber(bestStreak);
-  const animatedCorrect = useAnimatedNumber(correctDecisions);
-  const animatedTotal = useAnimatedNumber(totalDecisions);
 
   const [milestoneHit, setMilestoneHit] = useState(false);
   const prevStreakRef = useRef(currentStreak);
@@ -47,9 +45,13 @@ export default function StatsPanel() {
     >
       <Stat label="Hands"    value={handsPlayed > 0 ? animatedHands : '—'} />
       <Sep />
-      <Stat label="Accuracy" value={accDisplay} highlight={accHighlight} warn={accWarning} />
-      <Sep />
-      <Stat label="Correct"  value={totalDecisions > 0 ? `${animatedCorrect}/${animatedTotal}` : '—'} />
+      <Stat
+        label="Accuracy"
+        value={accDisplay}
+        highlight={accHighlight}
+        warn={accWarning}
+        title={totalDecisions > 0 ? `${correctDecisions} of ${totalDecisions} decisions correct` : undefined}
+      />
       <Sep />
       <div className="text-center min-w-[60px]">
         <div className="text-white/40 uppercase tracking-widest leading-none mb-2.5" style={{ fontSize: 'var(--text-xs)' }}>Streak</div>
@@ -73,14 +75,15 @@ export default function StatsPanel() {
   );
 }
 
-function Stat({ label, value, highlight, warn }: {
+function Stat({ label, value, highlight, warn, title }: {
   label: string;
   value: string | number;
   highlight?: boolean;
   warn?: boolean;
+  title?: string;
 }) {
   return (
-    <div className="text-center min-w-[60px]">
+    <div className="text-center min-w-[60px]" title={title}>
       <div className="text-white/40 uppercase tracking-widest leading-none mb-2.5" style={{ fontSize: 'var(--text-xs)' }}>{label}</div>
       <div className={`font-black leading-none ${
         highlight ? 'text-emerald-400' : warn ? 'text-rose-400' : 'text-white/80'

@@ -404,3 +404,16 @@ input[type="range"]::-moz-range-thumb {
     padding-top: 36px;
   }
 }
+
+/* ── Short phones (e.g. 360×640): the 3.75 / 6.25 split leaves the dealer zone
+   with spare height while the player hand overflows into the divider, so the
+   dealer zone sizes to its content and the player zone takes the rest ── */
+@media (max-width: 500px) and (max-height: 700px) {
+  :root {
+    --badge-offset-top: 4px;
+  }
+  .dealer-zone {
+    flex: 0 0 auto;
+    padding-bottom: 8px;
+  }
+}

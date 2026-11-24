@@ -9,6 +9,15 @@ interface SettingsState {
   resetRules: () => void;
 }
 
+/**
+ * Saved settings predate any rule added later, and persist's default merge is
+ * shallow, so a saved `rules` object would drop new fields. Merge rules deeply.
+ */
+export function mergePersistedSettings(persisted: unknown, current: SettingsState): SettingsState {
+  const saved = (persisted ?? {}) as Partial<SettingsState>;
+  return { ...current, ...saved, rules: { ...DEFAULT_RULES, ...current.rules, ...saved.rules } };
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
@@ -24,6 +33,6 @@ export const useSettingsStore = create<SettingsState>()(
         }),
       resetRules: () => set({ rules: DEFAULT_RULES }),
     }),
-    { name: 'blackjack-settings' }
+    { name: 'blackjack-settings', merge: mergePersistedSettings }
   )
 );
